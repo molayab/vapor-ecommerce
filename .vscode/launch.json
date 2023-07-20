@@ -1,0 +1,28 @@
+{
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "sourceLanguages": [
+        "swift"
+      ],
+      "name": "Debug App",
+      "program": "${workspaceFolder:simple_cms}/.build/debug/App",
+      "args": [],
+      "cwd": "${workspaceFolder:simple_cms}",
+      "preLaunchTask": "swift: Build Debug App"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "sourceLanguages": [
+        "swift"
+      ],
+      "name": "Release App",
+      "program": "${workspaceFolder:simple_cms}/.build/release/App",
+      "args": [],
+      "cwd": "${workspaceFolder:simple_cms}",
+      "preLaunchTask": "swift: Build Release App"
+    }
+  ]
+}

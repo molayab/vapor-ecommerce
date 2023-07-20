@@ -1,0 +1,140 @@
+#extend("layouts/layout"):
+#export("body"):
+
+<div class="inline-flex rounded-md shadow-sm">
+  <a href="/users/create/natural" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-r-md hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
+    Agregar Persona Natural
+  </a>
+  <a href="/users/create/organization" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-r-md hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-blue-500 dark:focus:text-white">
+    Agregar Persona Juridica
+  </a>
+</div>
+
+<div data-element="fields" data-stacked="false" class="flex items-center w-full max-w-md mb-3 seva-fields formkit-fields">
+  <div class="relative w-full mr-3 formkit-field">
+      <label for="member_email" class="hidden block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Buscar</label>
+      <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+        <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 16">
+          <path d="m10.036 8.278 9.258-7.79A1.979 1.979 0 0 0 18 0H2A1.987 1.987 0 0 0 .641.541l9.395 7.737Z"></path>
+          <path d="M11.241 9.817c-.36.275-.801.425-1.255.427-.428 0-.845-.138-1.187-.395L0 2.6V14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2.5l-8.759 7.317Z"></path>
+        </svg>
+      </div>
+      <input id="member_email" class="formkit-input bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" name="email_address" aria-label="Email Address" placeholder="Your email address..." required="" type="email">
+  </div>
+  <button data-element="submit" class="formkit-submit">
+      <div class="formkit-spinner">
+          <div></div>
+          <div></div>
+          <div></div>
+      </div>
+      <span class="px-5 py-3 text-sm font-medium text-center text-white bg-blue-700 rounded-lg cursor-pointer hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Buscar</span>
+  </button>
+</div>
+
+<ul class="flex flex-wrap text-sm mt-4 font-medium text-center text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400">
+  #for(category in categories):
+  <li class="mr-2">
+    #if(category == selectedCategory):
+      <a href="/users?category=#(category)" aria-current="page" class="inline-block p-4 text-blue-600 bg-gray-100 rounded-t-lg active dark:bg-gray-800 dark:text-blue-500">#(category)</a>
+    #else:
+      <a href="/users?category=#(category)" class="inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300">#(category)</a>
+    #endif
+  </li>
+  #endfor
+  
+  <!-- <li class="mr-2">
+      <a href="#" class="inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300">Dashboard</a>
+  </li>
+  <li class="mr-2">
+      <a href="#" class="inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300">Settings</a>
+  </li>
+  <li class="mr-2">
+      <a href="#" class="inline-block p-4 rounded-t-lg hover:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 dark:hover:text-gray-300">Contacts</a>
+  </li>
+  <li>
+      <a class="inline-block p-4 text-gray-400 rounded-t-lg cursor-not-allowed dark:text-gray-500">Disabled</a>
+  </li> -->
+</ul>
+
+
+<div class="relative overflow-x-auto shadow-md mt-3">
+  <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+      <tr>
+        <th scope="col" class="px-6 py-3">
+          Usuario
+        </th>
+        <th scope="col" class="px-6 py-3">
+          Roles
+        </th>
+        <th scope="col" class="px-6 py-3">
+          Category
+        </th>
+        <th scope="col" class="px-6 py-3">
+          Activo
+        </th>
+        <th scope="col" class="px-6 py-3">
+          Action
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      #for(user in users):
+      <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
+        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+          #(user.name)
+          <span class="text-xs text-gray-500 font-normal block">#(user.id)</span>
+          <span class="text-xs text-gray-500 font-normal block">#(user.email)</span>
+        </th>
+        <td class="px-6 py-4">
+          #(user.rolesString)
+        </td>
+        <td class="px-6 py-4">
+          #(user.kind)
+        </td>
+        <td class="px-6 py-4">
+          <label class="relative inline-flex items-center mr-5 cursor-pointer">
+            <input type="checkbox" value="#(user.id)" class="sr-only peer" #if(user.isActive): checked #endif onchange="toggleUser(event)" >
+            <div class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+          </label>
+        </td>
+        <td class="px-6 py-4">
+          <span class="text-xs text-gray-500 font-normal block">
+            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+          </span>
+          <span class="text-xs text-gray-500 font-normal block">
+            <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Promote</a>
+          </span>
+          <span class="text-xs text-gray-500 font-normal block">
+            <a href="/users/#(user.id)/delete" class="font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
+          </span>
+        </td>
+      </tr>
+      #endfor
+    </tbody>
+  </table>
+</div>
+<script>
+  function toggleUser(event) {
+    console.log("toggleUser");
+
+    const { checked, value } = event.target;
+    if (checked) {
+      fetch(`/users/${value}/activate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    } else {
+      fetch(`/users/${value}/deactivate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }
+  }
+</script>
+#endexport
+#endextend

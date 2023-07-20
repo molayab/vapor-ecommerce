@@ -1,0 +1,42 @@
+#extend("layout"):
+    #export("body"):
+    <ul class="nav">
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/products/create">Agregar Producto</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/categories/create">Agregar Categoria</a>
+        </li>
+    </ul>
+      
+    <table class="table">
+        <thead>
+            <tr>
+                <th>id</th>
+                <th>título</th>
+                <th>categoria</th>
+                <th>precio</th>
+                <th>precio de venta</th>
+                <th>disponible</th>
+                <th>acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            #for(product in products):
+            <tr>
+                <td>#(product.id)</td>
+                <td>#(product.title)</td>
+                <td>#(product.category)</td>
+                <td>#(product.price)</td>
+                <td>#(product.salePrice)</td>
+                <td>#(product.available)</td>
+                <td>
+                    <a href="/products/id/edit">editar</a>
+                    <a href="/products/id/delete">eliminar</a>
+                </td>
+            </tr>
+            #endfor
+    </table>
+    
+    #endexport
+#endextend

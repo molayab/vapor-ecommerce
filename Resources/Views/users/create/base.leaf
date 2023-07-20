@@ -1,0 +1,82 @@
+#extend("layouts/layout"):
+#export("body"):
+
+<div class="py-5 mx-auto max-w-screen-xl text-left">
+  <h1
+    class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
+    Agregar usuario</h1>
+  <p class="mb-4 text-lg font-normal text-gray-500 lg:text-xl dark:text-gray-200">Agrega un nuevo usuario a la
+    plataforma, este usuario podra ser empleado, cliente o proveedor y se agregara a la base de contatos de la compañia,
+    recuerda que solo los usuarios <b>empleados</b> podran gestionar el CMS. Si vas a agregar un cliente o proveedor
+    como una empresa recuerda usar la opcion de "persona juridica", para un empleado o cliente puedes usar "persona
+    natural".</p>
+</div>
+
+
+<div
+  class="mb-5 text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700">
+  <ul class="flex flex-wrap -mb-px">
+    <li class="mr-2">
+      #if(option == "natural"):
+      <a href="/users/create/natural"
+        class="inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500"
+        aria-current="page">Personal Natural</a>
+      #else:
+      <a href="/users/create/natural"
+        class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Personal
+        Natural</a>
+
+      #endif
+    </li>
+    <li class="mr-2">
+      #if(option == "organization"):
+      <a href="/users/create/organization"
+        class="inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500"
+        aria-current="page">Persona Juridica</a>
+      #else:
+      <a href="/users/create/organization"
+        class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Persona
+        Juridica</a>
+      #endif
+    </li>
+</div>
+
+<form action="/users/create/#(option)" method="post">
+  #import("shared")
+
+  <hr class="my-6 border-gray-300 dark:border-gray-700">
+
+  <div class="mb-6">
+    <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Direccion Contacto</label>
+    <input type="email" id="email"
+      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+      placeholder="john.doe@company.com" required>
+  </div>
+  <div class="mb-6">
+    <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Departamento/Estado</label>
+    <input type="email" id="email"
+      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+      placeholder="john.doe@company.com" required>
+  </div>
+
+  <div class="mb-6">
+    <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Pais</label>
+    <input type="email" id="email"
+      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+      placeholder="john.doe@company.com" required>
+  </div>
+  <div class="mb-6">
+    <label class="relative inline-flex items-center cursor-pointer">
+      <input type="checkbox" name="isActive" class="sr-only peer">
+      <div
+        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+      </div>
+      <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Activar usuario</span>
+    </label>
+  </div>
+  <button type="submit"
+    class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Submit</button>
+</form>
+
+#endexport
+#endextend
