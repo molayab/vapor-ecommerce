@@ -6,6 +6,8 @@ import Vapor
 import Leaf
 import Redis
 
+import Fakery
+
 struct CustomRedisSessionsDelegate: RedisSessionsDelegate {
     func redis<Client>(_ client: Client, store data: SessionData, with key: RedisKey) -> EventLoopFuture<Void> where Client : RedisClient {
         return client.set(key, toJSON: data).flatMap { _ in
