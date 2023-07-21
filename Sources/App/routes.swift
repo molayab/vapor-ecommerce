@@ -11,10 +11,7 @@ struct ProductsViewData: Codable {
     let products: [Product.Public]
 }
 
-struct CategoriesViewData: Codable {
-    let user: User.Public
-    let categories: [Category.Public]
-}
+
 
 struct CreateProductViewData: Codable {
     let user: User.Public
@@ -32,6 +29,7 @@ func routes(_ app: Application) throws {
     
     try app.register(collection: AuthenticationController())
     try app.register(collection: UsersController())
+    try app.register(collection: CategoriesController())
     
     /*let protected = app.routes.grouped(
         app.sessions.middleware,

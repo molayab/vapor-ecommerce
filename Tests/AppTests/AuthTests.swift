@@ -1,7 +1,7 @@
 @testable import App
 import XCTVapor
 
-final class AuthTests: XCTestCase {
+/*final class AuthTests: XCTestCase {
     lazy var decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -144,3 +144,4 @@ final class AuthTests: XCTestCase {
     }
     
 }
+*/

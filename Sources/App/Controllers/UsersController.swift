@@ -1,11 +1,15 @@
 import Vapor
 import Fluent
 
-struct UsersViewData: Codable {
+struct UsersViewData: Codable, ViewPaginable {
+    let pages: [Int]?
+    let totalPages: Int?
+    let currentPage: Int?
     let user: User.Public
     let users: [User.Public]
     let categories: [UserKind]
     let selectedCategory: UserKind?
+    let query: String?
 }
 
 struct UserViewCreateData: Codable {
@@ -82,28 +86,39 @@ struct UsersController: RouteCollection {
 
     func listView(req: Request) async throws -> View {
         let category = try? req.query.get(String.self, at: "category")
+        let query = try? req.query.get(String.self, at: "q")
         let context = User.query(on: req.db)
         
         if let category = category, let kind = UserKind(rawValue: category), !category.isEmpty {
             context.filter(\User.$kind == kind)
         }
+        
+        if let query = query, !query.isEmpty {
+            context.group(.or) { or in
+                or.filter(\User.$name ~~ query)
+                or.filter(\User.$email ~~ query)
+            }
+        }
 
         var users: [User.Public] = []
-        for user in try await context.paginate(for: req).items {
+        let paginator = try await context.paginate(for: req)
+        for user in paginator.items {
             users.append(try await user.asPublic(on: req.db))
         }
 
         return try await req.view.render("users/list", UsersViewData(
+            pages: paginator.metadata.pages,
+            totalPages: paginator.metadata.pageCount,
+            currentPage: paginator.metadata.page,
             user: await req.auth.get(User.self)!.asPublic(on: req.db),
             users: users,
             categories: UserKind.allCases,
-            selectedCategory: UserKind(rawValue: category ?? "")
+            selectedCategory: UserKind(rawValue: category ?? ""),
+            query: query
         ))
     }
 
     func createView(req: Request) async throws -> View {
-        
-
         let option = try req.parameters.require("option", as: String.self).lowercased()
         guard AvailableOptions.allCases.map({ $0.rawValue }).contains(option) else {
             throw Abort(.badRequest)

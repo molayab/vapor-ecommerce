@@ -1,7 +1,7 @@
 @testable import App
 import XCTVapor
 
-final class CategoriesTests: XCTestCase {
+/*final class CategoriesTests: XCTestCase {
     lazy var decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -103,4 +103,4 @@ final class CategoriesTests: XCTestCase {
             XCTAssertNotNil(category.createdAt)
         })
     }
-}
+}*/

@@ -12,7 +12,7 @@ import Vapor
             - description: String
     - DELETE `/categories/:categoryId` - Deletes a category by id
  */
-struct CategoriesController: RouteCollection {
+struct APICategoriesController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         routes.group(Auth.authenticator(), EnsureAdminUserMiddleware()) { protected in
             let categories = protected.grouped("categories")
