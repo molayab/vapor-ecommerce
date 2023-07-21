@@ -85,7 +85,7 @@
             <a href="#" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Promote</a>
           </span>
           <span class="text-xs text-gray-500 font-normal block">
-            <a href="/users/#(user.id)/delete" class="font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
+            <a href="#" onclick="deleteUser(event, '#(user.id)')" class="font-medium text-red-600 dark:text-red-500 hover:underline">Delete</a>
           </span>
         </td>
       </tr>
@@ -128,20 +128,38 @@
   </ul>
 </nav>
 <script>
+  deleteUser = function (event, id) {
+    event.preventDefault();
+
+    if (confirm("Estas seguro?")) {
+      fetch("/users/" + id, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "_csrf": document.querySelector("meta[name='_csrf']").content
+        }
+      }).then(function (response) {
+        if (response.ok) {
+          location.reload();
+        }
+      });
+    }
+  }
+
   appendExtras = function(event) {
     event.target.href += location.search.replace(/\?page=\d+/gm, "").replace("?", "&");
   }
 </script>
+#csrfFormField()
 <script>
   function toggleUser(event) {
-    console.log("toggleUser");
-
     const { checked, value } = event.target;
     if (checked) {
       fetch(`/users/${value}/activate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "_csrf": document.querySelector("[name='_csrf']").value
         },
       });
     } else {
@@ -149,6 +167,7 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "_csrf": document.querySelector("[name='_csrf']").value
         },
       });
     }

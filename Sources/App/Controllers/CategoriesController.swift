@@ -45,7 +45,7 @@ struct CategoriesController: RouteCollection {
             
         protected.get("categories", use: listView)
         protected.get("categories", "create", use: createView)
-        protected.get("categories", ":categoryId", "delete", use: delete)
+        protected.delete("categories", ":categoryId", use: delete)
         protected.post("categories", "create", use: create)
     }
     

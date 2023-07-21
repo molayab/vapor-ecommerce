@@ -28,6 +28,15 @@
       }
     },
     {
+      "identity" : "csrf",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor-community/CSRF.git",
+      "state" : {
+        "revision" : "7ca62d39981d22694ae3c51edbc2854ae26435ea",
+        "version" : "3.1.1"
+      }
+    },
+    {
       "identity" : "fakery",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vadymmarkov/Fakery",

@@ -1,6 +1,0 @@
-#extend("layout"):
-    #export("body"):
-        <h1>Error</h1>
-        <p>Sorry, an error has occurred. You dont have sufficient permissions to access this page.</p>
-    #endexport
-#endextend

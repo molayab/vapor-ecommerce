@@ -42,6 +42,7 @@
 </div>
 
 <form action="/users/create/#(option)" method="post">
+  #csrfFormField()
   #import("shared")
 
   <hr class="my-6 border-gray-300 dark:border-gray-700">

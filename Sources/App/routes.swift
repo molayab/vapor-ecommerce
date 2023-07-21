@@ -11,8 +11,6 @@ struct ProductsViewData: Codable {
     let products: [Product.Public]
 }
 
-
-
 struct CreateProductViewData: Codable {
     let user: User.Public
     let categories: [Category.Public]
@@ -25,6 +23,12 @@ func routes(_ app: Application) throws {
         
     root.get { req async throws in
         return req.redirect(to: "/dashboard")
+    }
+    
+    root.get("dashboard") { req async throws in
+        return try await req.view.render("index", [
+            "user": req.auth.get(User.self)!
+        ])
     }
     
     try app.register(collection: AuthenticationController())

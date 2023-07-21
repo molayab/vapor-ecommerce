@@ -5,6 +5,7 @@ import FluentSQLiteDriver
 import Vapor
 import Leaf
 import Redis
+import CSRF
 
 import Fakery
 
@@ -72,16 +73,20 @@ public func configure(_ app: Application) async throws {
         try await role.save(on: app.db)
     }
     
-    let corsConfiguration = CORSMiddleware.Configuration(
-        allowedOrigin: .all,
+    /*let corsConfiguration = CORSMiddleware.Configuration(
+        allowedOrigin: .none,
         allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
         allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent, .accessControlAllowOrigin]
     )
-    let cors = CORSMiddleware(configuration: corsConfiguration)
+    let cors = CORSMiddleware(configuration: corsConfiguration)*/
     // cors middleware should come before default error middleware using `at: .beginning`
-    app.middleware.use(cors, at: .beginning)
+    // app.middleware.use(cors, at: .beginning)
     app.middleware.use(app.sessions.middleware)
+    app.middleware.use(CSRF())
+    
     app.views.use(.leaf)
+    app.leaf.tags["csrfFormField"] = CSRFFormFieldTag()
+    app.leaf.tags["csrfHeaderField"] = CSRFHeaderFieldTag()
     
     try routes(app)
 }

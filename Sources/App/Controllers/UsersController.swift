@@ -36,7 +36,7 @@ struct UsersController: RouteCollection {
         restricted.post("users", "create", ":option", use: create)
         restricted.post("users", ":userId", "activate", use: activateUser)
         restricted.post("users", ":userId", "deactivate", use: deactivateUser)
-        restricted.get("users", ":userId", "delete", use: delete)
+        restricted.delete("users", ":userId", use: delete)
     }
 
     func delete(req: Request) async throws -> Response {
