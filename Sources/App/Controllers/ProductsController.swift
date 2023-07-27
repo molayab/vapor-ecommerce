@@ -1,6 +1,5 @@
 import Vapor
 import Fluent
-
 struct ProductsController: RouteCollection {
   func boot(routes: RoutesBuilder) throws {
     let products = routes.grouped("products")
@@ -8,7 +7,7 @@ struct ProductsController: RouteCollection {
     let restricted = products.grouped([
         UserSessionAuthenticator(),
         User.redirectMiddleware(path: "/login"),
-        // RoleMiddleware(roles: [.admin])
+        RoleMiddleware(roles: [.admin, .manager])
     ])
 
     restricted.post(use: create)

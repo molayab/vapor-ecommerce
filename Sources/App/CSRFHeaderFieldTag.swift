@@ -1,14 +1,6 @@
-//
-//  File.swift
-//  
-//
-//  Created by Mateo Olaya on 21/07/23.
-//
-
 import Vapor
 import Leaf
 import CSRF
-
 
 struct CSRFHeaderFieldTag: UnsafeUnescapedLeafTag {
     func render(_ ctx: LeafContext) throws -> LeafData {

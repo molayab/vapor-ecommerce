@@ -30,7 +30,7 @@ struct UsersController: RouteCollection {
             UserSessionAuthenticator(),
             User.redirectMiddleware(path: "/login"))
 
-        let restricted = protected.grouped(EnsureAdminUserMiddleware())
+        let restricted = protected.grouped(RoleMiddleware(roles: [.admin]))
         restricted.get("users", use: listView)
         restricted.get("users", "create", ":option", use: createView)
         restricted.post("users", "create", ":option", use: create)

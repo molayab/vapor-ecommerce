@@ -3,7 +3,7 @@ import Fluent
 
 enum AvailableRoles: String, CaseIterable, Codable, Content {
     case admin
-    case user
+    case manager
     case pos
     case noAccess
 }
