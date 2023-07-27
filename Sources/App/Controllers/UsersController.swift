@@ -140,7 +140,6 @@ struct UsersController: RouteCollection {
 
         try User.Create.validate(content: req)
         let payload = try req.content.decode(User.Create.self)
-
         let newUser = try User(create: payload)
 
         try await newUser.save(on: req.db)

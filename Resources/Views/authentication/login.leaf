@@ -2,6 +2,7 @@
 #export("body"):
 
 <form method="post" action="/login">
+  #csrfFormField()
     <label for="input-group-1" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your Email</label>
     <div class="flex">
         <span

@@ -10,7 +10,7 @@ final class ProductReview: Model {
     @Field(key: "comment")
     var comment: String?
     
-    @Field(key "score")
+    @Field(key: "score")
     var score: Int
     
     @Parent(key: "product_id")
@@ -23,9 +23,9 @@ final class ProductReview: Model {
         Public(
             id: try requireID(),
             comment: comment,
-            score: score,
-            product: try product.asPublic(),
-            user: try user.asPublic()
+            score: score
+            // product: try product.asPublic(),
+            // user: try user.asPublic()
         )
     }
 }
@@ -47,7 +47,7 @@ extension ProductReview {
         }
         
         static func validations(_ validations: inout Validations) {
-            validations.add("comment", as: String?.self, is: nil? || (!.empty && .count(5...256)))
+            validations.add("comment", as: String?.self, is: .nil || (!.empty && .count(5...256)))
             validations.add("score", as: Int.self, is: .range(1...5))
             validations.add("product", as: UUID.self, is: .valid)
             validations.add("user", as: UUID.self, is: .valid)
@@ -58,8 +58,8 @@ extension ProductReview {
         var id: UUID?
         var comment: String?
         var score: Int
-        var product: Product.Public
-        var user: User.Public
+        // var product: Product.Public
+        // var user: User.Public
     }
 }
 

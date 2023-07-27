@@ -65,8 +65,8 @@ extension ProductVariant {
         
         static func validations(_ validations: inout Validations) {
             validations.add("name", as: String.self, is: !.empty)
-            validations.add("price", as: Double.self, is: !.empty)
-            validations.add("salePrice", as: Double.self, is: !.empty)
+            validations.add("price", as: Double.self, is: .valid)
+            validations.add("salePrice", as: Double.self, is: .valid)
             validations.add("sku", as: String?.self, required: false)
             validations.add("stock", as: Int?.self, required: false)
             validations.add("product", as: UUID.self, is: .valid)

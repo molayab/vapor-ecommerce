@@ -34,8 +34,8 @@ final class Product: Model {
     @Children(for: \.$product)
     var variants: [ProductVariant]
 
-    func isAvailable(on database: Database) async -> Bool {
-        return await withCheckedThrowingContinuation({ next in
+    func isAvailable(on database: Database) async throws -> Bool {
+        return try await withCheckedThrowingContinuation({ next in
             $variants.get(on: database).whenComplete { result in
                 switch result {
                 case .success(let variants):
@@ -47,8 +47,8 @@ final class Product: Model {
         })
     }
     
-    func averageSalePrice(on database: Database) async -> Double {
-        return await withCheckedThrowingContinuation({ next in
+    func averageSalePrice(on database: Database) async throws -> Double {
+        return try await withCheckedThrowingContinuation({ next in
             $variants.get(on: database).whenComplete { result in
                 switch result {
                 case .success(let variants):
@@ -60,8 +60,8 @@ final class Product: Model {
         })
     }
     
-    func minimumSalePrice(on database: Database) async -> Double {
-        return await withCheckedThrowingContinuation({ next in
+    func minimumSalePrice(on database: Database) async throws -> Double {
+        return try await withCheckedThrowingContinuation({ next in
             $variants.get(on: database).whenComplete { result in
                 switch result {
                 case .success(let variants):
@@ -73,8 +73,8 @@ final class Product: Model {
         })
     }
     
-    func productCoverImage(on database: Database) async -> ProductImage? {
-        return await withCheckedThrowingContinuation({ next in
+    func productCoverImage(on database: Database) async throws -> ProductImage? {
+        return try await withCheckedThrowingContinuation({ next in
             $variants.get(on: database).whenComplete { result in
                 switch result {
                 case .success(let variants):
@@ -86,8 +86,8 @@ final class Product: Model {
         })
     }
     
-    func productImages(on database: Database) async -> [ProductImage] {
-        return await withCheckedThrowingContinuation({ next in
+    func productImages(on database: Database) async throws -> [ProductImage] {
+        return try await withCheckedThrowingContinuation({ next in
             $variants.get(on: database).whenComplete { result in
                 switch result {
                 case .success(let variants):
@@ -107,7 +107,8 @@ extension Product {
         var description: String
         var creatorUserId: UUID
         var categoryId: UUID
-        var model: Product {
+        
+        func asModel() -> Product {
             let model = Product()
             model.title = title
             model.description = description
@@ -125,14 +126,16 @@ extension Product {
     }
     
     struct Public: Content {
-    }
-}
-
-extension Product.Create: Validatable {
-    static func validations(_ validations: inout Validations) {
-        validations.add("title", as: String.self, is: !.empty)
-        validations.add("description", as: String.self, is: !.empty)
-        validations.add("price", as: Double.self, is: .range(0...))
+        var id: UUID?
+        var title: String
+        var description: String
+        var createdAt: Date?
+        var updatedAt: Date?
+        var creator: User.Public
+        var category: Category.Public
+        var reviews: [ProductReview.Public]
+        var questions: [ProductQuestion.Public]
+        var variants: [ProductVariant.Public]
     }
 }
 

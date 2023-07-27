@@ -18,8 +18,36 @@ final class ProductAnswer: Model {
 }
 
 extension ProductAnswer {
+    struct Create: Content, Validatable {
+        var answer: String
+        var question: ProductQuestion.IDValue
+        var user: User.IDValue
+        var model: ProductAnswer {
+            let model = ProductAnswer()
+            model.answer = answer
+            model.$question.id = question
+            model.$user.id = user
+            return model
+        }
+        
+        static func validations(_ validations: inout Validations) {
+            validations.add("answer", as: String.self, is: !.empty)
+            validations.add("question", as: UUID.self, is: .valid)
+            validations.add("user", as: UUID.self, is: .valid)
+        }
+    }
+    
+    struct Public: Content {
+        var id: UUID?
+        var answer: String
+        var question: ProductQuestion.Public
+        var user: User.Public
+    }
+}
+
+extension ProductAnswer {
     struct CreateMigration: AsyncMigration {
-        func prepare(on database: Database) async {
+        func prepare(on database: Database) async throws {
             try await database.schema(ProductAnswer.schema)
                 .id()
                 .field("answer", .string, .required)
@@ -28,7 +56,7 @@ extension ProductAnswer {
                 .create()
         }
         
-        func rollback(on database: Database) async {
+        func revert(on database: Database) async throws {
             try await database.schema(ProductAnswer.schema).delete()
         }
     }

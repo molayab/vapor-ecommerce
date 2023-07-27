@@ -27,14 +27,14 @@ extension ProductImage {
         
         static func validations(_ validations: inout Validations) {
             validations.add("url", as: String.self, is: !.empty)
-            validations.add("product", as: UUID.self, is: .uuid)
+            validations.add("product", as: UUID.self, is: .valid)
         }
     }
 }
 
 extension ProductImage {
     struct CreateMigration: AsyncMigration {
-        func prepare(on database: Database) async {
+        func prepare(on database: Database) async throws {
             try await database.schema(ProductImage.schema)
                 .id()
                 .field("url", .string, .required)
@@ -42,7 +42,7 @@ extension ProductImage {
                 .create()
         }
         
-        func rollback(on database: Database) async {
+        func revert(on database: Database) async throws {
             try await database.schema(ProductImage.schema).delete()
         }
     }
