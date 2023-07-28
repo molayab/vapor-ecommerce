@@ -13,10 +13,10 @@ final class Product: Model {
     @Field(key: "description")
     var description: String
     
-    @Timestamp(key: "created_at", on: .create)
+    @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
     
-    @Timestamp(key: "updated_at", on: .update)
+    @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
     @Parent(key: "creator_user_id")
@@ -105,23 +105,30 @@ extension Product {
     struct Create: Content, Validatable {
         var title: String
         var description: String
-        var creatorUserId: UUID
-        var categoryId: UUID
+        var category: UUID
+        var variants: [ProductVariant.Create]
         
-        func asModel() -> Product {
+        @discardableResult
+        func create(for req: Request, user: User) async throws -> Product {
             let model = Product()
             model.title = title
             model.description = description
-            model.$creator.id = creatorUserId
-            model.$category.id = categoryId
+            model.$creator.id = try user.requireID()
+            model.$category.id = category
+            try await model.create(on: req.db)
+            
+            // Create variants
+            for variant in variants {
+                try await variant.create(for: req, product: model)
+            }
+            
             return model
         }
         
         static func validations(_ validations: inout Validations) {
             validations.add("title", as: String.self, is: !.empty)
             validations.add("description", as: String.self, is: !.empty)
-            validations.add("creatorUserId", as: UUID.self, is: .valid)
-            validations.add("categoryId", as: UUID.self, is: .valid)
+            validations.add("category", as: UUID.self, is: .valid)
         }
     }
     

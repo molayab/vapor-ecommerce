@@ -25,6 +25,8 @@ struct CustomRedisSessionsDelegate: RedisSessionsDelegate {
 public func configure(_ app: Application) async throws {
     // uncomment to serve files from /Public folder
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    // set post maximum size to 20mb
+    app.routes.defaultMaxBodySize = "20mb"
 
     // docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
     app.redis.configuration = try RedisConfiguration(hostname: "localhost")
@@ -56,6 +58,7 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(ProductVariant.CreateMigration())
     app.migrations.add(ProductReview.CreateMigration())
     app.migrations.add(ProductQuestion.CreateMigration())
+    app.migrations.add(ProductImage.CreateMigration())
     try await app.autoMigrate()
     
     // Create root user

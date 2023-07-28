@@ -44,22 +44,32 @@ final class ProductVariant: Model {
 }
 
 extension ProductVariant {
-    struct Create: Validatable {
+    struct Create: Content, Validatable {
         var name: String
         var price: Double
         var salePrice: Double
-        var sku: String? = nil
-        var stock: Int? = nil
-        var product: Product.IDValue
+        var sku: String?
+        var stock: Int?
+        var availability: Bool
+        var images: [UploadImage]
         
-        var model: ProductVariant {
+        @discardableResult
+        func create(for request: Request, product: Product) async throws -> ProductVariant {
             let model = ProductVariant()
             model.name = name
             model.price = price
             model.salePrice = salePrice
             model.sku = sku
             model.stock = stock
-            model.$product.id = product
+            model.isAvailable = availability
+            model.$product.id = try product.requireID()
+            try await model.create(on: request.db)
+            
+            // Upload images
+            for image in images {
+                try await ProductImage.upload(image: image, forVariant: model, on: request)
+            }
+            
             return model
         }
         
@@ -69,7 +79,6 @@ extension ProductVariant {
             validations.add("salePrice", as: Double.self, is: .valid)
             validations.add("sku", as: String?.self, required: false)
             validations.add("stock", as: Int?.self, required: false)
-            validations.add("product", as: UUID.self, is: .valid)
         }
     }
     
