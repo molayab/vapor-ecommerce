@@ -15,14 +15,14 @@ struct ProductsController: RouteCollection {
     restricted.get("create", use: createView)
   }
 
-  private func create(req: Request) async throws -> Response {
+  private func create(req: Request) async throws -> Product.Public {
       let user = try req.auth.require(User.self)
       let payload = try req.content.decode(Product.Create.self)
       
       try Product.Create.validate(content: req)
-      try await payload.create(for: req, user: user)
+      let product = try await payload.create(for: req, user: user)
     
-      return Response(status: .created)
+      return try await product.asPublic(on: req.db)
   }
 
   private func createView(req: Request) async throws -> View {

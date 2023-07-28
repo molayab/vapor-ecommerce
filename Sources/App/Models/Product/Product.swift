@@ -34,6 +34,29 @@ final class Product: Model {
     @Children(for: \.$product)
     var variants: [ProductVariant]
 
+    func asPublic(on database: Database) async throws -> Public {
+        var publics = [ProductVariant.Public]()
+        for variant in try await self.$variants.get(on: database) {
+            publics.append(try await variant.asPublic(on: database))
+        }
+        
+        let creator = try await self.$creator.get(on: database)
+        let category = try await self.$category.get(on: database)
+
+        return Public(
+            id: try requireID(),
+            title: title,
+            description: description,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            creator: try await creator.asPublic(on: database),
+            category: try category.asPublic(),
+            reviews: [], // try reviews.map({ try $0.asPublic() }),
+            questions: [], // try questions.map({ try $0.asPublic() }),
+            variants: publics
+        )
+    }
+
     func isAvailable(on database: Database) async throws -> Bool {
         return try await withCheckedThrowingContinuation({ next in
             $variants.get(on: database).whenComplete { result in

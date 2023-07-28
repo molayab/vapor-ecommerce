@@ -9,6 +9,7 @@ struct UploadImage: Content {
 
 final class ProductImage: Model {
     static let schema = "product_images"
+    static let allowedExtensions = ["jpg", "jpeg", "png", "gif"]
     
     @ID(key: .id)
     var id: UUID?
@@ -18,6 +19,17 @@ final class ProductImage: Model {
     
     @Parent(key: "variant_id")
     var variant: ProductVariant
+
+    private static func storeImageVariant(_ image: Image, _ publicFolder: String, _ fileName: String, size: Int) throws {
+        guard let thumbnail = image.resizedTo(width: size) else {
+            throw Abort(.internalServerError)
+        }
+
+        let url = URL(fileURLWithPath: publicFolder + "thumbnail-\(size)_" + fileName)
+        guard thumbnail.write(to: url) else {
+            throw Abort(.notAcceptable)
+        }
+    }
     
     @discardableResult
     static func upload(image: UploadImage,
@@ -27,33 +39,43 @@ final class ProductImage: Model {
         let fileManager = FileManager.default
         let fileName = UUID().uuidString + "." + image.ext
         let filePath = publicFolder + fileName
-        let fileUrl = URL(fileURLWithPath: filePath)
-        
-        if fileManager.createFile(atPath: filePath, contents: image.dat) {
-            let model = ProductImage()
-            model.url = fileName
-            model.$variant.id = try variant.requireID()
 
-            if let thumbnail = Image(url: fileUrl)?.resizedTo(width: 256) {
-                let url = URL(fileURLWithPath: publicFolder + "thumbnail-sm_" + fileName)
-                thumbnail.write(to: url)
-            }
+        guard fileManager.fileExists(atPath: publicFolder) else {
+            try fileManager.createDirectory(atPath: publicFolder, withIntermediateDirectories: true)
+            return try await upload(image: image, forVariant: variant, on: request)
+        }
+        guard allowedExtensions.contains(image.ext) else {
+            throw Abort(.badRequest)
+        }
 
-            if let thumbnail = Image(url: fileUrl)?.resizedTo(width: 512) {
-                let url = URL(fileURLWithPath: publicFolder + "thumbnail-md_" + fileName)
-                thumbnail.write(to: url)
-            }
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            let image = try Image(data: image.dat)
 
-            if let thumbnail = Image(url: fileUrl)?.resizedTo(width: 1024) {
-                let url = URL(fileURLWithPath: publicFolder + "thumbnail-lg_" + fileName)
-                thumbnail.write(to: url)
+            group.addTask {
+                try storeImageVariant(image, publicFolder, fileName, size: 256)
             }
             
-            try await model.save(on: request.db)
-            return model
+            group.addTask {
+                try storeImageVariant(image, publicFolder, fileName, size: 512)
+            }
+            
+            group.addTask {
+                try storeImageVariant(image, publicFolder, fileName, size: 1024)
+            }
+
+            try await group.waitForAll()
         }
         
-        throw Abort(.internalServerError)
+        guard fileManager.createFile(atPath: filePath, contents: image.dat) else {
+            throw Abort(.internalServerError)
+        }
+
+        let model = ProductImage()
+        model.url = fileName
+        model.$variant.id = try variant.requireID()
+            
+        try await model.save(on: request.db)
+        return model
     }
 }
 

@@ -24,6 +24,15 @@ async function onFormSubmit(e) {
   e.preventDefault();
   const form = e.target;
 
+  if (variants.length === 0) {
+    alert('Debes agregar al menos una variacion');
+    return;
+  }
+
+  if (confirm('¿Estas seguro de que deseas agregar este producto?') === false) {
+    return;
+  }
+
   // convert images to base64
   for (let i = 0; i < variants.length; i++) {
     for (let j = 0; j < variants[i].images.length; j++) {
@@ -51,9 +60,14 @@ async function onFormSubmit(e) {
   })
   
   if (response.ok) {
+    console.log(await response.json());
     window.location.href = '/products';
   } else {
+    let error = await response.json()
+    console.log(error);
     console.log(response);
+
+    alert(error.reason)
   }
 }
 
@@ -129,6 +143,11 @@ function deleteVariation(event) {
 }
 
 function addVariationToTable(event) {
+  if (images.length === 0) {
+    alert('Debes agregar al menos una imagen');
+    return;
+  }
+
   const variation = buildVariation();
   buildTableRow(variation.images[0], variation.name, variation.salePrice, variation.availability);
   variants.push(variation);

@@ -31,15 +31,18 @@ final class ProductVariant: Model {
     @Children(for: \.$variant)
     var images: [ProductImage]
     
-    func asPublic() throws -> Public {
-        Public(
+    func asPublic(on database: Database) async throws -> Public {
+        let images = try await self.$images.get(on: database)
+        let urls = images.map { "/images/catalog/\($0.url)" }
+
+        return Public(
             id: try requireID(),
             name: name,
             price: price,
             salePrice: salePrice,
             sku: sku,
             stock: stock,
-            product: try product.requireID())
+            images: urls)
     }
 }
 
@@ -89,7 +92,7 @@ extension ProductVariant {
         var salePrice: Double
         var sku: String?
         var stock: Int?
-        var product: Product.IDValue
+        var images: [String]
     }
 }
 
