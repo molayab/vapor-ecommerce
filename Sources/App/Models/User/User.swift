@@ -7,20 +7,6 @@ enum UserKind: String, CaseIterable , Codable {
     case provider
 }
 
-/**
-    # User Model
-    This model is used to store the user's information.
- 
-    ## Properties
-    - `id`: UUID
-    - `name`: String
-    - `password`: String
-    - `email`: String
-    - `role`: Role
-    - `createdAt`: Date
-    - `updatedAt`: Date
-    - `isActive`: Bool
- */
 final class User: Model {
     static let schema = "users"
     
@@ -52,7 +38,7 @@ final class User: Model {
     var isActive: Bool
     
     init() { }
-    convenience init(create: Create) throws {
+    private convenience init(create: Create) throws {
         self.init()
         self.name = create.name
         if let lastName = create.lastName {
@@ -94,15 +80,48 @@ final class User: Model {
     }
 }
 
+extension User.Create {
+    enum Option: String, CaseIterable {
+        case natural
+        case organization
+    }
+}
 extension User {
-    struct Create: Codable {
+    struct Create: Codable, Validatable {
         var name: String
         var lastName: String?
         var kind: UserKind
         var password: String?
         var email: String
-        var role: [AvailableRoles]
+        var roles: [AvailableRoles]
         var isActive: Bool
+
+        @discardableResult
+        func create(on database: Database, option: Option) async throws -> User {
+            let user = try User(create: self)
+            try await user.save(on: database)
+            
+            if option != .natural || self.roles.isEmpty {
+                let role = Role(
+                    role: .noAccess,
+                    userId: try user.requireID())
+                try await role.save(on: database)
+            } else {
+                for role in self.roles {
+                    let role = Role(
+                        role: role,
+                        userId: try user.requireID())
+                    try await role.save(on: database)
+                }
+            }
+            
+            return user
+        }
+
+        static func validations(_ validations: inout Validations) {
+            validations.add("name", as: String.self, is: !.empty)
+            validations.add("email", as: String.self, is: .email)
+        }
     }
     
     struct Public: Content {
@@ -124,13 +143,6 @@ extension User: SessionAuthenticatable {
 }
 
 extension User: Authenticatable { }
-extension User.Create: Validatable {
-    static func validations(_ validations: inout Validations) {
-        validations.add("name", as: String.self, is: !.empty)
-        validations.add("email", as: String.self, is: .email)
-    }
-}
-
 extension User: ModelCredentialsAuthenticatable { }
 extension User: ModelAuthenticatable {
     static let usernameKey = \User.$email

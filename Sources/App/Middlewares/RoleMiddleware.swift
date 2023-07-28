@@ -5,12 +5,9 @@ struct RoleMiddleware: AsyncMiddleware {
   let roles: [AvailableRoles]
 
   func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
-    guard let user = try? request.auth.require(User.self) else {
-      throw Abort(.unauthorized)
-    }
-
-    let userRoles = try await user.$roles.get(on: request.db)
-    guard userRoles.contains(where: { roles.contains($0.role) }) else {
+    let user = try request.auth.require(User.self)
+    let userRoles = try await user.$roles.get(on: request.db).map({ $0.role })
+    guard userRoles.contains(where: { roles.contains($0) }) else {
       throw Abort(.unauthorized)
     }
 

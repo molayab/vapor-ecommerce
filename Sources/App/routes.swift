@@ -34,6 +34,7 @@ func routes(_ app: Application) throws {
     try app.register(collection: AuthenticationController())
     try app.register(collection: UsersController())
     try app.register(collection: CategoriesController())
+    try app.register(collection: ProductsController())
     
     /*let protected = app.routes.grouped(
         app.sessions.middleware,

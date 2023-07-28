@@ -20,11 +20,6 @@ struct UserViewCreateData: Codable {
 }
 
 struct UsersController: RouteCollection {
-    enum AvailableOptions: String, CaseIterable {
-        case natural
-        case organization
-    }
-
     func boot(routes: RoutesBuilder) throws {
         let protected = routes.grouped(
             UserSessionAuthenticator(),
@@ -39,49 +34,12 @@ struct UsersController: RouteCollection {
         restricted.delete("users", ":userId", use: delete)
     }
 
-    func delete(req: Request) async throws -> Response {
-        guard let userId = req.parameters.get("userId", as: UUID.self) else {
-            throw Abort(.badRequest)
-        }
-
-        guard let user = try await User.find(userId, on: req.db) else {
-            throw Abort(.notFound)
-        }
-
-        for role in try await user.$roles.get(on: req.db) {
-            try await role.delete(on: req.db)
-        }
-
-        try await user.delete(on: req.db)
-        return req.redirect(to: "/users")
-    }
-
     func activateUser(req: Request) async throws -> Response {
-        guard let userId = req.parameters.get("userId", as: UUID.self) else {
-            throw Abort(.badRequest)
-        }
-
-        guard let user = try await User.find(userId, on: req.db) else {
-            throw Abort(.notFound)
-        }
-
-        user.isActive = true
-        try await user.save(on: req.db)
-        return req.redirect(to: "/users")
+        return try await setUserActivation(for: req, to: true)
     }
 
     func deactivateUser(req: Request) async throws -> Response {
-        guard let userId = req.parameters.get("userId", as: UUID.self) else {
-            throw Abort(.badRequest)
-        }
-
-        guard let user = try await User.find(userId, on: req.db) else {
-            throw Abort(.notFound)
-        }
-
-        user.isActive = false
-        try await user.save(on: req.db)
-        return req.redirect(to: "/users")
+        return try await setUserActivation(for: req, to: false)
     }
 
     func listView(req: Request) async throws -> View {
@@ -120,7 +78,7 @@ struct UsersController: RouteCollection {
 
     func createView(req: Request) async throws -> View {
         let option = try req.parameters.require("option", as: String.self).lowercased()
-        guard AvailableOptions.allCases.map({ $0.rawValue }).contains(option) else {
+        guard User.Create.Option.allCases.map({ $0.rawValue }).contains(option) else {
             throw Abort(.badRequest)
         }
 
@@ -134,26 +92,45 @@ struct UsersController: RouteCollection {
 
     func create(req: Request) async throws -> Response {
         let option = try req.parameters.require("option", as: String.self).lowercased()
-        guard let option = AvailableOptions(rawValue: option) else {
+        guard let option = User.Create.Option(rawValue: option) else {
             throw Abort(.badRequest)
         }
 
         try User.Create.validate(content: req)
         let payload = try req.content.decode(User.Create.self)
-        let newUser = try User(create: payload)
-
-        try await newUser.save(on: req.db)
-        var askedRoles = payload.role
-
-        if case .organization = option {
-            askedRoles = [.noAccess]
-        }
-
-        for askedRole in askedRoles {
-            let role = Role(role: askedRole, userId: try newUser.requireID())
-            try await role.save(on: req.db)
-        }
+        try await payload.create(on: req.db, option: option)
         
+        return req.redirect(to: "/users")
+    }
+
+    func delete(req: Request) async throws -> Response {
+        guard let userId = req.parameters.get("userId", as: UUID.self) else {
+            throw Abort(.badRequest)
+        }
+
+        guard let user = try await User.find(userId, on: req.db) else {
+            throw Abort(.notFound)
+        }
+
+        for role in try await user.$roles.get(on: req.db) {
+            try await role.delete(on: req.db)
+        }
+
+        try await user.delete(on: req.db)
+        return req.redirect(to: "/users")
+    }
+
+    private func setUserActivation(for req: Request, to isActive: Bool) async throws -> Response {
+        guard let userId = req.parameters.get("userId", as: UUID.self) else {
+            throw Abort(.badRequest)
+        }
+
+        guard let user = try await User.find(userId, on: req.db) else {
+            throw Abort(.notFound)
+        }
+
+        user.isActive = isActive
+        try await user.save(on: req.db)
         return req.redirect(to: "/users")
     }
 }

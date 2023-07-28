@@ -61,17 +61,16 @@ public func configure(_ app: Application) async throws {
     // Create root user
     let rootEmail = Environment.get("CMS_ROOT_USER") ?? "root@cms.local"
     if try await app.db.query(User.self).filter(\.$email == rootEmail).first() == nil {
-        let rootUser = try User(
-            create: .init(
-                name: Environment.get("CMS_ROOT_NAME") ?? "Root User",
-                kind: .employee,
-                password: Environment.get("CMS_ROOT_PASSWORD") ?? "password",
-                email: rootEmail,
-                role: [.admin],
-                isActive: true))
-        try await rootUser.save(on: app.db)
-        let role = Role(role: .admin, userId: try rootUser.requireID())
-        try await role.save(on: app.db)
+        let rootUser = User.Create(
+            name: Environment.get("CMS_ROOT_NAME") ?? "Root User",
+            kind: .employee,
+            password: Environment.get("CMS_ROOT_PASSWORD") ?? "password",
+            email: rootEmail,
+            roles: [.admin],
+            isActive: true
+        )
+
+        try await rootUser.create(on: app.db, option: .natural)
     }
     
     /*let corsConfiguration = CORSMiddleware.Configuration(
