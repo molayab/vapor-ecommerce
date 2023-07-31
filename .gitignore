@@ -16,6 +16,7 @@ Public/images/catalog/
 *.log
 /.vscode/
 /docs/.vitepress/cache
+node_modules
 /packages/vite/LICENSE
 dist
 dist-ssr
