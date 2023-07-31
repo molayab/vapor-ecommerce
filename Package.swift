@@ -13,10 +13,9 @@ let package = Package(
         .package(url: "https://github.com/vapor/fluent.git", from: "4.8.0"),
         .package(url: "https://github.com/vapor/fluent-postgres-driver.git", from: "2.7.2"),
         .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.0.0"),
-        .package(url: "https://github.com/vapor/leaf.git", from: "4.1.0"),
-        .package(url: "https://github.com/vadymmarkov/Fakery", from: "5.0.0"),
         .package(url: "https://github.com/vapor-community/CSRF.git", from: "3.0.0"),
-        .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0")
+        .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0"),
+        .package(url: "https://github.com/vapor/jwt.git", from: "4.0.0"),
     ],
     targets: [
         .executableTarget(
@@ -27,9 +26,9 @@ let package = Package(
                 .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
                 .product(name: "Redis", package: "redis"),
                 .product(name: "Vapor", package: "vapor"),
-                .product(name: "Leaf", package: "leaf"),
                 .product(name: "CSRF", package: "CSRF"),
-                .product(name: "SwiftGD", package: "SwiftGD")
+                .product(name: "SwiftGD", package: "SwiftGD"),
+                .product(name: "JWT", package: "jwt")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

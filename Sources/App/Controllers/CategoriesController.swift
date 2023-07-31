@@ -41,46 +41,23 @@ struct CategoriesController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let protected = routes.grouped(
             UserSessionAuthenticator(),
-            User.redirectMiddleware(path: "/login"))
-            
-        protected.get("categories", use: listView)
-        protected.get("categories", "create", use: createView)
+            User.guardMiddleware())
+        
+        routes.get("categories", use: listCategories)
         protected.delete("categories", ":categoryId", use: delete)
-        protected.post("categories", "create", use: create)
+        protected.post("categories", use: create)
     }
     
-    func listView(req: Request) async throws -> View {
-        let query = try? req.query.get(String.self, at: "q")
-        let categories = Category.query(on: req.db)
-        
-        if let query = query {
-            categories.filter(\.$title ~~ query)
-        }
-        
-        let paginator = try await categories.paginate(for: req)
-        
-        return try await req.view.render("categories/list", CategoriesViewData(
-            user: await req.auth.get(User.self)!.asPublic(on: req.db),
-            categories: paginator.items.map { try $0.asPublic() },
-            totalPages: paginator.metadata.pageCount,
-            currentPage: paginator.metadata.page,
-            pages: paginator.metadata.pages
-        ))
+    func listCategories(req: Request) async throws -> [Category.Public] {
+        return try await Category.query(on: req.db).all().map { try $0.asPublic() }
     }
     
-    func createView(req: Request) async throws -> View {
-        return try await req.view.render("categories/create", CategoriesViewData(
-            user: await req.auth.get(User.self)!.asPublic(on: req.db),
-            categories: try await Category.query(on: req.db).all().map { try $0.asPublic() }
-        ))
-    }
-    
-    func create(req: Request) async throws -> Response {
+    func create(req: Request) async throws -> Category.Public {
         try Category.Create.validate(content: req)
         let payload = try req.content.decode(Category.Create.self)
         let category = Category(model: payload)
         try await category.save(on: req.db)
-        return req.redirect(to: "/categories")
+        return try category.asPublic()
     }
     
     func delete(req: Request) async throws -> Response {

@@ -1,75 +1,99 @@
 import Vapor
-import Fluent
+import Redis
+import JWT
 
-/**
-    # Auth Model
-    This model represents an authentication token for a user. It is used to authenticate a user for a period of time.
-    The token is generated when a user logs in and is deleted when the user logs out.
- 
-    ## Properties
-    - `id`: UUID
-    - `token`: String
-    - `expiresAt`: Date
-    - `createdAt`: Date
-    - `user`: User
- 
-    ## Relationships
-    - `user`: Parent
- 
-    ## Migrations
-    - `CreateAuth`: Creates the `auths` table
- */
-final class Auth: Model, Content {
-    static let schema = "auths"
+struct Auth: Authenticatable, JWTPayload {
+    private static var expirationTime: TimeInterval = { 60 * 15 }()
+
+    var refreshToken = (UUID().uuidString + [UInt8].random(count: 16).base64).base64String()
+    var expiration: ExpirationClaim
+    var userId: UUID
     
-    @ID(key: .id)
-    var id: UUID?
-    
-    @Field(key: "token")
-    var token: String
-    
-    @Field(key: "expires_at")
-    var expiresAt: Date
-    
-    @Timestamp(key: "created_at", on: .create)
-    var createdAt: Date?
-    
-    @Parent(key: "user_id")
-    var user: User
-    
-    init() { }
-    init(id: UUID? = nil, token: String, userId: User.IDValue) throws {
-        self.id = id
-        self.token = token
-        self.$user.id = userId
-        self.expiresAt = Date().addingTimeInterval(60 * 60 * 24 * 7)
+    static func refresh(in req: Request, token: String) async throws -> Auth {
+        let user: User = try await withUnsafeThrowingContinuation({ next in
+            let key = RedisKey(token)
+            
+            req.redis.get(key).whenComplete { response in
+                switch response {
+                case .failure(let error):
+                    return next.resume(throwing: error)
+                case .success(let content):
+                    guard let content = content.string else {
+                        return next.resume(throwing: Abort(.unauthorized))
+                    }
+                    guard let userId = UUID(uuidString: content) else {
+                        return next.resume(throwing: Abort(.internalServerError))
+                    }
+                    
+                    req.redis.delete(key).whenComplete { _ in }
+                    let user = User.find(userId, on: req.db)
+                    user.whenSuccess { user in
+                        guard let user = user else {
+                            return next.resume(throwing: Abort(.internalServerError))
+                        }
+                        
+                        return next.resume(returning: user)
+                    }
+                }
+            }
+        })
+        
+        return try await Auth(forRequest: req, user: user)
     }
-}
-
-extension Auth: ModelTokenAuthenticatable {
-    static let valueKey = \Auth.$token
-    static let userKey = \Auth.$user
     
-    var isValid: Bool {
-        return expiresAt > Date()
+    init(forRequest req: Request, user: User) async throws {
+        self.expiration = ExpirationClaim(value: Date().addingTimeInterval(Self.expirationTime))
+        self.userId = try user.requireID()
+        
+        try await self.storeRefreshToken(
+            in: req,
+            token: self.refreshToken)
+    }
+    
+    func asPublic(on req: Request) async throws -> Public {
+        guard let user = try await User.find(userId, on: req.db) else {
+            throw Abort(.internalServerError)
+        }
+        
+        return Public(
+            accessToken: try sign(in: req),
+            refreshToken: refreshToken,
+            user: try await user.asPublic(on: req.db))
+    }
+    
+    
+    func sign(in req: Request) throws -> String {
+        return try req.jwt.sign(self)
+    }
+    
+    private func storeRefreshToken(in req: Request, token: String) async throws {
+        return try await withUnsafeThrowingContinuation({ next in
+            let key = RedisKey(token)
+            
+            req.redis.setex(
+                key,
+                to: userId.uuidString,
+                expirationInSeconds: 60 * 60 * 24 * 7 // 7 days
+            ).whenComplete { response in
+                switch response {
+                case .failure(let error):
+                    return next.resume(throwing: error)
+                case .success:
+                    return next.resume(returning: ())
+                }
+            }
+        })
+    }
+    
+    func verify(using signer: JWTKit.JWTSigner) throws {
+        try expiration.verifyNotExpired()
     }
 }
 
 extension Auth {
-    struct CreateMigration: AsyncMigration {
-        func prepare(on database: Database) async throws {
-            try await database.schema("auths")
-                .id()
-                .field("token", .string, .required)
-                .field("user_id", .uuid, .required, .references("users", "id"))
-                .field("expires_at", .datetime, .required)
-                .field("created_at", .datetime)
-                .unique(on: "token")
-                .create()
-        }
-        
-        func revert(on database: Database) async throws {
-            try await database.schema("authentications").delete()
-        }
+    struct Public: Content {
+        var accessToken: String
+        var refreshToken: String
+        var user: User.Public
     }
 }

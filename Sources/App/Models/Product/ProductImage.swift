@@ -35,7 +35,11 @@ final class ProductImage: Model {
     static func upload(image: UploadImage,
                        forVariant variant: ProductVariant,
                        on request: Request) async throws -> ProductImage {
-        let publicFolder = request.application.directory.publicDirectory + "images/catalog/"
+        
+        let parentId = try variant.requireID()
+        let publicFolder = request.application.directory.publicDirectory
+        + "images/catalog/" + parentId.uuidString + "/"
+        
         let fileManager = FileManager.default
         let fileName = UUID().uuidString + "." + image.ext
         let filePath = publicFolder + fileName
@@ -76,6 +80,20 @@ final class ProductImage: Model {
             
         try await model.save(on: request.db)
         return model
+    }
+    
+    func deleteImage(on request: Request) async throws {
+        // Delete the variant's images in its folder
+        // the simple way is to remove the folder itself
+        let id = try await self.$variant.get(on: request.db).requireID().uuidString
+        let publicFolder = request.application.directory.publicDirectory
+        + "images/catalog/" + id + "/"
+        
+        let fileManager = FileManager.default
+        try? fileManager.removeItem(atPath: publicFolder)
+        
+        // Delete the image from the database
+        try await self.delete(on: request.db)
     }
 }
 

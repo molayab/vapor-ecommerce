@@ -37,15 +37,6 @@
       }
     },
     {
-      "identity" : "fakery",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/vadymmarkov/Fakery",
-      "state" : {
-        "revision" : "71cb3bf36a808534659d1248780c2bf3c4c4fc91",
-        "version" : "5.1.0"
-      }
-    },
-    {
       "identity" : "fluent",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vapor/fluent.git",
@@ -79,6 +70,24 @@
       "state" : {
         "revision" : "33e920bd53c9a3a77f82733aaf26a82495afddd4",
         "version" : "4.4.0"
+      }
+    },
+    {
+      "identity" : "jwt",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/jwt.git",
+      "state" : {
+        "revision" : "d65f32bfd08fae5910d603028be5dec4f35b3482",
+        "version" : "4.2.2"
+      }
+    },
+    {
+      "identity" : "jwt-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/jwt-kit.git",
+      "state" : {
+        "revision" : "9e929d925434b91857661bcd455d1bd53f00bf22",
+        "version" : "4.13.0"
       }
     },
     {

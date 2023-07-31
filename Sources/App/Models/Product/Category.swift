@@ -51,7 +51,6 @@ extension Category {
 extension Category.Create: Validatable {
     static func validations(_ validations: inout Validations) {
         validations.add("title", as: String.self, is: .count(3...))
-        validations.add("description", as: String.self, is: .count(3...))
     }
 }
 

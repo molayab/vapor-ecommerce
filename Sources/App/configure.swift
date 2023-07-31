@@ -3,9 +3,9 @@ import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
 import Vapor
-import Leaf
 import Redis
 import CSRF
+import JWT
 
 struct CustomRedisSessionsDelegate: RedisSessionsDelegate {
     func redis<Client>(_ client: Client, store data: SessionData, with key: RedisKey) -> EventLoopFuture<Void> where Client : RedisClient {
@@ -25,8 +25,12 @@ struct CustomRedisSessionsDelegate: RedisSessionsDelegate {
 public func configure(_ app: Application) async throws {
     // uncomment to serve files from /Public folder
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    
     // set post maximum size to 20mb
     app.routes.defaultMaxBodySize = "20mb"
+    
+    // set JWT secret key
+    app.jwt.signers.use(.hs256(key: Environment.get("JWT_SIGNER_KEY") ?? "secret"))
 
     // docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
     app.redis.configuration = try RedisConfiguration(hostname: "localhost")
@@ -47,11 +51,9 @@ public func configure(_ app: Application) async throws {
     }
 
     app.migrations.add(User.CreateMigration())
-    app.migrations.add(Auth.CreateMigration())
     app.migrations.add(Category.CreateMigration())
     app.migrations.add(Product.CreateMigration())
     app.migrations.add(Role.CreateMigration())
-    app.migrations.add(UnauthorizedAttempt.CreateMigration())
     app.migrations.add(Country.CreateMigration())
     app.migrations.add(State.CreateMigration())
     app.migrations.add(Address.CreateMigration())
@@ -76,20 +78,17 @@ public func configure(_ app: Application) async throws {
         try await rootUser.create(on: app.db, option: .natural)
     }
     
-    /*let corsConfiguration = CORSMiddleware.Configuration(
-        allowedOrigin: .none,
+    let corsConfiguration = CORSMiddleware.Configuration(
+        allowedOrigin: .custom("http://localhost:5173"),
         allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
-        allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent, .accessControlAllowOrigin]
+        allowedHeaders: [.accept, .authorization, .contentType, .origin, .xRequestedWith, .userAgent],
+        allowCredentials: true
     )
-    let cors = CORSMiddleware(configuration: corsConfiguration)*/
+    let cors = CORSMiddleware(configuration: corsConfiguration)
     // cors middleware should come before default error middleware using `at: .beginning`
-    // app.middleware.use(cors, at: .beginning)
+    app.middleware.use(cors, at: .beginning)
     app.middleware.use(app.sessions.middleware)
-    app.middleware.use(CSRF())
-    
-    app.views.use(.leaf)
-    app.leaf.tags["csrfFormField"] = CSRFFormFieldTag()
-    app.leaf.tags["csrfHeaderField"] = CSRFHeaderFieldTag()
+    // app.middleware.use(CSRF())
     
     try routes(app)
 }

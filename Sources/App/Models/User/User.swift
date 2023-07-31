@@ -151,11 +151,6 @@ extension User: ModelAuthenticatable {
     func verify(password: String) throws -> Bool {
         return try Bcrypt.verify(password, created: self.password)
     }
-    
-    func generateToken() throws -> Auth {
-        let token = SHA256.hash(data: [UInt8].random(count: 64)).hexEncodedString()
-        return try Auth(token: token, userId: self.requireID())
-    }
 }
 
 extension User {

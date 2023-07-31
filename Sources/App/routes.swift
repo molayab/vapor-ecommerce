@@ -17,24 +17,12 @@ struct CreateProductViewData: Codable {
 }
 
 func routes(_ app: Application) throws {
-    let root = app.routes.grouped(
-        UserSessionAuthenticator(),
-        User.redirectMiddleware(path: "/login"))
-        
-    root.get { req async throws in
-        return req.redirect(to: "/dashboard")
-    }
+    let api = app.grouped("api")
     
-    root.get("dashboard") { req async throws in
-        return try await req.view.render("index", [
-            "user": req.auth.get(User.self)!
-        ])
-    }
-    
-    try app.register(collection: AuthenticationController())
-    try app.register(collection: UsersController())
-    try app.register(collection: CategoriesController())
-    try app.register(collection: ProductsController())
+    try api.register(collection: AuthenticationController())
+    try api.register(collection: UsersController())
+    try api.register(collection: CategoriesController())
+    try api.register(collection: ProductsController())
     
     /*let protected = app.routes.grouped(
         app.sessions.middleware,

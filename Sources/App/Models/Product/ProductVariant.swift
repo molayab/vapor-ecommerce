@@ -33,7 +33,7 @@ final class ProductVariant: Model {
     
     func asPublic(on database: Database) async throws -> Public {
         let images = try await self.$images.get(on: database)
-        let urls = images.map { "/images/catalog/\($0.url)" }
+        let urls = images.map { "/images/catalog/\($0.$variant.id.uuidString)/thumbnail-256_\($0.url)" }
 
         return Public(
             id: try requireID(),
@@ -42,6 +42,7 @@ final class ProductVariant: Model {
             salePrice: salePrice,
             sku: sku,
             stock: stock,
+            isAvailable: isAvailable,
             images: urls)
     }
 }
@@ -92,6 +93,7 @@ extension ProductVariant {
         var salePrice: Double
         var sku: String?
         var stock: Int?
+        var isAvailable: Bool
         var images: [String]
     }
 }

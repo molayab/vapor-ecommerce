@@ -43,18 +43,34 @@ final class Product: Model {
         let creator = try await self.$creator.get(on: database)
         let category = try await self.$category.get(on: database)
 
-        return Public(
+        return await Public(
             id: try requireID(),
             title: title,
             description: description,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            creator: try await creator.asPublic(on: database),
+            creator: try creator.asPublic(on: database),
             category: try category.asPublic(),
             reviews: [], // try reviews.map({ try $0.asPublic() }),
             questions: [], // try questions.map({ try $0.asPublic() }),
-            variants: publics
+            variants: publics,
+            minimumSalePrice: try minimumSalePrice(on: database),
+            averageSalePrice: try averageSalePrice(on: database),
+            stock: try calculateStock(on: database)
         )
+    }
+    
+    func calculateStock(on database: Database) async throws -> Int {
+        return try await withCheckedThrowingContinuation({ next in
+            $variants.get(on: database).whenComplete { result in
+                switch result {
+                case .success(let variants):
+                    next.resume(returning: variants.reduce(0, { $0 + ($1.stock ?? 0) }))
+                case .failure(let error):
+                    next.resume(throwing: error)
+                }
+            }
+        })
     }
 
     func isAvailable(on database: Database) async throws -> Bool {
@@ -166,6 +182,9 @@ extension Product {
         var reviews: [ProductReview.Public]
         var questions: [ProductQuestion.Public]
         var variants: [ProductVariant.Public]
+        var minimumSalePrice: Double
+        var averageSalePrice: Double
+        var stock: Int
     }
 }
 
