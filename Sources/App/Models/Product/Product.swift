@@ -42,6 +42,8 @@ final class Product: Model {
         
         let creator = try await self.$creator.get(on: database)
         let category = try await self.$category.get(on: database)
+        let reviews = try await self.$reviews.get(on: database).sorted(
+            by: { $0.createdAt ?? Date() > $1.createdAt ?? Date() }).prefix(100)
 
         return await Public(
             id: try requireID(),
@@ -51,14 +53,31 @@ final class Product: Model {
             updatedAt: updatedAt,
             creator: try creator.asPublic(on: database),
             category: try category.asPublic(),
-            reviews: [], // try reviews.map({ try $0.asPublic() }),
+            reviews: try reviews.map({ try $0.asPublic() }),
             questions: [], // try questions.map({ try $0.asPublic() }),
             variants: publics,
             minimumSalePrice: try minimumSalePrice(on: database),
             averageSalePrice: try averageSalePrice(on: database),
-            stock: try calculateStock(on: database)
+            stock: try calculateStock(on: database),
+            numberOfStars: try numberOfStars(on: database)
         )
     }
+    
+    func numberOfStars(on database: Database) async throws -> Int {
+        return try await withCheckedThrowingContinuation({ next in
+            $reviews.get(on: database).whenComplete { result in
+                switch result {
+                case .success(let reviews) where reviews.count > 0:
+                    next.resume(returning: reviews.reduce(0, { $0 + ($1.score) }) / reviews.count)
+                case .success:
+                    next.resume(returning: 0)
+                case .failure(let error):
+                    next.resume(throwing: error)
+                }
+            }
+        })
+    }
+    
     
     func calculateStock(on database: Database) async throws -> Int {
         return try await withCheckedThrowingContinuation({ next in
@@ -185,6 +204,7 @@ extension Product {
         var minimumSalePrice: Double
         var averageSalePrice: Double
         var stock: Int
+        var numberOfStars: Int
     }
 }
 

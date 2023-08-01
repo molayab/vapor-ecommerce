@@ -19,38 +19,42 @@ final class ProductReview: Model {
     @Parent(key: "user_id")
     var user: User
     
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+    
     func asPublic() throws -> Public {
         Public(
             id: try requireID(),
             comment: comment,
             score: score
-            // product: try product.asPublic(),
-            // user: try user.asPublic()
         )
     }
 }
 
 extension ProductReview {
-    struct Create: Validatable {
+    struct Create: Validatable, Content {
         var comment: String?
         var score: Int
-        var product: Product.IDValue
-        var user: User.IDValue
         
         var model: ProductReview {
             let model = ProductReview()
             model.comment = comment
             model.score = score
-            model.$product.id = product
-            model.$user.id = user
+            return model
+        }
+        
+        @discardableResult
+        func create(for req: Request, product: Product) async throws -> ProductReview {
+            let model = self.model
+            model.$product.id = try product.requireID()
+            model.$user.id = try req.auth.require(User.self).requireID()
+            try await model.save(on: req.db)
             return model
         }
         
         static func validations(_ validations: inout Validations) {
             validations.add("comment", as: String?.self, is: .nil || (!.empty && .count(5...256)))
             validations.add("score", as: Int.self, is: .range(1...5))
-            validations.add("product", as: UUID.self, is: .valid)
-            validations.add("user", as: UUID.self, is: .valid)
         }
     }
     
@@ -58,8 +62,7 @@ extension ProductReview {
         var id: UUID?
         var comment: String?
         var score: Int
-        // var product: Product.Public
-        // var user: User.Public
+        var createdAt: Date?
     }
 }
 
@@ -72,6 +75,7 @@ extension ProductReview {
                 .field("score", .int, .required)
                 .field("product_id", .uuid, .required, .references("products", "id"))
                 .field("user_id", .uuid, .required, .references("users", "id"))
+                .field("created_at", .datetime)
                 .create()
         }
         

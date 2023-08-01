@@ -10,6 +10,7 @@ import CreateUser from './pages/users/CreateUser'
 import ListProducts from './pages/products/ListProducts'
 import CreateProduct from './pages/products/CreateProduct'
 import ShowProductDetails from './pages/products/ShowProductDetails'
+import CreateProductVariant from './pages/products/CreateProductVariant'
 
 export const API_URL = 'http://localhost:8080/api'
 
@@ -84,6 +85,12 @@ function App() {
     </RestrictedRoute>
   )
 
+  const createProductVariant = (
+    <RestrictedRoute>
+      <CreateProductVariant />
+    </RestrictedRoute>
+  )
+
   return (
     <>
       <BrowserRouter>
@@ -96,6 +103,7 @@ function App() {
           <Route path='/products' element={listProducts} />
           <Route path='/products/create' element={createProduct} />
           <Route path='/products/:id' element={showProductDetails} />
+          <Route path='/products/:id/variants/add' element={createProductVariant} />
         </Routes>
       </BrowserRouter>
     </>

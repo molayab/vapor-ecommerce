@@ -24,7 +24,7 @@ struct AuthenticationController: RouteCollection {
         // Create the secure cookie for refresh token
         let cookie = HTTPCookies.Value(
             string: refresh,
-            expires: authorization.expiration.value,
+            expires: .distantFuture,
             isHTTPOnly: true)
         req.cookies["refresh"] = cookie
         
@@ -48,7 +48,7 @@ struct AuthenticationController: RouteCollection {
             data: try JSONEncoder().encode(await authorization.asPublic(on: req)))
         response.cookies["refresh"] = HTTPCookies.Value(
             string: authorization.refreshToken,
-            expires: authorization.expiration.value,
+            expires: .distantFuture,
             isHTTPOnly: true)
         
         return response

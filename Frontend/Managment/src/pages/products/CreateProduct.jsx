@@ -7,25 +7,42 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { API_URL } from "../../App";
 
+export function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      let encoded = reader.result.toString().replace(/^data:(.*,)?/, '');
+      if ((encoded.length % 4) > 0) {
+        encoded += '='.repeat(4 - (encoded.length % 4));
+      }
+      resolve(encoded);
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
+export async function imagesToSendableResource(variants) {
+  let images = []
+  for (let i = 0; i < variants.length; i++) {
+    for (let j = 0; j < variants[i].images.length; j++) {
+      const image = variants[i].images[j]
+      images.push(
+        {
+          dat: await toBase64(image),
+          ext: image.name.split('.').pop()
+        }
+      )
+    }
+  }
+  return images
+}
+
 function CreateProduct() {
   const [variants, setVariants] = useState([]);
   const navigate = useNavigate();
   let refreshCategories = null;
-
-  function toBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        let encoded = reader.result.toString().replace(/^data:(.*,)?/, '');
-        if ((encoded.length % 4) > 0) {
-          encoded += '='.repeat(4 - (encoded.length % 4));
-        }
-        resolve(encoded);
-      };
-      reader.onerror = error => reject(error);
-    });
-  }
+  
 
   const createVariant = (e) => {
     e.preventDefault();
@@ -97,19 +114,7 @@ function CreateProduct() {
     const description = document.querySelector('input[name="productDescription"]').value;
     const categoryId = document.querySelector('select[name="category_selector"]').value;
 
-    let images = []
-    for (let i = 0; i < variants.length; i++) {
-      for (let j = 0; j < variants[i].images.length; j++) {
-        const image = variants[i].images[j]
-        images.push(
-          {
-            dat: await toBase64(image),
-            ext: image.name.split('.').pop()
-          }
-        )
-      }
-    }
-
+    const images = await imagesToSendableResource(variants)
     const playload = {
       title: name,
       description: description,

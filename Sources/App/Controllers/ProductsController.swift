@@ -27,8 +27,6 @@ struct ProductsController: RouteCollection {
         return try await product.asPublic(on: req.db)
     }
     
-    
-    
     private func listAll(req: Request) async throws -> Page<Product.Public> {
         let products = try await Product.query(on: req.db)
             .with(\.$category)
@@ -76,6 +74,10 @@ struct ProductsController: RouteCollection {
             }
             
             try await variant.delete(on: req.db)
+        }
+        
+        for review in try await product.$reviews.get(on: req.db) {
+            try await review.delete(on: req.db)
         }
         
         try await product.delete(on: req.db)
