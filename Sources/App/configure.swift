@@ -6,7 +6,6 @@ import Vapor
 import Redis
 import CSRF
 import JWT
-
 extension Application {
     /// Configures the allowed CORS origins for the application.
     var allowedOriginURLs: [String] {
@@ -31,6 +30,8 @@ struct CustomRedisSessionsDelegate: RedisSessionsDelegate {
 
 // configures your application
 public func configure(_ app: Application) async throws {
+    app.commands.use(UserCommand(), as: "users")
+
     // uncomment to serve files from /Public folder
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
     
@@ -70,21 +71,6 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(ProductQuestion.CreateMigration())
     app.migrations.add(ProductImage.CreateMigration())
     try await app.autoMigrate()
-    
-    // Create root user
-    let rootEmail = Environment.get("CMS_ROOT_USER") ?? "root@cms.local"
-    if try await app.db.query(User.self).filter(\.$email == rootEmail).first() == nil {
-        let rootUser = User.Create(
-            name: Environment.get("CMS_ROOT_NAME") ?? "Root User",
-            kind: .employee,
-            password: Environment.get("CMS_ROOT_PASSWORD") ?? "password",
-            email: rootEmail,
-            roles: [.admin],
-            isActive: true
-        )
-
-        try await rootUser.create(on: app.db, option: .natural)
-    }
     
     let corsConfiguration = CORSMiddleware.Configuration(
         allowedOrigin: .any(app.allowedOriginURLs),

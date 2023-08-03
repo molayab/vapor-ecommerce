@@ -16,6 +16,7 @@ let package = Package(
         .package(url: "https://github.com/vapor-community/CSRF.git", from: "3.0.0"),
         .package(url: "https://github.com/twostraws/SwiftGD.git", from: "2.0.0"),
         .package(url: "https://github.com/vapor/jwt.git", from: "4.0.0"),
+        .package(url: "https://github.com/vadymmarkov/Fakery", from: "5.0.0"),
     ],
     targets: [
         .executableTarget(
@@ -28,7 +29,8 @@ let package = Package(
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "CSRF", package: "CSRF"),
                 .product(name: "SwiftGD", package: "SwiftGD"),
-                .product(name: "JWT", package: "jwt")
+                .product(name: "JWT", package: "jwt"),
+                .product(name: "Fakery", package: "Fakery"),
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of

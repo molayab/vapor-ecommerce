@@ -38,20 +38,15 @@ final class User: Model {
     var isActive: Bool
     
     init() { }
-    private convenience init(create: Create) throws {
+    convenience init(create: Create, isHashed: Bool = false) throws {
         self.init()
         self.name = create.name
         if let lastName = create.lastName {
             self.name += " \(lastName)"
         }
 
-        if let password = create.password {
-            self.password = try Bcrypt.hash(password)
-            self.isActive = create.isActive
-        } else {
-            self.password = try Bcrypt.hash("password")
-            self.isActive = false
-        }
+        self.password = isHashed ? create.password : try Bcrypt.hash(create.password)
+        self.isActive = create.isActive
         
         self.email = create.email
         self.kind = create.kind
@@ -91,7 +86,7 @@ extension User {
         var name: String
         var lastName: String?
         var kind: UserKind
-        var password: String?
+        var password: String
         var email: String
         var roles: [AvailableRoles]
         var isActive: Bool
