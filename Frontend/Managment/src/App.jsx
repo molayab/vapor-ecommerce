@@ -12,14 +12,16 @@ import CreateProduct from './pages/products/CreateProduct'
 import ShowProductDetails from './pages/products/ShowProductDetails'
 import CreateProductVariant from './pages/products/CreateProductVariant'
 
-export const API_URL = 'http://localhost:8080/api'
+export const API_URL = 'http://api.localhost/v1'
 
 const { fetch: originalFetch } = window;
 window.fetch = async (...args) => {
   let [resource, options] = args;
   const token = localStorage.getItem('token');
 
+  // options.referrer = 'strict-origin-when-cross-origin';
   if (token) { options.headers['Authorization'] = `Bearer ${token}` }
+  options.mode = 'cors'
 
   const response = await originalFetch(resource, options);
   if (response.status === 401) {
@@ -28,6 +30,7 @@ window.fetch = async (...args) => {
     // Call to refresh token and retry request
     const refreshResponse = await originalFetch(API_URL + '/auth/refresh', {
       credentials: 'include',
+      mode: 'cors',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

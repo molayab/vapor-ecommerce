@@ -17,7 +17,11 @@ struct CreateProductViewData: Codable {
 }
 
 func routes(_ app: Application) throws {
-    let api = app.grouped("api")
+    let api = app.grouped("v1")
+
+    app.get { req in
+        return "It works! This is the API endpoint. Please refer to the documentation for more information."
+    }
     
     try api.register(collection: AuthenticationController())
     try api.register(collection: UsersController())

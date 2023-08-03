@@ -1,8 +1,11 @@
 import Header from "../components/Header";
 import { API_URL } from "../App";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
+  const navigate = useNavigate();
+
   const onSubmit = async (e) => {
     e.preventDefault();
 
@@ -31,7 +34,7 @@ function Login() {
     const data = await response.json();
     if (data.accessToken) {
       localStorage.setItem('token', data.accessToken);
-      window.location.href = '/dashboard';
+      navigate('/dashboard');
     } else if (data.error) {
       const errorZone = document.getElementById("hello");
       errorZone.classList.remove("hidden");
