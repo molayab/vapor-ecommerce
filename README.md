@@ -56,3 +56,21 @@ Start app: docker-compose up app
 Start database: docker-compose up db
 Run migrations: docker-compose run migrate
 Stop all: docker-compose down (add -v to wipe db)
+
+# TODOs
+ - Add payments providers gateway 
+ - Add orders controller 
+ - Add transactions controller 
+ - Add dashboard controller 
+ - Create frontend for managment
+ - Create store frontend 
+ - Add commands for categories
+ - Add commands for orders 
+ - Add commands for transactions
+ - Add commands for image managment 
+ - Create worker for notifications
+ - Create basic documentation
+ - Create advance documentation
+ - Add unit test
+ - Add integration tests
+ - Add performance tests (wkl)
