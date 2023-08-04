@@ -19,8 +19,8 @@ final class Product: Model {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
-    @Parent(key: "creator_user_id")
-    var creator: User
+    @OptionalParent(key: "creator_user_id")
+    var creator: User?
     
     @Parent(key: "category_id")
     var category: Category
@@ -51,7 +51,7 @@ final class Product: Model {
             description: description,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            creator: try creator.asPublic(on: database),
+            creator: try creator?.asPublic(on: database),
             category: try category.asPublic(),
             reviews: try reviews.map({ try $0.asPublic() }),
             questions: [], // try questions.map({ try $0.asPublic() }),
@@ -196,7 +196,7 @@ extension Product {
         var description: String
         var createdAt: Date?
         var updatedAt: Date?
-        var creator: User.Public
+        var creator: User.Public?
         var category: Category.Public
         var reviews: [ProductReview.Public]
         var questions: [ProductQuestion.Public]
@@ -215,7 +215,7 @@ extension Product {
                 .id()
                 .field("title", .string, .required)
                 .field("description", .string, .required)
-                .field("creator_user_id", .uuid, .required, .references("users", "id"))
+                .field("creator_user_id", .uuid, .references("users", "id"))
                 .field("editor_user_id", .uuid, .references("users", "id"))
                 .field("category_id", .uuid, .required, .references("categories", "id"))
                 .field("createdAt", .datetime)
