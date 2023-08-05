@@ -74,3 +74,4 @@ Stop all: docker-compose down (add -v to wipe db)
  - Add unit test
  - Add integration tests
  - Add performance tests (wkl)
+ - Add configuration json 
