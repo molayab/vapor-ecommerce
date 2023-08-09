@@ -49,7 +49,6 @@ struct ProductsController: RouteCollection {
         )
     }
     
-    
     private func create(req: Request) async throws -> Product.Public {
         let user = try req.auth.require(User.self)
         let payload = try req.content.decode(Product.Create.self)

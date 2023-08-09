@@ -10,9 +10,26 @@ struct ProductsVariantsController: RouteCollection {
             RoleMiddleware(roles: [.admin, .manager])
         ])
         
-        restricted.post(":productId", "variants", use: create)
-        restricted.delete(":productId", "variants", ":variantId", use: delete)
+        restricted.post(":productId", "variants", use: createVariant)
+        restricted.delete(":productId", "variants", ":variantId", use: deleteVariant)
         restricted.patch(":productId", "variants", ":variantId", use: editVariant)
+        restricted.get(":productId", "variants", use: listVariants)
+    }
+    
+    private func listVariants(req: Request) async throws -> [ProductVariant.Public] {
+        guard let uuid = req.parameters.get("productId", as: UUID.self) else {
+            throw Abort(.badRequest)
+        }
+        guard let product = try await Product.find(uuid, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        var variants: [ProductVariant.Public] = []
+        for variant in try await product.$variants.query(on: req.db).all() {
+            variants.append(try await variant.asPublic(on: req.db))
+        }
+        
+        return variants
     }
     
     private func editVariant(req: Request) async throws -> ProductVariant.Public {
@@ -48,7 +65,7 @@ struct ProductsVariantsController: RouteCollection {
         return try await variant.asPublic(on: req.db)
     }
     
-    private func create(req: Request) async throws -> ProductVariant.Public {
+    private func createVariant(req: Request) async throws -> ProductVariant.Public {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
         }
@@ -63,7 +80,7 @@ struct ProductsVariantsController: RouteCollection {
         return try await variant.asPublic(on: req.db)
     }
     
-    private func delete(req: Request) async throws -> Response {
+    private func deleteVariant(req: Request) async throws -> Response {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
         }

@@ -6,14 +6,29 @@ import Vapor
 import Redis
 import CSRF
 import JWT
-extension Application {
-    /// Configures the allowed CORS origins for the application.
-    var allowedOriginURLs: [String] {
-        [
-            "http://cms.localhost",
-        ]
+
+/// Site domain
+let kSiteDomain = Environment.get("SITE_DOMAIN") ?? "http://localhost:8080"
+
+/// Allowed origins
+let kAllowedOrigins = Environment.get("ALLOWED_ORIGINS")?
+    .split(separator: ",")
+    .map { String($0) } ?? ["http://cms.localhost"]
+
+/// Payment gateways available
+enum GatewayType: String, CaseIterable, Content {
+    case wompi
+    
+    // Add more gateways here
+    
+    var gateway: PaymentGateway {
+        switch self {
+        case .wompi:
+            return Wompi()
+        }
     }
 }
+
 struct CustomRedisSessionsDelegate: RedisSessionsDelegate {
     func redis<Client>(_ client: Client, store data: SessionData, with key: RedisKey) -> EventLoopFuture<Void> where Client : RedisClient {
         return client.set(key, toJSON: data).flatMap { _ in
@@ -65,17 +80,17 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(Category.CreateMigration())
     app.migrations.add(Product.CreateMigration())
     app.migrations.add(Role.CreateMigration())
-    app.migrations.add(Country.CreateMigration())
-    app.migrations.add(State.CreateMigration())
     app.migrations.add(Address.CreateMigration())
     app.migrations.add(ProductVariant.CreateMigration())
     app.migrations.add(ProductReview.CreateMigration())
     app.migrations.add(ProductQuestion.CreateMigration())
     app.migrations.add(ProductImage.CreateMigration())
+    app.migrations.add(Transaction.CreateMigration())
+    app.migrations.add(TransactionItem.CreateMigration())
     try await app.autoMigrate()
     
     let corsConfiguration = CORSMiddleware.Configuration(
-        allowedOrigin: .any(app.allowedOriginURLs),
+        allowedOrigin: .any(kAllowedOrigins),
         allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
         allowedHeaders: [
             .accept,
