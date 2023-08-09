@@ -46,7 +46,9 @@ subcommands:
 
     Optional arguments:
     [--kind --roles --active]
-    
+ - list
+ - delete
+    --email (user email)
 """
     }
     
@@ -56,19 +58,102 @@ subcommands:
             try create(using: context, signature: signature)
         case "randomize":
             try randomize(using: context, signature: signature)
+        case "list":
+            try list(using: context, signature: signature)
+        case "delete":
+            try delete(using: context, signature: signature)
+        case "update":
+            try update(using: context, signature: signature)
         default:
             context.console.error("Invalid subcommand: \(signature.subcommand)")
         }
     }
     
-    private func randomize(using context: CommandContext, signature: Signature) throws {
-        guard let entries = signature.entries else {
-            context.console.error("Missing required argument: entries")
+    private func update(using context: CommandContext, signature: Signature) throws {
+        guard let email = signature.email else {
+            context.console.error("Missing required argument: email")
             return
         }
         
-        guard let password = signature.password else {
-            context.console.error("Missing required argument: password")
+        let app = context.application
+        let query = User.query(on: app.db)
+            .filter(\.$email == email)
+        let user = try query.first().wait()
+        
+        guard let user = user else {
+            context.console.error("User not found: \(email)")
+            return
+        }
+        
+        if let name = signature.name {
+            user.name = name
+        }
+        
+        if let kind = signature.kind {
+            user.kind = UserKind(rawValue: kind) ?? .client
+        }
+        
+        if let roles = signature.roles {
+            let roles = try roles.split(separator: ",")
+                .map { String($0) }
+                .map { AvailableRoles(rawValue: $0) }
+                .compactMap { $0 }
+                .map { Role(role: $0, userId: try user.requireID()) }
+            try user.$roles
+                .get(on: app.db)
+                .wait()
+                .delete(on: app.db)
+                .wait()
+            
+            try roles.create(on: app.db).wait()
+        }
+        
+        user.isActive = signature.isActive
+        
+        try user.save(on: app.db).wait()
+        context.console.info("User updated: \(email)")
+    }
+    
+    
+    private func delete(using context: CommandContext, signature: Signature) throws {
+        guard let email = signature.email else {
+            context.console.error("Missing required argument: email")
+            return
+        }
+        
+        let app = context.application
+        let query = User.query(on: app.db)
+            .filter(\.$email == email)
+        let user = try query.first().wait()
+        try user?.$roles
+            .get(on: app.db)
+            .wait()
+            .delete(on: app.db)
+            .wait()
+        
+        guard let user = user else {
+            context.console.error("User not found: \(email)")
+            return
+        }
+        
+        try user.delete(on: app.db).wait()
+        context.console.info("User deleted: \(email)")
+    }
+    
+    private func list(using context: CommandContext, signature: Signature) throws {
+        let app = context.application
+        let query = User.query(on: app.db)
+        let users = try query.all().wait()
+        
+        users.forEach { user in
+            context.console.info("\(user.name) <\(user.email)>")
+        }
+    }
+    
+    
+    private func randomize(using context: CommandContext, signature: Signature) throws {
+        guard let entries = signature.entries else {
+            context.console.error("Missing required argument: entries")
             return
         }
         
@@ -167,7 +252,7 @@ subcommands:
                 let rootUser = User.Create(
                     name: signature.name ?? "No Name",
                     kind: kind,
-                    password: password,
+                    password: try Bcrypt.hash(password),
                     email: email,
                     roles: roles,
                     isActive: signature.isActive

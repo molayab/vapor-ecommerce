@@ -70,7 +70,7 @@ struct CategoriesController: RouteCollection {
         }
         
         try await category.delete(on: req.db)
-        return req.redirect(to: "/categories")
+        return Response(status: .ok)
     }
     
 }

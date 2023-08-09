@@ -32,6 +32,7 @@ struct CustomRedisSessionsDelegate: RedisSessionsDelegate {
 public func configure(_ app: Application) async throws {
     app.commands.use(UserCommand(), as: "users")
     app.commands.use(ProductCommand(), as: "products")
+    app.commands.use(RoleCommand(), as: "roles")
 
     // uncomment to serve files from /Public folder
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
