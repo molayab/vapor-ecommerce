@@ -22,6 +22,10 @@ struct PaymentsController: RouteCollection {
             throw Abort(.notFound)
         }
         
+        transaction.status = .pending
+        transaction.orderdAt = Date()
+        try await transaction.save(on: req.db)
+        
         return try await provider.pay(
             transaction: try await transaction.asPublic(on: req.db),
             req: req)
@@ -35,14 +39,28 @@ struct PaymentsController: RouteCollection {
             throw Abort(.badRequest)
         }
         
-        // Validate the request is coming from the provider
+        let response = try await provider.checkEvent(for: req)
+        guard let transactionId = UUID(uuidString: response.reference) else {
+            req.logger.error("Invalid transaction id for \(response.reference) in \(provider) callback")
+            throw Abort(.badRequest)
+        }
         
-        // Get the tx reference
+        let transaction = try await Transaction.find(transactionId, on: req.db)
+        guard let transaction = transaction else {
+            req.logger.error("Transaction \(transactionId) not found in \(provider) callback")
+            throw Abort(.notFound)
+        }
         
-        // Get the status from the provider
+        switch response.status {
+        case .approved:
+            transaction.status = .paid
+        case .declined:
+            transaction.status = .declined
+        case .inProgress:
+            transaction.status = .pending
+        }
         
-        // Update the transaction status
-    
+        try await transaction.save(on: req.db)
         return Response(status: .ok)
     }
 }

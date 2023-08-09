@@ -58,7 +58,8 @@ Run migrations: docker-compose run migrate
 Stop all: docker-compose down (add -v to wipe db)
 
 # TODOs
- - Add payments providers gateway 
+ - [X] Add payments providers gateway 
+    - [X] Added Wompi provider (COL)
  - Add orders controller 
  - Add transactions controller 
  - Add dashboard controller 
@@ -125,5 +126,12 @@ Stop all: docker-compose down (add -v to wipe db)
 | DELETE | /v1/products/:productId/variants/:variantId |
 +--------+---------------------------------------------+
 | PATCH  | /v1/products/:productId/variants/:variantId |
++--------+---------------------------------------------+
+| GET    | /v1/products/:productId/variants            |
++--------+---------------------------------------------+
+| GET    | /v1/payments/callback/:provider             |
++--------+---------------------------------------------+
+| GET    | /v1/payments/pay/:provider/:transactionId   |
++--------+---------------------------------------------+
 
 ```

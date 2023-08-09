@@ -8,6 +8,7 @@ final class Transaction: Model {
         case shipped
         case delivered
         case canceled
+        case declined
     }
     
     static var schema: String = "transactions"

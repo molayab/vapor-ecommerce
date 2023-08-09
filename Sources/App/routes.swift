@@ -29,6 +29,8 @@ func routes(_ app: Application) throws {
     try api.register(collection: ProductsController())
     try api.register(collection: ProductReviewsController())
     try api.register(collection: ProductsVariantsController())
+    try api.register(collection: TransactionsController())
+    try api.register(collection: PaymentsController())
     
     /*let protected = app.routes.grouped(
         app.sessions.middleware,

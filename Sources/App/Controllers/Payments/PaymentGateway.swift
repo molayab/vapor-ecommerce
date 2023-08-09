@@ -5,16 +5,15 @@ enum Currency: String {
     case USD
 }
 
-enum GatewayResponse {
-    case paid
-    case inProgress
-    case failed
-}
-
-enum GatewayError: Error {
-    case canceled
-    case expired
-    case declined
+struct PaymentEvent {
+    enum Status {
+        case approved
+        case inProgress
+        case declined
+    }
+    
+    var reference: String
+    var status: Status
 }
 
 protocol PaymentGateway {
@@ -25,6 +24,6 @@ protocol PaymentGateway {
     func pay(transaction: Transaction.Public, req: Request) async throws -> Response
     
     /// Asks the provider for the status of the payment
-    func checkForStatus() async throws -> Result<GatewayResponse, GatewayError>
+    func checkEvent(for req: Request) async throws -> PaymentEvent
 }
 
