@@ -78,6 +78,7 @@ Stop all: docker-compose down (add -v to wipe db)
 
 ## Routes
 
+```
 +--------+---------------------------------------------+
 | GET    | /                                           |
 +--------+---------------------------------------------+
@@ -124,3 +125,5 @@ Stop all: docker-compose down (add -v to wipe db)
 | DELETE | /v1/products/:productId/variants/:variantId |
 +--------+---------------------------------------------+
 | PATCH  | /v1/products/:productId/variants/:variantId |
+
+```
