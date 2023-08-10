@@ -3,7 +3,7 @@ import Fluent
 
 struct PaymentsController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
-        let payments = routes.grouped("payments")
+        let payments = routes.grouped("transactions", "payment")
         payments.get("callback", ":provider", use: callback)
         payments.get("pay", ":provider", ":transactionId", use: pay)
     }

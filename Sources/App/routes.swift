@@ -15,7 +15,7 @@ func routes(_ app: Application) throws {
     try api.register(collection: ProductReviewsController())
     try api.register(collection: ProductVariantsController())
     try api.register(collection: ProductQuestionsController())
-    try api.register(collection: TransactionsController())
+    try api.register(collection: OrdersController())
     try api.register(collection: PaymentsController())
 }
 

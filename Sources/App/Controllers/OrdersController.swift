@@ -1,10 +1,10 @@
 import Vapor
 import Fluent
 
-struct TransactionsController: RouteCollection {
+struct OrdersController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         // Public API
-        let transactions = routes.grouped("transactions")
+        let transactions = routes.grouped("orders")
         transactions.post("checkout", use: checkout)
         
         let requiredAuth = transactions.grouped(
