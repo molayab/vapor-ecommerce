@@ -17,8 +17,8 @@ struct CategoriesController: RouteCollection {
         let restricted = protected.grouped(
             RoleMiddleware(roles: [.admin, .manager]))
         
-        restricted.delete("categories", ":categoryId", use: delete)
-        restricted.post("categories", use: create)
+        restricted.delete(":categoryId", use: delete)
+        restricted.post(use: create)
     }
     
     /// Public API
