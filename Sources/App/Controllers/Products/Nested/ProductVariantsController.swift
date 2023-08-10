@@ -53,7 +53,6 @@ struct ProductVariantsController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        let user = try req.auth.require(User.self)
         let payload = try req.content.decode(ProductVariant.Create.self)
         try ProductVariant.Create.validate(content: req)
         

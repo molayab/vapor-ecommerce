@@ -7,6 +7,7 @@ import Redis
 import CSRF
 import JWT
 import Gatekeeper
+import QueuesRedisDriver
 
 /// Site domain
 let kSiteDomain = Environment.get("SITE_DOMAIN") ?? "http://localhost:8080"
@@ -15,6 +16,9 @@ let kSiteDomain = Environment.get("SITE_DOMAIN") ?? "http://localhost:8080"
 let kAllowedOrigins = Environment.get("ALLOWED_ORIGINS")?
     .split(separator: ",")
     .map { String($0) } ?? ["http://cms.localhost"]
+
+/// JWT signer key
+let kJWTSignerKey = Environment.get("JWT_SIGNER_KEY") ?? "secret"
 
 /// Payment gateways available
 enum GatewayType: String, CaseIterable, Content {
@@ -49,19 +53,15 @@ public func configure(_ app: Application) async throws {
     app.commands.use(UserCommand(), as: "users")
     app.commands.use(ProductCommand(), as: "products")
     app.commands.use(RoleCommand(), as: "roles")
-
-    // uncomment to serve files from /Public folder
-    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
     
-    // set post maximum size to 20mb
     app.routes.defaultMaxBodySize = "20mb"
-    
-    // set JWT secret key
-    app.jwt.signers.use(.hs256(key: Environment.get("JWT_SIGNER_KEY") ?? "secret"))
-    
+    app.jwt.signers.use(.hs256(key: kJWTSignerKey))
     app.redis.configuration = try RedisConfiguration(hostname: "redis")
-    app.sessions.use(.redis(delegate: CustomRedisSessionsDelegate()))
     app.caches.use(.redis)
+    if let configuration = app.redis.configuration {
+        app.queues.use(.redis(configuration))
+        app.queues.schedule(CostShedulerJob()).daily().at(.midnight)
+    }
     
     if app.environment == .testing {
         app.databases.use(.sqlite(.memory), as: .sqlite)
@@ -87,6 +87,9 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(ProductImage.CreateMigration())
     app.migrations.add(Transaction.CreateMigration())
     app.migrations.add(TransactionItem.CreateMigration())
+    app.migrations.add(Cost.CreateMigration())
+    app.migrations.add(Finance.CreateMigration())
+    app.migrations.add(Sale.CreateMigration())
     try await app.autoMigrate()
     
     let corsConfiguration = CORSMiddleware.Configuration(
@@ -106,6 +109,7 @@ public func configure(_ app: Application) async throws {
     let cors = CORSMiddleware(configuration: corsConfiguration)
     app.middleware.use(cors, at: .beginning)
     app.middleware.use(GatekeeperMiddleware(config: .init(maxRequests: 30, per: .minute)))
+    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
     // app.middleware.use(CSRF())
     
     try routes(app)

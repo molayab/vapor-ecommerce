@@ -185,10 +185,6 @@ subcommands:
                                asyncProcesses: Int,
                                loopTo: Int) async throws {
         let app = context.application
-        let roles = signature
-            .roles?
-            .split(separator: ",")
-            .map { AvailableRoles(rawValue: String($0))! } ?? [.noAccess]
         let kind = signature.kind.flatMap(UserKind.init(rawValue:)) ?? .employee
         let faker = Faker()
         let password = try! Bcrypt.hash(signature.password!)

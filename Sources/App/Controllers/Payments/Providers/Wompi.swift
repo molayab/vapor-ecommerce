@@ -62,8 +62,6 @@ struct Wompi: PaymentGateway {
         
         // Validate signature
         let signature = req.headers.first(name: "X-Event-Checksum")!
-        var properties = [String]()
-        
         let dict = payload.data.transaction.dictionary
         var calculatedSignature = payload.signature.properties.compactMap {
             guard let key = $0.split(separator: ".").last else { return nil }

@@ -1,6 +1,6 @@
 import Vapor
 
-enum Currency: String {
+enum Currency: String, Codable {
     case COP
     case USD
 }

@@ -62,13 +62,16 @@ Stop all: docker-compose down (add -v to wipe db)
     - [X] Added Wompi provider (COL)
  - [X] Add orders controller 
  - [X] Add transactions controller 
+ - Add POS frontend 
+ - Add POS controller 
  - Add dashboard controller 
  - Create frontend for managment
  - Create store frontend 
  - Add commands for categories
  - Add commands for orders 
  - Add commands for transactions
- - Add commands for image managment 
+ - Add commands for image managment
+ - [X] Add finance controller 
  - Create worker for notifications
  - Create basic documentation
  - Create advance documentation
@@ -103,9 +106,9 @@ Stop all: docker-compose down (add -v to wipe db)
 +--------+-------------------------------------------------------+
 | GET    | /v1/categories                                        |
 +--------+-------------------------------------------------------+
-| DELETE | /v1/categories/categories/:categoryId                 |
+| DELETE | /v1/categories/:categoryId                            |
 +--------+-------------------------------------------------------+
-| POST   | /v1/categories/categories                             |
+| POST   | /v1/categories                                        |
 +--------+-------------------------------------------------------+
 | GET    | /v1/products                                          |
 +--------+-------------------------------------------------------+
@@ -156,6 +159,22 @@ Stop all: docker-compose down (add -v to wipe db)
 | GET    | /v1/transactions/payment/callback/:provider           |
 +--------+-------------------------------------------------------+
 | GET    | /v1/transactions/payment/pay/:provider/:transactionId |
++--------+-------------------------------------------------------+
+| POST   | /v1/finance/costs                                     |
++--------+-------------------------------------------------------+
+| GET    | /v1/finance/costs/fixed                               |
++--------+-------------------------------------------------------+
+| GET    | /v1/finance/costs/variable                            |
++--------+-------------------------------------------------------+
+| GET    | /v1/finance/costs/all                                 |
++--------+-------------------------------------------------------+
+| GET    | /v1/finance/costs                                     |
++--------+-------------------------------------------------------+
+| DELETE | /v1/finance/costs/:costId                             |
++--------+-------------------------------------------------------+
+| PATCH  | /v1/finance/costs/:costId                             |
++--------+-------------------------------------------------------+
+| GET    | /v1/finance/costs/:costId                             |
 +--------+-------------------------------------------------------+
 
 ```

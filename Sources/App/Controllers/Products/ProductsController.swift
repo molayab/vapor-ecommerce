@@ -84,7 +84,6 @@ struct ProductsController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        let user = try req.auth.require(User.self)
         let payload = try req.content.decode(Product.Create.self)
         
         try Product.Create.validate(content: req)
