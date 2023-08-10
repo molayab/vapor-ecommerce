@@ -4,26 +4,33 @@ import Vapor
 struct ProductReviewsController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let root = routes.grouped("products", ":productId", "reviews")
-        let restricted = root.grouped([
+        
+        // Public API
+        root.get(use: listReviews)
+        
+        // Private API
+        
+        let authRequired = root.grouped([
             UserSessionAuthenticator(),
             User.guardMiddleware()
         ])
         
-        restricted.post(use: addReview)
-        restricted.get(use: listReviews)
-        restricted.delete(":reviewId", use: deleteReview)
-        restricted.patch(":reviewId", use: editReview)
+        authRequired.post(use: addReview)
+        authRequired.delete(":reviewId", use: deleteReview)
+        authRequired.patch(":reviewId", use: editReview)
     }
     
+    /// Private API
+    /// DELETE /products/:productId/reviews/:reviewId
+    /// This endpoint is used to delete a review.
+    /// Only the review's author or a moderator can delete a review.
     private func deleteReview(req: Request) async throws -> HTTPStatus {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
         }
-        
         guard let reviewId = req.parameters.get("reviewId", as: UUID.self) else {
             throw Abort(.badRequest)
         }
-        
         guard let product = try await Product.find(uuid, on: req.db) else {
             throw Abort(.notFound)
         }
@@ -38,7 +45,8 @@ struct ProductReviewsController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        guard try review.$user.id == user.requireID() else {
+        let isModerator = try await user.isReviewModerator(on: req.db)
+        guard try review.$user.id == user.requireID() || isModerator else {
             throw Abort(.forbidden)
         }
         
@@ -46,15 +54,17 @@ struct ProductReviewsController: RouteCollection {
         return .ok
     }
     
+    /// Private API
+    /// PATCH /products/:productId/reviews/:reviewId
+    /// This endpoint is used to edit a review.
+    /// Only the review's author or a moderator can edit a review.
     private func editReview(req: Request) async throws -> ProductReview.Public {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
         }
-        
         guard let reviewId = req.parameters.get("reviewId", as: UUID.self) else {
             throw Abort(.badRequest)
         }
-        
         guard let product = try await Product.find(uuid, on: req.db) else {
             throw Abort(.notFound)
         }
@@ -69,7 +79,8 @@ struct ProductReviewsController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        guard try review.$user.id == user.requireID() else {
+        let isModerator = try await user.isReviewModerator(on: req.db)
+        guard try review.$user.id == user.requireID() || isModerator else {
             throw Abort(.forbidden)
         }
         
@@ -83,11 +94,13 @@ struct ProductReviewsController: RouteCollection {
         return try review.asPublic()
     }
     
+    /// Public API
+    /// GET /products/:productId/reviews
+    /// This endpoint is used to list all reviews for a product.
     private func listReviews(req: Request) async throws -> [ProductReview.Public] {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
         }
-        
         guard let product = try await Product.find(uuid, on: req.db) else {
             throw Abort(.notFound)
         }
@@ -95,6 +108,9 @@ struct ProductReviewsController: RouteCollection {
         return try await product.$reviews.get(on: req.db).map { try $0.asPublic() }
     }
     
+    /// Private API
+    /// POST /products/:productId/reviews
+    /// This endpoint is used to add a review for a product.
     private func addReview(req: Request) async throws -> ProductReview.Public {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
@@ -105,7 +121,6 @@ struct ProductReviewsController: RouteCollection {
         
         let payload = try req.content.decode(ProductReview.Create.self)
         try ProductReview.Create.validate(content: req)
-        
         let review = try await payload.create(for: req, product: product)
         return try review.asPublic()
     }

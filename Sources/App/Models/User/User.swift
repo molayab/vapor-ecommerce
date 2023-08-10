@@ -51,6 +51,13 @@ final class User: Model {
         self.kind = create.kind
     }
     
+    func isReviewModerator(on db: Database) async throws -> Bool {
+        return try await self.$roles
+            .get(on: db)
+            .contains(where: { $0.role == .admin || $0.role == .moderator })
+    }
+    
+    
     private func gravatar() -> String {
         let computed = Insecure.MD5.hash(data: email.data(using: .utf8)!)
         return "https://www.gravatar.com/avatar/\(computed.map { String(format: "%02hhx", $0) }.joined())"
@@ -81,6 +88,28 @@ extension User.Create {
     }
 }
 extension User {
+    struct Client: Content, Validatable {
+        var name: String
+        var email: String
+        var password: String
+        
+        static func validations(_ validations: inout Validations) {
+            validations.add("name", as: String.self, is: !.empty)
+            validations.add("email", as: String.self, is: .email)
+        }
+    }
+    
+    struct Provider: Content, Validatable {
+        var name: String
+        var email: String
+        var password: String
+        
+        static func validations(_ validations: inout Validations) {
+            validations.add("name", as: String.self, is: !.empty)
+            validations.add("email", as: String.self, is: .email)
+        }
+    }
+    
     struct Create: Codable, Validatable {
         var name: String
         var lastName: String?
@@ -96,22 +125,15 @@ extension User {
         var isActive: Bool
 
         @discardableResult
-        func create(on database: Database, option: Option) async throws -> User {
+        func create(on database: Database) async throws -> User {
             let user = try User(create: self)
             try await user.save(on: database)
             
-            if option != .natural || self.roles.isEmpty {
+            for role in self.roles {
                 let role = Role(
-                    role: .noAccess,
+                    role: role,
                     userId: try user.requireID())
                 try await role.save(on: database)
-            } else {
-                for role in self.roles {
-                    let role = Role(
-                        role: role,
-                        userId: try user.requireID())
-                    try await role.save(on: database)
-                }
             }
             
             return user

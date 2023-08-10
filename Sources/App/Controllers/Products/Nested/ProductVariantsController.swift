@@ -1,21 +1,28 @@
 import Fluent
 import Vapor
 
-struct ProductsVariantsController: RouteCollection {
+struct ProductVariantsController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
-        let products = routes.grouped("products")
+        let products = routes.grouped("products", ":productId", "variants")
+        
+        // Public API
+        products.get(use: listVariants)
+        
+        // Restricted API
         let restricted = products.grouped([
             UserSessionAuthenticator(),
             User.guardMiddleware(),
             RoleMiddleware(roles: [.admin, .manager])
         ])
         
-        restricted.post(":productId", "variants", use: createVariant)
-        restricted.delete(":productId", "variants", ":variantId", use: deleteVariant)
-        restricted.patch(":productId", "variants", ":variantId", use: editVariant)
-        restricted.get(":productId", "variants", use: listVariants)
+        restricted.post(use: createVariant)
+        restricted.delete(":variantId", use: deleteVariant)
+        restricted.patch(":variantId", use: editVariant)
     }
     
+    /// Public API
+    /// GET /products/:productId/variants
+    /// This endpoint is used to retrieve all variants for a product.
     private func listVariants(req: Request) async throws -> [ProductVariant.Public] {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
@@ -24,14 +31,17 @@ struct ProductsVariantsController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        var variants: [ProductVariant.Public] = []
-        for variant in try await product.$variants.query(on: req.db).all() {
-            variants.append(try await variant.asPublic(on: req.db))
-        }
-        
-        return variants
+        return try await product.$variants
+            .query(on: req.db)
+            .all()
+            .asyncMap({ variant in
+                try await variant.asPublic(on: req.db)
+        })
     }
     
+    /// Restricted API
+    /// PATCH /products/:productId/variants
+    /// This endpoint is used to edit a variant.
     private func editVariant(req: Request) async throws -> ProductVariant.Public {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
@@ -65,6 +75,9 @@ struct ProductsVariantsController: RouteCollection {
         return try await variant.asPublic(on: req.db)
     }
     
+    /// Restricted API
+    /// POST /products/:productId/variants
+    /// This endpoint is used to create a variant.
     private func createVariant(req: Request) async throws -> ProductVariant.Public {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
@@ -80,6 +93,9 @@ struct ProductsVariantsController: RouteCollection {
         return try await variant.asPublic(on: req.db)
     }
     
+    /// Restricted API
+    /// DELETE /products/:productId/variants/:variantId
+    /// This endpoint is used to delete a variant.
     private func deleteVariant(req: Request) async throws -> Response {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)

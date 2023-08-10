@@ -258,7 +258,7 @@ subcommands:
                     isActive: signature.isActive
                 )
                 
-                try await rootUser.create(on: app.db, option: .natural)
+                try await rootUser.create(on: app.db)
                 context.console.info("Root user created.")
             } else {
                 context.console.info("Root user already exists.")

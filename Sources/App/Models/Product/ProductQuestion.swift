@@ -18,25 +18,30 @@ final class ProductQuestion: Model {
     
     @Parent(key: "user_id")
     var user: User
+    
+    func asPublic(on db: Database) async throws -> Public {
+        await Public(
+            id: try requireID(),
+            question: question,
+            product: try product.asPublic(on: db),
+            user: try user.asPublic(on: db),
+            answers: try answers.asyncMap { try await $0.asPublic(on: db) }
+        )
+    }
 }
 
 extension ProductQuestion {
     struct Create: Content, Validatable {
         var question: String
-        var product: Product.IDValue
-        var user: User.IDValue
+        
         var model: ProductQuestion {
             let model = ProductQuestion()
             model.question = question
-            model.$product.id = product
-            model.$user.id = user
             return model
         }
         
         static func validations(_ validations: inout Validations) {
             validations.add("question", as: String.self, is: !.empty)
-            validations.add("product", as: UUID.self, is: .valid)
-            validations.add("user", as: UUID.self, is: .valid)
         }
     }
     

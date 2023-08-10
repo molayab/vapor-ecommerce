@@ -183,6 +183,15 @@ extension Product {
             return model
         }
         
+        @discardableResult
+        func update(for req: Request, product: Product) async throws -> Product {
+            product.title = title
+            product.description = description
+            product.$category.id = category
+            try await product.update(on: req.db)
+            return product
+        }
+        
         static func validations(_ validations: inout Validations) {
             validations.add("title", as: String.self, is: !.empty)
             validations.add("description", as: String.self, is: !.empty)

@@ -6,6 +6,7 @@ import Vapor
 import Redis
 import CSRF
 import JWT
+import Gatekeeper
 
 /// Site domain
 let kSiteDomain = Environment.get("SITE_DOMAIN") ?? "http://localhost:8080"
@@ -57,15 +58,14 @@ public func configure(_ app: Application) async throws {
     
     // set JWT secret key
     app.jwt.signers.use(.hs256(key: Environment.get("JWT_SIGNER_KEY") ?? "secret"))
-
-    // docker run -d --name redis-stack -p 6379:6379 -p 8001:8001 redis/redis-stack:latest
+    
     app.redis.configuration = try RedisConfiguration(hostname: "redis")
     app.sessions.use(.redis(delegate: CustomRedisSessionsDelegate()))
+    app.caches.use(.redis)
     
     if app.environment == .testing {
         app.databases.use(.sqlite(.memory), as: .sqlite)
     } else {
-        // docker run --name vapor_postgres -e POSTGRES_PASSWORD="password123" -e POSTGRES_USER="vapor" -e POSTGRES_DB="vapor_database" -p 5432:5432 postgres
         app.databases.use(.postgres(configuration: SQLPostgresConfiguration(
             hostname: Environment.get("DATABASE_HOST") ?? "db",
             port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? SQLPostgresConfiguration.ianaPortNumber,
@@ -104,10 +104,31 @@ public func configure(_ app: Application) async throws {
         cacheExpiration: 600
     )
     let cors = CORSMiddleware(configuration: corsConfiguration)
-    // cors middleware should come before default error middleware using `at: .beginning`
     app.middleware.use(cors, at: .beginning)
-    app.middleware.use(app.sessions.middleware)
+    app.middleware.use(GatekeeperMiddleware(config: .init(maxRequests: 30, per: .minute)))
     // app.middleware.use(CSRF())
     
     try routes(app)
+}
+
+extension PageMetadata {
+    var pages: [Int] {
+        guard page <= pageCount else {
+            return []
+        }
+        
+        var pages: [Int] = []
+        var index: Int = 0
+        
+        for i in max(0, page - 5)..<pageCount {
+            if index == 9 {
+                break
+            }
+            
+            pages.append(i + 1)
+            index += 1
+        }
+        
+        return pages
+    }
 }

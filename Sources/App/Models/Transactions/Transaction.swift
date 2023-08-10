@@ -9,6 +9,7 @@ final class Transaction: Model {
         case delivered
         case canceled
         case declined
+        case placed
     }
     
     static var schema: String = "transactions"
@@ -91,16 +92,17 @@ extension Transaction {
     }
     
     struct Create: Content {
-        var userId: UUID
         var shippingAddressId: UUID
         var billingAddressId: UUID
         var items: [TransactionItem.Create]
         
         func create(in req: Request) async throws -> Transaction {
+            let user = try req.auth.require(User.self)
             let model = Transaction()
-            model.$user.id = userId
+            model.$user.id = try user.requireID()
             model.$shippingAddress.id = shippingAddressId
             model.$billingAddress.id = billingAddressId
+            model.status = .placed
             model.placedIp = req.headers.first(name: .xForwardedFor)
                 ?? req.remoteAddress?.hostname
                 ?? "unknown"

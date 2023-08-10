@@ -6,6 +6,7 @@ enum AvailableRoles: String, CaseIterable, Codable, Content {
     case manager
     case pos
     case noAccess
+    case moderator
 }
 
 final class Role: Model, Content {

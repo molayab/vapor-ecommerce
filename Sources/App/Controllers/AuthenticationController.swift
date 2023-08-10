@@ -3,16 +3,23 @@ import Redis
 import Fluent
 
 struct AuthenticationController: RouteCollection {
-
     func boot(routes: RoutesBuilder) throws {
         let root = routes.grouped("auth")
+        
+        // Public API
         root.post("refresh", use: refresh)
         
-        let authenticator = root.grouped(User.credentialsAuthenticator(), User.guardMiddleware())
+        // Private API
+        let authenticator = root.grouped(
+            User.credentialsAuthenticator(),
+            User.guardMiddleware())
         authenticator.post("create", use: login)
     }
     
-    func login(req: Request) async throws -> Response {
+    /// Private API
+    /// POST /auth/create
+    /// Creates a new user session
+    private func login(req: Request) async throws -> Response {
         let user = try req.auth.require(User.self)
         guard user.isActive else {
             throw Abort(.unauthorized)
@@ -37,6 +44,9 @@ struct AuthenticationController: RouteCollection {
         return response
     }
     
+    /// Public API
+    /// POST /auth/refresh
+    /// Refreshes a user session
     func refresh(req: Request) async throws -> Response {
         guard let refresh = req.cookies["refresh"]?.string else {
             throw Abort(.unauthorized)
@@ -54,6 +64,9 @@ struct AuthenticationController: RouteCollection {
         return response
     }
     
+    /// Private API
+    /// POST /auth/logout
+    /// Logs out a user session
     func logout(req: Request) throws -> Response {
         req.auth.logout(User.self)
         return req.redirect(to: "/")

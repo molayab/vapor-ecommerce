@@ -15,6 +15,15 @@ final class ProductAnswer: Model {
     
     @Parent(key: "user_id")
     var user: User
+    
+    func asPublic(on db: Database) async throws -> Public {
+        await Public(
+            id: try requireID(),
+            answer: answer,
+            question: try question.asPublic(on: db),
+            user: try user.asPublic(on: db)
+        )
+    }
 }
 
 extension ProductAnswer {
