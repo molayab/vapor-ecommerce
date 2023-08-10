@@ -60,8 +60,8 @@ Stop all: docker-compose down (add -v to wipe db)
 # TODOs
  - [X] Add payments providers gateway 
     - [X] Added Wompi provider (COL)
- - Add orders controller 
- - Add transactions controller 
+ - [X] Add orders controller 
+ - [X] Add transactions controller 
  - Add dashboard controller 
  - Create frontend for managment
  - Create store frontend 
