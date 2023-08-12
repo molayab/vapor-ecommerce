@@ -8,16 +8,16 @@ final class Address: Model {
     var id: UUID?
     
     @Field(key: "street")
-    var street: String
+    var street: String?
     
     @Field(key: "city")
-    var city: String
+    var city: String?
     
     @Field(key: "state")
-    var state: String
+    var state: String?
     
     @Field(key: "zip")
-    var zip: String
+    var zip: String?
     
     @Enum(key: "country")
     var country: Country
@@ -26,7 +26,7 @@ final class Address: Model {
     var user: User
     
     func asPublic() -> Public {
-        .init(
+        Public(
             street: street,
             city: city,
             state: state,
@@ -38,11 +38,23 @@ final class Address: Model {
 
 extension Address {
     struct Public: Content {
-        var street: String
-        var city: String
-        var state: String
-        var zip: String
+        var street: String?
+        var city: String?
+        var state: String?
+        var zip: String?
         var country: Country
+        
+        func createModel(withUserId id: Address.IDValue) -> Address {
+            let model = Address()
+            model.$user.id = id
+            model.street = street
+            model.city = city
+            model.state = state
+            model.zip = zip
+            model.country = country
+            return model
+        }
+    
     }
     
     typealias Create = Public
@@ -63,10 +75,10 @@ extension Address {
         func prepare(on database: Database) async throws {
             try await database.schema(schema)
                 .id()
-                .field("street", .string, .required)
-                .field("city", .string, .required)
-                .field("state", .string, .required)
-                .field("zip", .string, .required)
+                .field("street", .string)
+                .field("city", .string)
+                .field("state", .string)
+                .field("zip", .string)
                 .field("country", .string, .required)
                 .field("user_id", .uuid, .required, .references("users", "id"))
                 .create()

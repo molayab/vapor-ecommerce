@@ -1,13 +1,37 @@
 import Vapor
 import Fluent
 
-enum UserKind: String, CaseIterable , Codable {
-    case employee
-    case client
-    case provider
-}
-
 final class User: Model {
+    enum Kind: String, CaseIterable , Codable {
+        case employee
+        case client
+        case provider
+    }
+    
+    enum NationalIdType: String, Codable , CaseIterable{
+        case cc
+        case ce
+        case nit
+        case passport
+        case ti
+        case ssn
+        
+        var name: String {
+            switch self {
+            case .cc: return "Cédula de ciudadanía"
+            case .ce: return "Cédula de extranjería"
+            case .nit: return "NIT"
+            case .passport: return "Pasaporte"
+            case .ti: return "Tarjeta de identidad"
+            case .ssn: return "Social Security Number"
+            }
+        }
+        
+        func asPublic() -> Public {
+            Public(id: self.rawValue, name: self.name)
+        }
+    }
+    
     static let schema = "users"
     
     @ID(key: .id)
@@ -23,7 +47,19 @@ final class User: Model {
     var email: String
 
     @Enum(key: "kind")
-    var kind: UserKind
+    var kind: Kind
+    
+    @OptionalEnum(key: "national_id_type")
+    var nationalIdType: NationalIdType?
+    
+    @Field(key: "national_id")
+    var nationalId: String?
+    
+    @Field(key: "telephone")
+    var telephone: String?
+    
+    @Field(key: "cellphone")
+    var cellphone: String?
     
     @Children(for: \.$user)
     var roles: [Role]
@@ -37,18 +73,21 @@ final class User: Model {
     @Field(key: "is_active")
     var isActive: Bool
     
+    @Children(for: \.$user)
+    var addresses: [Address]
+    
     init() { }
     convenience init(create: Create) throws {
         self.init()
+        self.nationalIdType = create.nationalIdType
+        self.nationalId = create.nationalId
         self.name = create.name
-        if let lastName = create.lastName {
-            self.name += " \(lastName)"
-        }
-
         self.password = create.password
         self.isActive = create.isActive
         self.email = create.email
         self.kind = create.kind
+        self.telephone = create.telephone
+        self.cellphone = create.cellphone
     }
     
     func isReviewModerator(on db: Database) async throws -> Bool {
@@ -81,6 +120,13 @@ final class User: Model {
     }
 }
 
+extension User.NationalIdType {
+    struct Public: Content {
+        var id: String
+        var name: String
+    }
+}
+
 extension User.Create {
     enum Option: String, CaseIterable {
         case natural
@@ -92,6 +138,7 @@ extension User {
         var name: String
         var email: String
         var password: String
+        var addresses: [Address.Create]
         
         static func validations(_ validations: inout Validations) {
             validations.add("name", as: String.self, is: !.empty)
@@ -100,9 +147,13 @@ extension User {
     }
     
     struct Provider: Content, Validatable {
+        var nationalIdType: NationalIdType?
+        var nationalId: String?
         var name: String
         var email: String
-        var password: String
+        var addresses: [Address.Create]
+        var telephone: String?
+        var cellphone: String?
         
         static func validations(_ validations: inout Validations) {
             validations.add("name", as: String.self, is: !.empty)
@@ -111,9 +162,10 @@ extension User {
     }
     
     struct Create: Codable, Validatable {
+        var nationalIdType: NationalIdType?
+        var nationalId: String?
         var name: String
-        var lastName: String?
-        var kind: UserKind
+        var kind: Kind
         var password: String {
             didSet {
                 self.password = (try? Bcrypt.hash(password))
@@ -123,18 +175,18 @@ extension User {
         var email: String
         var roles: [AvailableRoles]
         var isActive: Bool
+        var addresses: [Address.Create]
+        var telephone: String?
+        var cellphone: String?
 
         @discardableResult
         func create(on database: Database) async throws -> User {
             let user = try User(create: self)
             try await user.save(on: database)
-            
-            for role in self.roles {
-                let role = Role(
-                    role: role,
-                    userId: try user.requireID())
-                try await role.save(on: database)
-            }
+            try await roles.map { Role(role: $0,userId: try user.requireID()) }
+                .create(on: database)
+            try await addresses.map { $0.createModel(withUserId: try user.requireID()) }
+                .create(on: database)
             
             return user
         }
@@ -148,7 +200,7 @@ extension User {
     struct Public: Content {
         var id: UUID?
         var name: String
-        var kind: UserKind
+        var kind: Kind
         var email: String
         var createdAt: Date?
         var updatedAt: Date?
@@ -181,7 +233,11 @@ extension User {
                 .id()
                 .field("name", .string, .required)
                 .field("kind", .string, .required)
+                .field("national_id_type", .string)
+                .field("national_id", .string)
                 .field("password", .string, .required)
+                .field("telephone", .string)
+                .field("cellphone", .string)
                 .field("email", .string, .required)
                 .field("created_at", .datetime)
                 .field("updated_at", .datetime)

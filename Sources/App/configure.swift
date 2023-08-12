@@ -15,7 +15,7 @@ let kSiteDomain = Environment.get("SITE_DOMAIN") ?? "http://localhost:8080"
 /// Allowed origins
 let kAllowedOrigins = Environment.get("ALLOWED_ORIGINS")?
     .split(separator: ",")
-    .map { String($0) } ?? ["http://cms.localhost"]
+    .map { String($0) } ?? ["http://cms.localhost", "http://localhost:5173"]
 
 /// JWT signer key
 let kJWTSignerKey = Environment.get("JWT_SIGNER_KEY") ?? "secret"

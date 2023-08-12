@@ -13,10 +13,10 @@ function SideMenu({ children }) {
 
   return (
     <div className='flex'>
-      <aside className={`bg-slate-300 ${isOpen ? 'w-40' : 'w-20'}`}>
+      <aside className={`${isOpen ? 'w-40' : 'w-20'} mt-4 hidden md:block`}>
         <div className='flex flex-col items-center h-screen'>
           <ul className='mt-2 
-            [&>li]:flex [&>li]:gap-2 [&>li]:py-1 [&>li]:cursor-pointer'>
+            [&>li]:flex [&>li]:gap-2 [&>li]:py-1 [&>li]:cursor-pointer fill-white'>
             <li>
               <img src={activityIcon} alt='activity' />
               <span className={ !isOpen ? "hidden" : "" }>Dashboard</span>
@@ -41,7 +41,7 @@ function SideMenu({ children }) {
         </div>
       </aside>
 
-      <main className='w-full'>
+      <main className='w-full m-4'>
         { children }
       </main>
     </div>

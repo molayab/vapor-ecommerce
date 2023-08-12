@@ -7,6 +7,8 @@ struct UsersController: RouteCollection {
         
         // Public API
         routes.post("create", use: createClient)
+        routes.get("available", "roles", use: roles)
+        routes.get("available", "national", "ids", use: availableNationalIdTypes)
         
         // Private API
         let protected = routes.grouped(
@@ -22,6 +24,40 @@ struct UsersController: RouteCollection {
         restricted.post(":userId", "activate", use: activateUser)
         restricted.post(":userId", "deactivate", use: deactivateUser)
         restricted.delete(":userId", use: delete)
+        
+        restricted.get("all", "employees", use: getAllEmployees)
+        restricted.get("all", "providers", use: getAllProviders)
+        restricted.get("all", "clients", use: getAllClients)
+    }
+    
+    private func getAllEmployees(req: Request) async throws -> Page<User.Public> {
+        let users = try await User.query(on: req.db)
+            .filter(\.$kind == .employee)
+            .paginate(for: req)
+        
+        return try await Page(
+            items: users.items.asyncMap { try await $0.asPublic(on: req.db) },
+            metadata: users.metadata)
+    }
+    
+    private func getAllProviders(req: Request) async throws -> Page<User.Public> {
+        let users = try await User.query(on: req.db)
+            .filter(\.$kind == .provider)
+            .paginate(for: req)
+        
+        return try await Page(
+            items: users.items.asyncMap { try await $0.asPublic(on: req.db) },
+            metadata: users.metadata)
+    }
+    
+    private func getAllClients(req: Request) async throws -> Page<User.Public> {
+        let users = try await User.query(on: req.db)
+            .filter(\.$kind == .client)
+            .paginate(for: req)
+        
+        return try await Page(
+            items: users.items.asyncMap { try await $0.asPublic(on: req.db) },
+            metadata: users.metadata)
     }
     
     /// Private API
@@ -29,6 +65,14 @@ struct UsersController: RouteCollection {
     /// Returns the current user
     private func me(req: Request) async throws -> User.Public {
         try await req.auth.require(User.self).asPublic(on: req.db)
+    }
+    
+    private func roles(req: Request) async throws -> [String] {
+        AvailableRoles.allCases.map { $0.rawValue }
+    }
+    
+    private func availableNationalIdTypes(req: Request) async throws -> [User.NationalIdType.Public] {
+        User.NationalIdType.allCases.map { $0.asPublic() }
     }
     
     /// Public API
@@ -44,7 +88,8 @@ struct UsersController: RouteCollection {
             password: payload.password,
             email: payload.email,
             roles: [.noAccess],
-            isActive: false)
+            isActive: false,
+            addresses: payload.addresses)
         return try await user.create(on: req.db).asPublic(on: req.db)
     }
     
@@ -58,11 +103,11 @@ struct UsersController: RouteCollection {
         let user = User.Create(
             name: payload.name,
             kind: .provider,
-            password: payload.password,
+            password: UUID().uuidString,
             email: payload.email,
             roles: [.noAccess],
-            isActive: false)
-        
+            isActive: false,
+            addresses: payload.addresses)
         return try await user.create(on: req.db).asPublic(on: req.db)
     }
     

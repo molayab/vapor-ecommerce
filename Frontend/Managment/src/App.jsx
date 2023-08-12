@@ -6,13 +6,16 @@ import RestrictedRoute from './components/RestrictedRoute'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import ListUsers from './pages/users/ListUsers'
-import CreateUser from './pages/users/CreateUser'
+
 import ListProducts from './pages/products/ListProducts'
 import CreateProduct from './pages/products/CreateProduct'
 import ShowProductDetails from './pages/products/ShowProductDetails'
 import CreateProductVariant from './pages/products/CreateProductVariant'
+import CreateClient from './pages/users/create/CreateClient'
+import CreateEmployee from './pages/users/create/CreateEmployee'
+import CreateProvider from './pages/users/create/CreateProvider'
 
-export const API_URL = 'http://api.localhost/v1'
+export const API_URL = 'http://localhost:8080/v1'
 
 const { fetch: originalFetch } = window;
 window.fetch = async (...args) => {
@@ -64,9 +67,21 @@ function App() {
     </RestrictedRoute>
   )
 
-  const createUser = (
+  const createClient = (
     <RestrictedRoute>
-      <CreateUser />
+      <CreateClient />
+    </RestrictedRoute>
+  )
+
+  const createEmployee = (
+    <RestrictedRoute>
+      <CreateEmployee />
+    </RestrictedRoute>
+  )
+
+  const createProvider = (
+    <RestrictedRoute>
+      <CreateProvider />
     </RestrictedRoute>
   )
 
@@ -102,9 +117,11 @@ function App() {
           <Route path='/login' element={<Login />} />
           <Route path='/dashboard' element={dashboard} />
           <Route path='/users' element={listUsers} />
-          <Route path='/users/create' element={createUser} />
+          <Route path='/users/new/provider' element={createProvider} />
+          <Route path='/users/new/client' element={createClient} />
+          <Route path='/users/new/employee' element={createEmployee} />
           <Route path='/products' element={listProducts} />
-          <Route path='/products/create' element={createProduct} />
+          <Route path='/products/new' element={createProduct} />
           <Route path='/products/:id' element={showProductDetails} />
           <Route path='/products/:id/variants/add' element={createProductVariant} />
         </Routes>

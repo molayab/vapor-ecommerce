@@ -1,21 +1,15 @@
 import Header from "../components/Header";
 import { API_URL } from "../App";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Button, Card, Grid, Subtitle, TextInput, Title, Callout, Text } from "@tremor/react";
 
 function Login() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const [errorDescriptionState, setErrorDescriptionState] = useState(undefined)
 
   const onSubmit = async (e) => {
     e.preventDefault();
-
-    if (e.target.email.value === "" || e.target.password.value === "") {
-      const errorZone = document.getElementById("hello");
-      errorZone.classList.remove("hidden");
-      errorZone.innerHTML = "Please fill in all fields";
-
-      return;
-    }
 
     const payload = {
       username: e.target.email.value,
@@ -32,28 +26,35 @@ function Login() {
     });
 
     const data = await response.json();
+
     if (data.accessToken) {
       localStorage.setItem('token', data.accessToken);
       navigate('/dashboard');
     } else if (data.error) {
-      const errorZone = document.getElementById("hello");
-      errorZone.classList.remove("hidden");
-      errorZone.innerHTML = data.reason;
+      setErrorDescriptionState(data.reason);
     }
   }
 
   return (
     <>
-      <div className='flex flex-col items-center justify-center h-screen'>
-        <h1 className='text-4xl font-bold'>Login</h1>
-        <div id="hello" className='hidden'>
-          <p className='text-red-500'>Invalid credentials</p>
-        </div>
-        <form className='flex flex-col gap-2 mt-4' onSubmit={(e) => onSubmit(e) }>
-          <input type='email' name="email" placeholder='Email' className='p-2 rounded-md' />
-          <input type='password' name="password" placeholder='Password' className='p-2 rounded-md' />
-          <button type='submit' className='p-2 rounded-md bg-gray-200 hover:bg-gray-300'>Login</button>
-        </form>
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Card className="w-96">
+          <form onSubmit={onSubmit}>
+            <Title>Panel de gestión de tu e-commerce.</Title>
+            <Subtitle>Ingresa a tu cuenta</Subtitle>
+
+            {errorDescriptionState && (
+              <Callout className="mt-4" color="rose" title="Error">
+                <Text>{errorDescriptionState}</Text>
+              </Callout>
+            )}
+
+            <TextInput className="mt-4" placeholder="Email" name="email" label="Email" required />
+            <TextInput className="mt-4" placeholder="Password" name="password" label="Password" type="password" required />
+
+            <Button className="mt-4 w-full" type="submit">Login</Button>
+          </form>
+        </Card>
       </div>
     </>
     

@@ -90,7 +90,7 @@ subcommands:
         }
         
         if let kind = signature.kind {
-            user.kind = UserKind(rawValue: kind) ?? .client
+            user.kind = User.Kind(rawValue: kind) ?? .client
         }
         
         if let roles = signature.roles {
@@ -185,7 +185,7 @@ subcommands:
                                asyncProcesses: Int,
                                loopTo: Int) async throws {
         let app = context.application
-        let kind = signature.kind.flatMap(UserKind.init(rawValue:)) ?? .employee
+        let kind = signature.kind.flatMap(User.Kind.init(rawValue:)) ?? .employee
         let faker = Faker()
         let password = try! Bcrypt.hash(signature.password!)
         
@@ -229,7 +229,6 @@ subcommands:
             context.console.error("Missing required argument: name")
             return
         }
-        
         guard let password = signature.password else {
             context.console.error("Missing required argument: password")
             return
@@ -240,7 +239,7 @@ subcommands:
             .roles?
             .split(separator: ",")
             .map { AvailableRoles(rawValue: String($0))! } ?? [.noAccess]
-        let kind = signature.kind.flatMap(UserKind.init(rawValue:)) ?? .employee
+        let kind = signature.kind.flatMap(User.Kind.init(rawValue:)) ?? .employee
         
         let promise = context.application.eventLoopGroup.makeFutureWithTask {
             // Create root user if not exists
@@ -251,7 +250,8 @@ subcommands:
                     password: try Bcrypt.hash(password),
                     email: email,
                     roles: roles,
-                    isActive: signature.isActive
+                    isActive: signature.isActive,
+                    addresses: []
                 )
                 
                 try await rootUser.create(on: app.db)
