@@ -1,15 +1,22 @@
-import settingsIcon from '/settings.svg';
+import { Flex, Icon } from '@tremor/react';
+import { StarIcon as StarIcon } from '@heroicons/react/outline';
+import { StarIcon as FillStarIcon } from '@heroicons/react/solid';
 
 function RateStarList({ rate }) {
   const stars = [];
-  for (let i = 0; i < rate; i += 1) {
-    stars.push(<img src={settingsIcon} alt='settings' />);
+  for (let i = 0; i < 5; i += 1) {
+    if (i >= rate) {
+      stars.push(<Icon key={i} icon={StarIcon} />);
+    } else {
+      
+      stars.push(<Icon key={i} icon={FillStarIcon} />);
+    }
   }
 
   return (
-    <div className='flex'>
+    <Flex direction='row' gap={1} className='w-4'>
       {stars}
-    </div>
+    </Flex>
   );
 }
 

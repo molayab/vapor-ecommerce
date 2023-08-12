@@ -17,7 +17,7 @@ function SideMenu({ children }) {
         <div className='flex flex-col items-center h-screen'>
           <ul className='mt-2 
             [&>li]:flex [&>li]:gap-2 [&>li]:py-1 [&>li]:cursor-pointer fill-white'>
-            <li>
+            <li onClick={ () => navigate("/") }>
               <img src={activityIcon} alt='activity' />
               <span className={ !isOpen ? "hidden" : "" }>Dashboard</span>
             </li>

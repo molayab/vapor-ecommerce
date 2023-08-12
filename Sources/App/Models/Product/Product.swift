@@ -51,7 +51,7 @@ final class Product: Model {
             description: description,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            creator: try creator?.asPublic(on: database),
+            creator: try creator?.requireID(),
             category: try category.asPublic(),
             reviews: try reviews.map({ try $0.asPublic() }),
             questions: [], // try questions.map({ try $0.asPublic() }),
@@ -205,7 +205,7 @@ extension Product {
         var description: String
         var createdAt: Date?
         var updatedAt: Date?
-        var creator: User.Public?
+        var creator: UUID?
         var category: Category.Public
         var reviews: [ProductReview.Public]
         var questions: [ProductQuestion.Public]
