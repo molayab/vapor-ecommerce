@@ -1,5 +1,6 @@
 
 import { Button, Card, Flex, Text, Metric } from "@tremor/react"
+import SubHeader from "./SubHeader";
 
 function ContainerCard({ children, title, subtitle, action }) {
     return (
@@ -8,6 +9,7 @@ function ContainerCard({ children, title, subtitle, action }) {
                 <div>
                     <Text>{ subtitle }</Text>
                     <Metric>{ title }</Metric>
+                    <SubHeader />
                 </div>
           
             { action && (

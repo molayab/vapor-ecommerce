@@ -42,9 +42,6 @@ struct ProductsController: RouteCollection {
         let products = try await Product.query(on: req.db)
             .with(\.$category)
             .with(\.$variants)
-            .with(\.$variants, { variant in
-                variant.with(\.$images)
-            })
             .paginate(PageRequest(
                 page: req.parameters.get("page", as: Int.self) ?? 1,
                 per: 100))
@@ -104,9 +101,10 @@ struct ProductsController: RouteCollection {
         }
         
         for variant in try await product.$variants.get(on: req.db) {
-            for image in try await variant.$images.get(on: req.db) {
+            // REMOVE IMAGES FOLDER
+            /*for image in try await variant.$images.get(on: req.db) {
                 try await image.deleteImage(on: req)
-            }
+            }*/
             
             try await variant.delete(on: req.db)
         }

@@ -28,22 +28,16 @@ final class ProductVariant: Model {
     @Parent(key: "product_id")
     var product: Product
     
-    @Children(for: \.$variant)
-    var images: [ProductImage]
-    
-    func asPublic(on database: Database) async throws -> Public {
-        let images = try await self.$images.get(on: database)
-        let urls = images.map { "/images/catalog/\($0.$variant.id.uuidString)/thumbnail-256_\($0.url)" }
-
-        return Public(
-            id: try requireID(),
+    func asPublic(on database: Database) throws -> Public {
+        return try Public(
+            id: requireID(),
             name: name,
             price: price,
             salePrice: salePrice,
             sku: sku,
             stock: stock,
             isAvailable: isAvailable,
-            images: urls)
+            imagesDirectory: "/images/catalog/" + product.requireID().uuidString + "/" + requireID().uuidString)
     }
 }
 
@@ -94,7 +88,7 @@ extension ProductVariant {
         var sku: String?
         var stock: Int?
         var isAvailable: Bool
-        var images: [String]
+        var imagesDirectory: String
     }
 }
 
@@ -110,6 +104,7 @@ extension ProductVariant {
                 .field("sku", .string)
                 .field("stock", .int)
                 .field("product_id", .uuid, .required, .references("products", "id"))
+                .unique(on: "sku")
                 .create()
         }
         

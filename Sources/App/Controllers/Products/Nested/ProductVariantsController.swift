@@ -18,6 +18,20 @@ struct ProductVariantsController: RouteCollection {
         restricted.post(use: createVariant)
         restricted.delete(":variantId", use: deleteVariant)
         restricted.patch(":variantId", use: editVariant)
+        restricted.get("sku", use: generateSku)
+    }
+    
+    /// Restricted API
+    /// GET /products/sku/generate
+    /// This is a helper function to generate a unique SKU for a variant.
+    private func generateSku(req: Request) async throws -> [String: String] {
+        let sku = "SKU" + String(UUID().uuidString.prefix(8))
+        
+        guard try await ProductVariant.query(on: req.db).filter(\.$sku == sku).first() == nil else {
+            return try await generateSku(req: req)
+        }
+        
+        return ["sku": sku]
     }
     
     /// Public API

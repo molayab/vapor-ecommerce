@@ -13,6 +13,7 @@
     "@heroicons/react": "^1.0.6",
     "@tremor/react": "^3.6.1",
     "react": "^18.2.0",
+    "react-barcode": "^1.4.6",
     "react-dom": "^18.2.0",
     "react-pro-sidebar": "^1.1.0-alpha.1"
   },

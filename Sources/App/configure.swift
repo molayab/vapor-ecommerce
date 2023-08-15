@@ -58,10 +58,6 @@ public func configure(_ app: Application) async throws {
     app.jwt.signers.use(.hs256(key: kJWTSignerKey))
     app.redis.configuration = try RedisConfiguration(hostname: "redis")
     app.caches.use(.redis)
-    if let configuration = app.redis.configuration {
-        app.queues.use(.redis(configuration))
-        app.queues.schedule(CostShedulerJob()).daily().at(.midnight)
-    }
     
     if app.environment == .testing {
         app.databases.use(.sqlite(.memory), as: .sqlite)
@@ -84,7 +80,6 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(ProductVariant.CreateMigration())
     app.migrations.add(ProductReview.CreateMigration())
     app.migrations.add(ProductQuestion.CreateMigration())
-    app.migrations.add(ProductImage.CreateMigration())
     app.migrations.add(Transaction.CreateMigration())
     app.migrations.add(TransactionItem.CreateMigration())
     app.migrations.add(Cost.CreateMigration())
@@ -111,6 +106,19 @@ public func configure(_ app: Application) async throws {
     app.middleware.use(GatekeeperMiddleware(config: .init(maxRequests: 30, per: .minute)))
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
     // app.middleware.use(CSRF())
+    
+    if let configuration = app.redis.configuration {
+        app.queues.use(.redis(configuration))
+        app.queues.schedule(CostShedulerJob()).daily().at(.midnight)
+        app.queues.add(ImageResizerJob())
+        
+        try app.queues.startInProcessJobs(on: .default)
+        try app.queues.startScheduledJobs()
+        app.logger.info("Redis is configured")
+        app.logger.info("Queues are configured")
+    } else {
+        app.logger.error("Redis configuration not found")
+    }
     
     try routes(app)
 }

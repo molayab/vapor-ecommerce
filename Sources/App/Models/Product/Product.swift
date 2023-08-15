@@ -37,7 +37,7 @@ final class Product: Model {
     func asPublic(on database: Database) async throws -> Public {
         var publics = [ProductVariant.Public]()
         for variant in try await self.$variants.get(on: database) {
-            publics.append(try await variant.asPublic(on: database))
+            publics.append(try variant.asPublic(on: database))
         }
         
         let creator = try await self.$creator.get(on: database)
@@ -124,32 +124,6 @@ final class Product: Model {
                 switch result {
                 case .success(let variants):
                     next.resume(returning: variants.map({ $0.salePrice }).min() ?? 0)
-                case .failure(let error):
-                    next.resume(throwing: error)
-                }
-            }
-        })
-    }
-    
-    func productCoverImage(on database: Database) async throws -> ProductImage? {
-        return try await withCheckedThrowingContinuation({ next in
-            $variants.get(on: database).whenComplete { result in
-                switch result {
-                case .success(let variants):
-                    next.resume(returning: variants.flatMap({ $0.images }).first)
-                case .failure(let error):
-                    next.resume(throwing: error)
-                }
-            }
-        })
-    }
-    
-    func productImages(on database: Database) async throws -> [ProductImage] {
-        return try await withCheckedThrowingContinuation({ next in
-            $variants.get(on: database).whenComplete { result in
-                switch result {
-                case .success(let variants):
-                    next.resume(returning: variants.flatMap({ $0.images }))
                 case .failure(let error):
                     next.resume(throwing: error)
                 }

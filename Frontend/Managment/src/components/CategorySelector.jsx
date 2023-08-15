@@ -1,8 +1,9 @@
 
+import { Select, SelectItem } from '@tremor/react';
 import { API_URL } from '../App';
 import { useState, useEffect } from 'react';
 
-function CategorySelector({ name, callback }) {
+function CategorySelector({ name, callback, value, setValue }) {
   let isFetched = false;
 
   const [categories, setCategories] = useState([]);
@@ -31,13 +32,13 @@ function CategorySelector({ name, callback }) {
   callback(isFetched, refreshCategories)
 
   return (
-    <select name={name} className="border border-gray-400 px-2 py-1 rounded w-full">
+    <Select name={name} className="w-full" value={value} onValueChange={setValue}>
       {categories.map((category) => {
         return (
-          <option key={category.id} value={category.id}>{category.title}</option>
+          <SelectItem key={category.id} value={category.id}>{category.title}</SelectItem>
         )
       })}
-    </select>
+    </Select>
   )
 }
 

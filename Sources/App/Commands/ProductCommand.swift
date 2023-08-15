@@ -41,13 +41,7 @@ struct ProductCommand: Command {
         }
         
         let variants = try product.$variants.get(on: context.application.db).wait()
-        try variants.forEach { variant in
-            try variant.$images
-                .get(on: context.application.db)
-                .wait()
-                .delete(on: context.application.db)
-                .wait()
-        }
+
         try variants.delete(on: context.application.db).wait()
         try product.delete(on: context.application.db).wait()
         context.console.info("Product deleted")

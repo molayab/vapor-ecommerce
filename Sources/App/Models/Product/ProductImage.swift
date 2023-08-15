@@ -1,26 +1,71 @@
 import Fluent
 import Vapor
 import SwiftGD
+import Queues
 
 struct UploadImage: Content {
-    var ext: String
+    var size: Int
+    var name: String
+    var type: String
     var dat: Data
 }
 
-final class ProductImage: Model {
-    static let schema = "product_images"
-    static let allowedExtensions = ["jpg", "jpeg", "png", "gif"]
+struct ImageResizerJob: AsyncJob {
+    struct Payload: Codable {
+        let image: UploadImage
+        let parentId: UUID
+    }
     
-    @ID(key: .id)
-    var id: UUID?
-    
-    @Field(key: "url")
-    var url: String
-    
-    @Parent(key: "variant_id")
-    var variant: ProductVariant
+    func dequeue(_ context: QueueContext, _ payload: Payload) async throws {
+        let publicFolder = context.application.directory.publicDirectory
+        + "images/catalog/" + payload.parentId.uuidString + "/"
+        
+        guard let ext = payload.image.type.split(separator: "/").last else {
+            throw Abort(.badRequest)
+        }
+        let fileManager = FileManager.default
+        let fileName = UUID().uuidString + "." + String(ext)
+        let filePath = publicFolder + fileName
+        
+        // Write to disk the original image
+        
+        guard fileManager.fileExists(atPath: publicFolder) else {
+            try fileManager.createDirectory(atPath: publicFolder, withIntermediateDirectories: true)
+            return try await dequeue(context, payload)
+        }
+        guard fileManager.createFile(atPath: filePath, contents: payload.image.dat) else {
+            throw Abort(.notAcceptable)
+        }
+        
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            let image = try Image(data: payload.image.dat)
 
-    private static func storeImageVariant(_ image: Image, _ publicFolder: String, _ fileName: String, size: Int) throws {
+            group.addTask {
+                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 256)
+            }
+            
+            group.addTask {
+                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 512)
+            }
+            
+            group.addTask {
+                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 1024)
+            }
+
+            try await group.waitForAll()
+        }
+    }
+
+    func error(_ context: QueueContext, _ error: Error, _ payload: Payload) async throws {
+        // If you don't want to handle errors you can simply return. You can also omit this function entirely.
+    }
+}
+
+struct ProductImage: Codable {
+    static let schema = "product_images"
+    static let allowedExtensions = ["jpg", "jpeg", "png"]
+
+    static func storeImageVariant(_ image: Image, _ publicFolder: String, _ fileName: String, size: Int) throws {
         guard let thumbnail = image.resizedTo(width: size) else {
             throw Abort(.internalServerError)
         }
@@ -38,95 +83,34 @@ final class ProductImage: Model {
         
         let parentId = try variant.requireID()
         let publicFolder = request.application.directory.publicDirectory
-        + "images/catalog/" + parentId.uuidString + "/"
+            + "images/catalog/" + parentId.uuidString + "/"
         
-        let fileManager = FileManager.default
-        let fileName = UUID().uuidString + "." + image.ext
-        let filePath = publicFolder + fileName
-
-        guard fileManager.fileExists(atPath: publicFolder) else {
-            try fileManager.createDirectory(atPath: publicFolder, withIntermediateDirectories: true)
-            return try await upload(image: image, forVariant: variant, on: request)
-        }
-        guard allowedExtensions.contains(image.ext) else {
+        guard let ext = image.type.split(separator: "/").last else {
             throw Abort(.badRequest)
         }
-
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            let image = try Image(data: image.dat)
-
-            group.addTask {
-                try storeImageVariant(image, publicFolder, fileName, size: 256)
-            }
-            
-            group.addTask {
-                try storeImageVariant(image, publicFolder, fileName, size: 512)
-            }
-            
-            group.addTask {
-                try storeImageVariant(image, publicFolder, fileName, size: 1024)
-            }
-
-            try await group.waitForAll()
+        guard allowedExtensions.contains(String(ext)) else {
+            throw Abort(.badRequest)
         }
         
-        guard fileManager.createFile(atPath: filePath, contents: image.dat) else {
-            throw Abort(.internalServerError)
-        }
-
-        let model = ProductImage()
-        model.url = fileName
-        model.$variant.id = try variant.requireID()
-            
-        try await model.save(on: request.db)
-        return model
+        try await request.queue.dispatch(ImageResizerJob.self, .init(
+            image: image,
+            parentId: parentId))
+        
+        return ProductImage()
     }
     
     func deleteImage(on request: Request) async throws {
         // Delete the variant's images in its folder
         // the simple way is to remove the folder itself
-        let id = try await self.$variant.get(on: request.db).requireID().uuidString
-        let publicFolder = request.application.directory.publicDirectory
-        + "images/catalog/" + id + "/"
+        // let id = try await self.$variant.get(on: request.db).requireID().uuidString
+        // let publicFolder = request.application.directory.publicDirectory
+        // + "images/catalog/" + id + "/"
         
-        let fileManager = FileManager.default
-        try? fileManager.removeItem(atPath: publicFolder)
+        // let fileManager = FileManager.default
+        // try? fileManager.removeItem(atPath: publicFolder)
         
         // Delete the image from the database
-        try await self.delete(on: request.db)
+        // try await self.delete(on: request.db)
     }
 }
 
-extension ProductImage {
-    struct Create: Validatable {
-        var url: String
-        var variant: ProductVariant.IDValue
-        var model: ProductImage {
-            let model = ProductImage()
-            model.url = url
-            model.$variant.id = variant
-            return model
-        }
-        
-        static func validations(_ validations: inout Validations) {
-            validations.add("url", as: String.self, is: !.empty)
-            validations.add("product", as: UUID.self, is: .valid)
-        }
-    }
-}
-
-extension ProductImage {
-    struct CreateMigration: AsyncMigration {
-        func prepare(on database: Database) async throws {
-            try await database.schema(ProductImage.schema)
-                .id()
-                .field("url", .string, .required)
-                .field("variant_id", .uuid, .required, .references(ProductVariant.schema, "id"))
-                .create()
-        }
-        
-        func revert(on database: Database) async throws {
-            try await database.schema(ProductImage.schema).delete()
-        }
-    }
-}
