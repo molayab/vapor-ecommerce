@@ -52,7 +52,7 @@ function ListProducts() {
           stock: i.stock,
           minimumSalePrice: valueFormatter(i.minimumSalePrice),
           averageSalePrice: valueFormatter(i.averageSalePrice),
-          coverImage: "http://localhost:8080" + i.variants[0].images[0],
+          coverImage: i.coverImage,
           isAvailable: i.variants.reduce((acc, v) => acc || v.isAvailable, false),
         }))} />
 

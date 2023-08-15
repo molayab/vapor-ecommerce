@@ -37,7 +37,7 @@ final class ProductVariant: Model {
             sku: sku,
             stock: stock,
             isAvailable: isAvailable,
-            imagesDirectory: "/images/catalog/" + product.requireID().uuidString + "/" + requireID().uuidString)
+            imagesDirectory: "/images/catalog/" + ($product.$id.wrappedValue.uuidString) + "/" + requireID().uuidString + ".jpeg")
     }
 }
 

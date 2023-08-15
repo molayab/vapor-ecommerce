@@ -6,7 +6,7 @@ import Queues
 struct UploadImage: Content {
     var size: Int
     var name: String
-    var type: String
+    var ext: String
     var dat: Data
 }
 
@@ -14,17 +14,15 @@ struct ImageResizerJob: AsyncJob {
     struct Payload: Codable {
         let image: UploadImage
         let parentId: UUID
+        let id: UUID
     }
     
     func dequeue(_ context: QueueContext, _ payload: Payload) async throws {
         let publicFolder = context.application.directory.publicDirectory
         + "images/catalog/" + payload.parentId.uuidString + "/"
         
-        guard let ext = payload.image.type.split(separator: "/").last else {
-            throw Abort(.badRequest)
-        }
         let fileManager = FileManager.default
-        let fileName = UUID().uuidString + "." + String(ext)
+        let fileName = payload.id.uuidString + ".jpeg"
         let filePath = publicFolder + fileName
         
         // Write to disk the original image
@@ -81,11 +79,7 @@ struct ProductImage: Codable {
                        forVariant variant: ProductVariant,
                        on request: Request) async throws -> ProductImage {
         
-        let parentId = try variant.requireID()
-        let publicFolder = request.application.directory.publicDirectory
-            + "images/catalog/" + parentId.uuidString + "/"
-        
-        guard let ext = image.type.split(separator: "/").last else {
+        guard let ext = image.ext.split(separator: "/").last else {
             throw Abort(.badRequest)
         }
         guard allowedExtensions.contains(String(ext)) else {
@@ -94,7 +88,8 @@ struct ProductImage: Codable {
         
         try await request.queue.dispatch(ImageResizerJob.self, .init(
             image: image,
-            parentId: parentId))
+            parentId: variant.$product.$id.wrappedValue,
+            id: try variant.requireID()))
         
         return ProductImage()
     }

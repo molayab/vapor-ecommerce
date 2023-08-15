@@ -48,8 +48,8 @@ struct ProductVariantsController: RouteCollection {
         return try await product.$variants
             .query(on: req.db)
             .all()
-            .asyncMap({ variant in
-                try await variant.asPublic(on: req.db)
+            .map({ variant in
+                try variant.asPublic(on: req.db)
         })
     }
     
@@ -85,7 +85,7 @@ struct ProductVariantsController: RouteCollection {
         variant.isAvailable = payload.availability
         
         try await variant.save(on: req.db)
-        return try await variant.asPublic(on: req.db)
+        return try variant.asPublic(on: req.db)
     }
     
     /// Restricted API
@@ -103,7 +103,7 @@ struct ProductVariantsController: RouteCollection {
         try ProductVariant.Create.validate(content: req)
         
         let variant = try await payload.create(for: req, product: product)
-        return try await variant.asPublic(on: req.db)
+        return try variant.asPublic(on: req.db)
     }
     
     /// Restricted API

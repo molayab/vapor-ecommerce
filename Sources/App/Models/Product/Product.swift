@@ -44,6 +44,10 @@ final class Product: Model {
         let category = try await self.$category.get(on: database)
         let reviews = try await self.$reviews.get(on: database).sorted(
             by: { $0.createdAt ?? Date() > $1.createdAt ?? Date() }).prefix(100)
+        
+        let firstVariantId = try await $variants.get(on: database).first?.id?.uuidString ?? ""
+        let coverImageUrl = try "http://localhost:8080/images/catalog/"
+            + (requireID().uuidString) + "/" + firstVariantId + ".jpeg"
 
         return await Public(
             id: try requireID(),
@@ -59,7 +63,8 @@ final class Product: Model {
             minimumSalePrice: try minimumSalePrice(on: database),
             averageSalePrice: try averageSalePrice(on: database),
             stock: try calculateStock(on: database),
-            numberOfStars: try numberOfStars(on: database)
+            numberOfStars: try numberOfStars(on: database),
+            coverImage: coverImageUrl
         )
     }
     
@@ -188,6 +193,7 @@ extension Product {
         var averageSalePrice: Double
         var stock: Int
         var numberOfStars: Int
+        var coverImage: String
     }
 }
 
