@@ -15,69 +15,27 @@ function CreateProductVariant() {
   const fixedPaymentCost = 500;
   const paymentFee = 0.03;
 
+  const [isLoading, setIsLoading] = useState(false);
   const [availability, setAvailability] = useState("false");
   const [stock, setStock] = useState(1);
   const [price, setPrice] = useState(1);
   const [salePrice, setSalePrice] = useState(1);
   const [skuCode, setSkuCode] = useState({sku: '000000'});
-  const [product, _setProduct] = useState(JSON.parse(localStorage.getItem('product')) || null);
   const [tax, setTax] = useState(0)
   const [shippingCost, setShippingCost] = useState(0)
   const [images, setImages] = useState([])
-  const setProduct = (product) => {
-    localStorage.setItem('product', JSON.stringify(product));
-    _setProduct(product);
-  }
-
-  if (!product) {
-    navigate('/products');
-  }
 
   const requestSkuCode = async () => {
     const response = await fetch(API_URL + '/products/new/variants/sku', {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const data = await response.json()
-    console.log(data.sku)
-    setSkuCode(data)
+      headers: { 'Content-Type': 'application/json' }
+    })
+    setSkuCode(await response.json())
   }
 
   useEffect(() => {
     requestSkuCode()
   }, [])
-
-  const saveProductVariant = async (e) => {
-    e.preventDefault();
-
-    const name = document.querySelector('input[name="variantName"]').value;
-    const sku = document.querySelector('input[name="variantSku"]').value;
-
-    console.log(product.variants)
-
-    let p = {
-      ...product,
-      variants: [
-        ...product.variants,
-        {
-          name: name,
-          sku: sku,
-          price: parseFloat(price),
-          salePrice: parseFloat(salePrice),
-          stock: parseInt(stock),
-          availability: availability === "true" ? true : false,
-          images: images
-        }
-      ]
-    }
-
-    console.log(p)
-    setProduct(p)
-    navigate(`/products/new`)
-  }
 
   const addImages = async (e) => {
     const images = document.querySelector('input[name="variantFiles[]"]').files
@@ -98,37 +56,27 @@ function CreateProductVariant() {
     document.querySelector('input[name="variantFiles[]"]').files = null
   }
 
-
-  const onSubmit = async () => {
+  const onSubmit = async (e) => {
+    e.preventDefault();
     const name = document.querySelector('input[name="variantName"]').value;
     const sku = document.querySelector('input[name="variantSku"]').value;
-    const price = document.querySelector('input[name="variantPrice"]').value;
-    const salePrice = document.querySelector('input[name="variantSalePrice"]').value;
-    const stock = document.querySelector('input[name="variantStock"]').value;
-    const available = document.querySelector('select[name="variantAvailable"]').value === 'true';
-    
-    
-    
-    
     const variant = {
       name: name,
       sku: sku,
       price: parseFloat(price),
       salePrice: parseFloat(salePrice),
       stock: parseInt(stock),
-      availability: available,
-      images: imageSrcs
-    };
-
-    console.log(variant)
+      availability: availability === "true" ? true : false,
+      tax: parseFloat(tax),
+      shippingCost: parseFloat(shippingCost),
+      images: images
+    }
 
     const response = await fetch(API_URL + '/products/' + id + '/variants', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(variant)
-    });
+    })
 
     const data = await response.json();
     if (data.id) {
@@ -144,10 +92,10 @@ function CreateProductVariant() {
   return (
     <>
       <SideMenu>
-        <ContainerCard title={product.title} subtitle="Agregar una variante a" action={
+        <ContainerCard title={id} subtitle="Agregar una variante a" action={
           <div className="">
-            <Button onClick={(e) => { saveProduct(e) }}>Cancelar</Button>
-            <Button onClick={(e) => { saveProductVariant(e) }} className="mx-1">Agregar</Button>
+            <Button onClick={(e) => { navigate("/products/" + id) }}>Cancelar</Button>
+            <Button onClick={(e) => { onSubmit(e) }} className="mx-1" loading={isLoading}>Agregar</Button>
           </div>
           }>
         </ContainerCard>

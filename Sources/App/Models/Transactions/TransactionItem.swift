@@ -28,11 +28,11 @@ final class TransactionItem: Model {
     @Parent(key: "transaction_id")
     var transaction: Transaction
     
-    func asPublic(on db: Database) async throws -> Public {
+    func asPublic(on db: Database) throws -> Public {
         .init(
             id: try requireID(),
             quantity: quantity,
-            productVariant: try await productVariant.asPublic(on: db),
+            productVariant: try productVariant.asPublic(),
             price: price,
             discount: discount,
             tax: tax,

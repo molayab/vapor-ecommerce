@@ -16,6 +16,7 @@ import CreateEmployee from './pages/users/create/CreateEmployee'
 import CreateProvider from './pages/users/create/CreateProvider'
 
 export const API_URL = 'http://localhost:8080/v1'
+export const RES_URL = 'http://localhost:8080'
 
 const { fetch: originalFetch } = window;
 window.fetch = async (...args) => {
@@ -122,8 +123,8 @@ function App() {
           <Route path='/users/new/employee' element={createEmployee} />
           <Route path='/products' element={listProducts} />
           <Route path='/products/new' element={createProduct} />
-          <Route path='/products/:id' element={showProductDetails} />
-          <Route path='/products/new/variant' element={createProductVariant} />
+          <Route path='/products/:id' element={createProduct} />
+          <Route path='/products/new/:id/variant' element={createProductVariant} />
         </Routes>
       </BrowserRouter>
     </>

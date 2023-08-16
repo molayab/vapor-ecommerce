@@ -92,7 +92,7 @@ struct ProductsController: RouteCollection {
     /// Restricted API
     /// DELETE /products/:productId
     /// Deletes a product by ID
-    private func delete(req: Request) async throws -> Response {
+    private func delete(req: Request) async throws -> [String: String] {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
         }
@@ -102,9 +102,16 @@ struct ProductsController: RouteCollection {
         
         for variant in try await product.$variants.get(on: req.db) {
             // REMOVE IMAGES FOLDER
-            /*for image in try await variant.$images.get(on: req.db) {
-                try await image.deleteImage(on: req)
-            }*/
+            let fm = FileManager.default
+            let path = try req.application.directory.publicDirectory
+                + "images/catalog/\(product.requireID().uuidString)/\(variant.requireID().uuidString)"
+            
+            let enumerator = fm.enumerator(atPath: path)
+            if let objects = enumerator?.allObjects as? [String] {
+                for object in objects {
+                    try fm.removeItem(atPath: object)
+                }
+            }
             
             try await variant.delete(on: req.db)
         }
@@ -114,7 +121,10 @@ struct ProductsController: RouteCollection {
         }
         
         try await product.delete(on: req.db)
-        return Response(status: .ok)
+        return [
+            "status": "success",
+            "message": "Product deleted successfully"
+        ]
     }
     
 }

@@ -23,21 +23,39 @@ final class ProductVariant: Model {
     var sku: String?
     
     @Field(key: "stock")
-    var stock: Int?
+    var stock: Int
+    
+    @Field(key: "tax")
+    var tax: Double
+    
+    @Field(key: "shipping_cost")
+    var shippingCost: Double?
     
     @Parent(key: "product_id")
     var product: Product
     
-    func asPublic(on database: Database) throws -> Public {
-        return try Public(
-            id: requireID(),
+    var isAvailableForSale: Bool {
+        return isAvailable && stock > 0
+    }
+    
+    func asPublic() throws -> Public {
+        let fm = FileManager.default
+        let path = DirectoryConfiguration.detect().publicDirectory
+            + "/images/catalog/" + ($product.$id.wrappedValue.uuidString)
+        
+        let items = try fm.contentsOfDirectory(atPath: path)
+        return Public(
+            id: try requireID(),
+            product: $product.$id.wrappedValue,
             name: name,
             price: price,
             salePrice: salePrice,
             sku: sku,
             stock: stock,
             isAvailable: isAvailable,
-            imagesDirectory: "/images/catalog/" + ($product.$id.wrappedValue.uuidString) + "/" + requireID().uuidString + ".jpeg")
+            images: items.map { "/images/catalog/" + ($product.$id.wrappedValue.uuidString) + "/" + $0 },
+            tax: tax,
+            shippingCost: shippingCost)
     }
 }
 
@@ -47,8 +65,10 @@ extension ProductVariant {
         var price: Double
         var salePrice: Double
         var sku: String?
-        var stock: Int?
+        var stock: Int
         var availability: Bool
+        var tax: Double
+        var shippingCost: Double?
         var images: [UploadImage]
         
         @discardableResult
@@ -60,6 +80,8 @@ extension ProductVariant {
             model.sku = sku
             model.stock = stock
             model.isAvailable = availability
+            model.tax = tax
+            model.shippingCost = shippingCost
             model.$product.id = try product.requireID()
             try await model.create(on: request.db)
             
@@ -75,20 +97,25 @@ extension ProductVariant {
             validations.add("name", as: String.self, is: !.empty)
             validations.add("price", as: Double.self, is: .valid)
             validations.add("salePrice", as: Double.self, is: .valid)
-            validations.add("sku", as: String?.self, required: false)
-            validations.add("stock", as: Int?.self, required: false)
+            validations.add("sku", as: String?.self, required: true)
+            validations.add("stock", as: Int?.self, required: true)
+            validations.add("tax", as: Double.self, is: .range(0.0...1.0))
+            validations.add("shippingCost", as: Double?.self, required: false)
         }
     }
     
     struct Public: Content {
         var id: UUID?
+        var product: UUID?
         var name: String
         var price: Double
         var salePrice: Double
         var sku: String?
         var stock: Int?
         var isAvailable: Bool
-        var imagesDirectory: String
+        var images: [String]
+        var tax: Double
+        var shippingCost: Double?
     }
 }
 
@@ -102,7 +129,9 @@ extension ProductVariant {
                 .field("price", .double, .required)
                 .field("sale_price", .double, .required)
                 .field("sku", .string)
-                .field("stock", .int)
+                .field("stock", .int, .required, .custom("DEFAULT 0"))
+                .field("tax", .double, .required, .custom("DEFAULT 0"))
+                .field("shipping_cost", .double)
                 .field("product_id", .uuid, .required, .references("products", "id"))
                 .unique(on: "sku")
                 .create()

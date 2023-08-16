@@ -11,7 +11,7 @@ struct CostsController: RouteCollection {
             User.guardMiddleware())
         
         // Restricted API
-        let restricted = costs.grouped(
+        let restricted = requiredAuth.grouped(
             RoleMiddleware(roles: [.admin, .manager]))
         
         restricted.post(use: createCost)

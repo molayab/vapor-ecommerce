@@ -59,7 +59,7 @@ final class Transaction: Model {
             status: status,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            items: try await $items.get(on: db).asyncMap { try await $0.asPublic(on: db) },
+            items: try await $items.get(on: db).map { try $0.asPublic(on: db) },
             shippingAddress: shippingAddress.asPublic(),
             billingAddress: billingAddress.asPublic(),
             payedAt: payedAt,

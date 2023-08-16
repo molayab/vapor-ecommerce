@@ -48,9 +48,7 @@ struct ProductVariantsController: RouteCollection {
         return try await product.$variants
             .query(on: req.db)
             .all()
-            .map({ variant in
-                try variant.asPublic(on: req.db)
-        })
+            .map({ try $0.asPublic() })
     }
     
     /// Restricted API
@@ -85,7 +83,7 @@ struct ProductVariantsController: RouteCollection {
         variant.isAvailable = payload.availability
         
         try await variant.save(on: req.db)
-        return try variant.asPublic(on: req.db)
+        return try variant.asPublic()
     }
     
     /// Restricted API
@@ -103,13 +101,13 @@ struct ProductVariantsController: RouteCollection {
         try ProductVariant.Create.validate(content: req)
         
         let variant = try await payload.create(for: req, product: product)
-        return try variant.asPublic(on: req.db)
+        return try variant.asPublic()
     }
     
     /// Restricted API
     /// DELETE /products/:productId/variants/:variantId
     /// This endpoint is used to delete a variant.
-    private func deleteVariant(req: Request) async throws -> Response {
+    private func deleteVariant(req: Request) async throws -> [String: String] {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
         }
@@ -128,6 +126,9 @@ struct ProductVariantsController: RouteCollection {
         }
         
         try await variant.delete(on: req.db)
-        return Response(status: .ok)
+        return [
+            "status": "success",
+            "message": "Variant deleted successfully."
+        ]
     }
 }

@@ -19,6 +19,9 @@ final class Product: Model {
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
     
+    @Field(key: "is_published")
+    var isPublished: Bool
+    
     @OptionalParent(key: "creator_user_id")
     var creator: User?
     
@@ -35,11 +38,6 @@ final class Product: Model {
     var variants: [ProductVariant]
 
     func asPublic(on database: Database) async throws -> Public {
-        var publics = [ProductVariant.Public]()
-        for variant in try await self.$variants.get(on: database) {
-            publics.append(try variant.asPublic(on: database))
-        }
-        
         let creator = try await self.$creator.get(on: database)
         let category = try await self.$category.get(on: database)
         let reviews = try await self.$reviews.get(on: database).sorted(
@@ -59,7 +57,7 @@ final class Product: Model {
             category: try category.asPublic(),
             reviews: try reviews.map({ try $0.asPublic() }),
             questions: [], // try questions.map({ try $0.asPublic() }),
-            variants: publics,
+            variants: try await self.$variants.get(on: database).map({ try $0.asPublic() }),
             minimumSalePrice: try minimumSalePrice(on: database),
             averageSalePrice: try averageSalePrice(on: database),
             stock: try calculateStock(on: database),
@@ -89,7 +87,7 @@ final class Product: Model {
             $variants.get(on: database).whenComplete { result in
                 switch result {
                 case .success(let variants):
-                    next.resume(returning: variants.reduce(0, { $0 + ($1.stock ?? 0) }))
+                    next.resume(returning: variants.reduce(0, { $0 + $1.stock }))
                 case .failure(let error):
                     next.resume(throwing: error)
                 }
@@ -115,6 +113,10 @@ final class Product: Model {
             $variants.get(on: database).whenComplete { result in
                 switch result {
                 case .success(let variants):
+                    guard variants.count > 0 else {
+                        return next.resume(returning: 0)
+                    }
+                    
                     next.resume(returning: variants.reduce(0, { $0 + $1.salePrice }) / Double(variants.count))
                 case .failure(let error):
                     next.resume(throwing: error)
@@ -143,7 +145,6 @@ extension Product {
         var title: String
         var description: String
         var category: UUID
-        var variants: [ProductVariant.Create]
         
         @discardableResult
         func create(for req: Request, user: User) async throws -> Product {
@@ -153,12 +154,6 @@ extension Product {
             model.$creator.id = try user.requireID()
             model.$category.id = category
             try await model.create(on: req.db)
-            
-            // Create variants
-            for variant in variants {
-                try await variant.create(for: req, product: model)
-            }
-            
             return model
         }
         
@@ -175,6 +170,7 @@ extension Product {
             validations.add("title", as: String.self, is: !.empty)
             validations.add("description", as: String.self, is: !.empty)
             validations.add("category", as: UUID.self, is: .valid)
+            validations.add("isPublished", as: Bool.self, is: .valid)
         }
     }
     
@@ -207,6 +203,7 @@ extension Product {
                 .field("creator_user_id", .uuid, .references("users", "id"))
                 .field("editor_user_id", .uuid, .references("users", "id"))
                 .field("category_id", .uuid, .required, .references("categories", "id"))
+                .field("is_published", .bool, .required, .custom("DEFAULT FALSE"))
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)
                 .create()
