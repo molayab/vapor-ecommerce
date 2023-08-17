@@ -14,6 +14,7 @@ import CreateProductVariant from './pages/products/CreateProductVariant'
 import CreateClient from './pages/users/create/CreateClient'
 import CreateEmployee from './pages/users/create/CreateEmployee'
 import CreateProvider from './pages/users/create/CreateProvider'
+import POS from './pages/POS'
 
 export const API_URL = 'http://localhost:8080/v1'
 export const RES_URL = 'http://localhost:8080'
@@ -110,6 +111,12 @@ function App() {
     </RestrictedRoute>
   )
 
+  const pos = (
+    <RestrictedRoute>
+      <POS />
+    </RestrictedRoute>
+  )
+
   return (
     <>
       <BrowserRouter>
@@ -125,6 +132,8 @@ function App() {
           <Route path='/products/new' element={createProduct} />
           <Route path='/products/:id' element={createProduct} />
           <Route path='/products/new/:id/variant' element={createProductVariant} />
+          <Route path='/products/:pid/variants/:id/edit' element={createProductVariant} />
+          <Route path='/pos' element={pos} />
         </Routes>
       </BrowserRouter>
     </>

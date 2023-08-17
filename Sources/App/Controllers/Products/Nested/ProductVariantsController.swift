@@ -7,6 +7,7 @@ struct ProductVariantsController: RouteCollection {
         
         // Public API
         products.get(use: listVariants)
+        products.get(":variantId", use: getVariant)
         
         // Restricted API
         let restricted = products.grouped([
@@ -19,6 +20,17 @@ struct ProductVariantsController: RouteCollection {
         restricted.delete(":variantId", use: deleteVariant)
         restricted.patch(":variantId", use: editVariant)
         restricted.get("sku", use: generateSku)
+    }
+    
+    private func getVariant(req: Request) async throws -> ProductVariant.Public {
+        guard let variantId = req.parameters.get("variantId", as: UUID.self) else {
+            throw Abort(.badRequest)
+        }
+        guard let variant = try await ProductVariant.find(variantId, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        return try variant.asPublic()
     }
     
     /// Restricted API
@@ -123,6 +135,15 @@ struct ProductVariantsController: RouteCollection {
             .query(on: req.db)
             .filter(\.$id == variantId).first() else {
                 throw Abort(.notFound)
+        }
+        
+        do {
+            let fm = FileManager.default
+            let path = try req.application.directory.publicDirectory
+                + "images/catalog/\(product.requireID().uuidString)/\(variant.requireID().uuidString)"
+            try fm.removeItem(atPath: path)
+        } catch {
+            throw Abort(.internalServerError)
         }
         
         try await variant.delete(on: req.db)

@@ -1,20 +1,21 @@
 import { useEffect, useState } from "react";
 import SideMenu from "../../components/SideMenu";
-import { API_URL } from "../../App";
+import { API_URL, RES_URL } from "../../App";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import Barcode from "react-barcode";
 import { Button, Card, Flex, Grid, Icon, List, ListItem, Metric, NumberInput, Select, SelectItem, Subtitle, TextInput, Title } from "@tremor/react";
 import ContainerCard from "../../components/ContainerCard";
-import { CurrencyDollarIcon, DocumentRemoveIcon, TrashIcon, TruckIcon, VariableIcon } from "@heroicons/react/solid";
+import { CurrencyDollarIcon, DocumentRemoveIcon, SaveAsIcon, TrashIcon, TruckIcon, VariableIcon } from "@heroicons/react/solid";
 
 function CreateProductVariant() {
-  let { id } = useParams();
+  let { id, pid } = useParams();
   const navigate = useNavigate();
 
   const fixedPaymentCost = 500;
   const paymentFee = 0.03;
 
+  const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [availability, setAvailability] = useState("false");
   const [stock, setStock] = useState(1);
@@ -24,6 +25,46 @@ function CreateProductVariant() {
   const [tax, setTax] = useState(0)
   const [shippingCost, setShippingCost] = useState(0)
   const [images, setImages] = useState([])
+
+  const fetchProductVariant = async (productId, variantId) => {
+    const response = await fetch(API_URL + '/products/' + productId + '/variants/' + variantId, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    const data = await response.json()
+    if (data.id) {
+      const regex = /t256_/g
+
+      setName(data.name)
+      setAvailability(data.availability)
+      setStock(data.stock)
+      setPrice(data.price)
+      setSalePrice(data.salePrice)
+      setTax(data.tax)
+      setShippingCost(data.shippingCost)
+      setImages(data.images.filter((image) => {
+        // Filter thumbnails with the prefix "t<size>_"
+        return image.match(regex)
+      }))
+
+    } else if (data.error) {
+      alert(data.reason)
+    }
+  }
+
+  const remoteRemoveImage = async (index) => {
+    const response = await fetch(API_URL + '/products/' + pid + '/variants/' + id + '/images', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: images[index]
+    })
+
+    const data = await response.json()
+    if (data.error) {
+      alert(data.reason)
+    }
+  }
 
   const requestSkuCode = async () => {
     const response = await fetch(API_URL + '/products/new/variants/sku', {
@@ -37,7 +78,14 @@ function CreateProductVariant() {
     requestSkuCode()
   }, [])
 
+  useEffect(() => {
+    if (id && pid) {
+      fetchProductVariant(pid, id)
+    }
+  }, [id])
+
   const addImages = async (e) => {
+    setIsLoading(true)
     const images = document.querySelector('input[name="variantFiles[]"]').files
     let resources = []
     for (let i = 0; i < images.length; i++) {
@@ -53,49 +101,79 @@ function CreateProductVariant() {
     console.log(resources)
     setImages((old) => [...old, ...resources])
 
-    document.querySelector('input[name="variantFiles[]"]').files = null
-  }
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    const name = document.querySelector('input[name="variantName"]').value;
-    const sku = document.querySelector('input[name="variantSku"]').value;
+    // Create product in backend and get id
     const variant = {
       name: name,
-      sku: sku,
+      sku: skuCode.sku,
       price: parseFloat(price),
       salePrice: parseFloat(salePrice),
       stock: parseInt(stock),
       availability: availability === "true" ? true : false,
       tax: parseFloat(tax),
-      shippingCost: parseFloat(shippingCost),
-      images: images
+      shippingCost: parseFloat(shippingCost)
     }
 
-    const response = await fetch(API_URL + '/products/' + id + '/variants', {
-      method: 'POST',
+    let _id = id ? "/" + id : ""
+    let response = await fetch(API_URL + '/products/' + pid + '/variants' + _id, {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(variant)
+    })
+
+    let data = await response.json();
+    if (data.id) {
+      // Create images in backend
+      response = await fetch(API_URL + '/products/' + pid + '/variants/' + id + '/images/multiple', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resources)
+      })
+    } else if (data.error) {
+      alert(data.reason)
+    }
+    setIsLoading(false)
+  }
+
+  const onSubmit = async (e) => {
+    setIsLoading(true)
+
+    e.preventDefault()
+    const variant = {
+      name: name,
+      sku: skuCode.sku,
+      price: parseFloat(price),
+      salePrice: parseFloat(salePrice),
+      stock: parseInt(stock),
+      availability: availability === "true" ? true : false,
+      tax: parseFloat(tax),
+      shippingCost: parseFloat(shippingCost)
+    }
+
+    let _id = id ? "/" + id : ""
+    const response = await fetch(API_URL + '/products/' + pid + '/variants' + _id, {
+      method: id ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(variant)
     })
 
     const data = await response.json();
     if (data.id) {
-      alert("Variant created");
-      if (!confirm("Do you want to create another variant?")) {
-        navigate(`/products/${id}`);
-      }
+      navigate(`/products/${pid}`);
     } else if (data.error) {
       alert(data.reason);
     }
+
+    setIsLoading(false)
   }
 
   return (
     <>
       <SideMenu>
-        <ContainerCard title={id} subtitle="Agregar una variante a" action={
+        <ContainerCard title={pid} subtitle="Agregar una variante a" action={
           <div className="">
-            <Button onClick={(e) => { navigate("/products/" + id) }}>Cancelar</Button>
-            <Button onClick={(e) => { onSubmit(e) }} className="mx-1" loading={isLoading}>Agregar</Button>
+            <Button icon={SaveAsIcon} onClick={(e) => { onSubmit(e) }} className="mx-1" loading={isLoading}>
+              { id ? "Guardar" : "Agregar"}
+            </Button>
           </div>
           }>
         </ContainerCard>
@@ -110,9 +188,20 @@ function CreateProductVariant() {
               <Subtitle>Las variantes son las diferentes versiones de su producto. Por ejemplo, si vende camisetas, puede tener una variante para el tamaño y el color.</Subtitle>
 
               <Subtitle className="mt-8">Nombre de la variant</Subtitle>
-              <TextInput type="text" name="variantName" placeholder="'Tamaño - Color', 'Capacidad - Titulo', etc..." className="border border-gray-400 px-2 py-1 rounded w-full" />
+              <TextInput 
+                type="text" 
+                value={name}
+                onValueChange={setName} 
+                placeholder="'Tamaño - Color', 'Capacidad - Titulo', etc..." 
+                className="border border-gray-400 px-2 py-1 rounded w-full" />
               <Subtitle className="mt-2">SKU</Subtitle>
-              <TextInput type="text" name="variantSku" placeholder="SKU: Numero unico de identificacion de la variante" value={skuCode.sku} className="border border-gray-400 px-2 py-1 rounded w-full" />
+              <TextInput 
+                type="text"
+                name="variantSku"
+                placeholder="SKU: Numero unico de identificacion de la variante"
+                value={skuCode.sku}
+                onValueChange={(e) => setSkuCode({sku: e})}
+                className="border border-gray-400 px-2 py-1 rounded w-full" />
 
               <Flex className="mt-4">
                 <div className="w-full">
@@ -202,22 +291,43 @@ function CreateProductVariant() {
           
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6">
             { images.map((image, index) => {
-              return (
-                <div className="relative w-48">
-                  <div className="absolute right-0 bottom-0 w-full z-10 bg-slate-300 rounded opacity-30 hover:opacity-100">
-                    <Icon icon={TrashIcon} className="w-6 h-6 cursor-pointer" onClick={() => {
-                      setImages((old) => {
-                        let newImages = [...old];
-                        newImages.splice(index, 1);
-                        return newImages;
-                      })
-                    }} />
+              if (image.dat === undefined) {
+                return (
+                  <div className="relative w-48">
+                    <div className="absolute right-0 bottom-0 w-full z-10 bg-slate-300 rounded opacity-30 hover:opacity-100">
+                      <Icon icon={TrashIcon} className="w-6 h-6 cursor-pointer" onClick={() => {
+                        setImages((old) => {
+                          let newImages = [...old]
+                          newImages.splice(index, 1)
+                          remoteRemoveImage(index)
+                          return newImages
+                        })
+                      }} />
+                    </div>
+                    <div className="relative z-0">
+                      <img key={index} src={RES_URL + image} className="w-48 h-48 object-cover rounded" />
+                    </div>
                   </div>
-                  <div className="relative z-0">
-                    <img key={index} src={"data:" + image.type + ";base64," + image.dat} className="w-48 h-48 object-cover rounded" />
+                )
+              } else {
+                return (
+                  <div className="relative w-48">
+                    <div className="absolute right-0 bottom-0 w-full z-10 bg-slate-300 rounded opacity-30 hover:opacity-100">
+                      <Icon icon={TrashIcon} className="w-6 h-6 cursor-pointer" onClick={() => {
+                        setImages((old) => {
+                          let newImages = [...old]
+                          newImages.splice(index, 1)
+                          return newImages
+                        })
+                      }} />
+                    </div>
+                    <div className="relative z-0">
+                      <img key={index} src={"data:" + image.type + ";base64," + image.dat} className="w-48 h-48 object-cover rounded" />
+                    </div>
                   </div>
-                </div>
-              )
+                )
+              }
+              
             })}
           </div>
         </Card>

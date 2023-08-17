@@ -54,10 +54,11 @@ public func configure(_ app: Application) async throws {
     app.commands.use(ProductCommand(), as: "products")
     app.commands.use(RoleCommand(), as: "roles")
     
-    app.routes.defaultMaxBodySize = "20mb"
+    app.routes.defaultMaxBodySize = "256mb"
     app.jwt.signers.use(.hs256(key: kJWTSignerKey))
-    app.redis.configuration = try RedisConfiguration(hostname: "redis")
-    app.caches.use(.redis)
+    app.redis.configuration = try RedisConfiguration(hostname: "redis", pool: .init(
+        connectionRetryTimeout: .seconds(60)))
+    app.caches.use(.memory)
     
     if app.environment == .testing {
         app.databases.use(.sqlite(.memory), as: .sqlite)

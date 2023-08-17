@@ -19,6 +19,7 @@ struct ProductsController: RouteCollection {
         restricted.post(use: create)
         restricted.delete(":productId", use: delete)
         restricted.patch(":productId", use: update)
+        restricted.get("pos", use: listAllPos)
     }
     
     /// Public API
@@ -56,6 +57,22 @@ struct ProductsController: RouteCollection {
             metadata: products.metadata
         )
     }
+    
+    /// Restricted API
+    /// GET /products/pos
+    /// Returns a list of products that are available for sale
+    private func listAllPos(req: Request) async throws -> [Product.Public] {
+        let products = try await Product.query(on: req.db)
+            .with(\.$category)
+            .with(\.$variants)
+            .all()
+        
+        return try await products
+            .asyncFilter { try await $0.isAvailable(on: req.db) }
+            .asyncMap { try await $0.asPublic(on: req.db) }
+    }
+    
+    
     
     /// Restricted API
     /// POST /products
@@ -101,16 +118,13 @@ struct ProductsController: RouteCollection {
         }
         
         for variant in try await product.$variants.get(on: req.db) {
-            // REMOVE IMAGES FOLDER
-            let fm = FileManager.default
-            let path = try req.application.directory.publicDirectory
-                + "images/catalog/\(product.requireID().uuidString)/\(variant.requireID().uuidString)"
-            
-            let enumerator = fm.enumerator(atPath: path)
-            if let objects = enumerator?.allObjects as? [String] {
-                for object in objects {
-                    try fm.removeItem(atPath: object)
-                }
+            do {
+                let fm = FileManager.default
+                let path = try req.application.directory.publicDirectory
+                    + "images/catalog/\(product.requireID().uuidString)"
+                try fm.removeItem(atPath: path)
+            } catch {
+                throw Abort(.internalServerError)
             }
             
             try await variant.delete(on: req.db)

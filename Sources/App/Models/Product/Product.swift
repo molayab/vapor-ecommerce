@@ -34,6 +34,9 @@ final class Product: Model {
     @Children(for: \.$product)
     var questions: [ProductQuestion]
     
+    @Field(key: "cover_image_url")
+    var coverImageUrl: String?
+    
     @Children(for: \.$product)
     var variants: [ProductVariant]
 
@@ -62,7 +65,7 @@ final class Product: Model {
             averageSalePrice: try averageSalePrice(on: database),
             stock: try calculateStock(on: database),
             numberOfStars: try numberOfStars(on: database),
-            coverImage: coverImageUrl
+            coverImageUrl: coverImageUrl
         )
     }
     
@@ -100,7 +103,7 @@ final class Product: Model {
             $variants.get(on: database).whenComplete { result in
                 switch result {
                 case .success(let variants):
-                    next.resume(returning: variants.contains(where: { $0.isAvailable }))
+                    next.resume(returning: variants.contains(where: { $0.isAvailable && $0.stock > 0 }))
                 case .failure(let error):
                     next.resume(throwing: error)
                 }
@@ -189,7 +192,7 @@ extension Product {
         var averageSalePrice: Double
         var stock: Int
         var numberOfStars: Int
-        var coverImage: String
+        var coverImageUrl: String?
     }
 }
 
@@ -204,6 +207,7 @@ extension Product {
                 .field("editor_user_id", .uuid, .references("users", "id"))
                 .field("category_id", .uuid, .required, .references("categories", "id"))
                 .field("is_published", .bool, .required, .custom("DEFAULT FALSE"))
+                .field("cover_image_url", .string)
                 .field("createdAt", .datetime)
                 .field("updatedAt", .datetime)
                 .create()

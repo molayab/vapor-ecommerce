@@ -39,11 +39,17 @@ final class ProductVariant: Model {
     }
     
     func asPublic() throws -> Public {
+        let id = try self.requireID().uuidString
         let fm = FileManager.default
         let path = DirectoryConfiguration.detect().publicDirectory
-            + "/images/catalog/" + ($product.$id.wrappedValue.uuidString)
+            + "/images/catalog/" + ($product.$id.wrappedValue.uuidString) + "/"
+            + id
+        let publicPath = "/images/catalog/\($product.$id.wrappedValue.uuidString)/\(id)/"
+        let allowedExtensions = ["jpeg", "jpg", "png"]
+        let items = try fm.contentsOfDirectory(atPath: path).filter { item in
+            allowedExtensions.contains(String(item.split(separator: ".").last ?? ""))
+        }
         
-        let items = try fm.contentsOfDirectory(atPath: path)
         return Public(
             id: try requireID(),
             product: $product.$id.wrappedValue,
@@ -53,7 +59,7 @@ final class ProductVariant: Model {
             sku: sku,
             stock: stock,
             isAvailable: isAvailable,
-            images: items.map { "/images/catalog/" + ($product.$id.wrappedValue.uuidString) + "/" + $0 },
+            images: items.map { publicPath + $0 },
             tax: tax,
             shippingCost: shippingCost)
     }
@@ -69,7 +75,7 @@ extension ProductVariant {
         var availability: Bool
         var tax: Double
         var shippingCost: Double?
-        var images: [UploadImage]
+        var images: [UploadImage]?
         
         @discardableResult
         func create(for request: Request, product: Product) async throws -> ProductVariant {
@@ -86,8 +92,10 @@ extension ProductVariant {
             try await model.create(on: request.db)
             
             // Upload images
-            for image in images {
-                try await ProductImage.upload(image: image, forVariant: model, on: request)
+            if let images = images {
+                for image in images {
+                    try await ProductImage.upload(image: image, forVariant: model, on: request)
+                }
             }
             
             return model

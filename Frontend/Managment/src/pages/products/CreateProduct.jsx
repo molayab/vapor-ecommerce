@@ -215,11 +215,14 @@ function CreateProduct() {
                 onClick={(e) => { deleteProductVariant(e, index) }}
                 className="absolute z-50 bottom-0 right-1 bg-slate-50 rounded-full hover:bg-slate-200 cursor-pointer" />
                 
-                <div className="absolute z-30 w-full h-full items-center justify-center text-center opacity-80">
-                  <Subtitle className="bg-slate-400">{ variant.name }</Subtitle>
+                <div className="absolute z-30 w-full h-full items-center justify-center text-center opacity-80 cursor-pointer">
+                  <Subtitle onClick={(e) => { navigate("/products/" + id + "/variants/" + variant.id + "/edit") }} className="bg-slate-400">{ variant.name }</Subtitle>
                 </div>
                 { variant.images.length > 0 && (
-                  <img key={index} src={RES_URL + variant.images[0]} className="relative z-10 rounded" />
+                  <img 
+                    key={index} 
+                    src={RES_URL + variant.images[0]} 
+                    className="relative z-10 rounded" />
                 )}
               </div>
             </Card>)

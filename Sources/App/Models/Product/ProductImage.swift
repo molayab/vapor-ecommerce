@@ -18,11 +18,14 @@ struct ImageResizerJob: AsyncJob {
     }
     
     func dequeue(_ context: QueueContext, _ payload: Payload) async throws {
-        let publicFolder = context.application.directory.publicDirectory
-        + "images/catalog/" + payload.parentId.uuidString + "/"
+        guard let ext = payload.image.ext.split(separator: "/").last else {
+            throw Abort(.badRequest)
+        }
         
+        let publicFolder = context.application.directory.publicDirectory
+            + "images/catalog/" + payload.parentId.uuidString + "/" + payload.id.uuidString + "/"
         let fileManager = FileManager.default
-        let fileName = payload.id.uuidString + ".jpeg"
+        let fileName = UUID().uuidString + "." + ext
         let filePath = publicFolder + fileName
         
         // Write to disk the original image
@@ -68,7 +71,7 @@ struct ProductImage: Codable {
             throw Abort(.internalServerError)
         }
 
-        let url = URL(fileURLWithPath: publicFolder + "thumbnail-\(size)_" + fileName)
+        let url = URL(fileURLWithPath: publicFolder + "t\(size)_" + fileName)
         guard thumbnail.write(to: url) else {
             throw Abort(.notAcceptable)
         }
@@ -92,20 +95,6 @@ struct ProductImage: Codable {
             id: try variant.requireID()))
         
         return ProductImage()
-    }
-    
-    func deleteImage(on request: Request) async throws {
-        // Delete the variant's images in its folder
-        // the simple way is to remove the folder itself
-        // let id = try await self.$variant.get(on: request.db).requireID().uuidString
-        // let publicFolder = request.application.directory.publicDirectory
-        // + "images/catalog/" + id + "/"
-        
-        // let fileManager = FileManager.default
-        // try? fileManager.removeItem(atPath: publicFolder)
-        
-        // Delete the image from the database
-        // try await self.delete(on: request.db)
     }
 }
 

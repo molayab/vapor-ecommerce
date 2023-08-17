@@ -20,6 +20,7 @@ func routes(_ app: Application) throws {
     try api.register(collection: CostsController())
     try api.register(collection: SalesController())
     try api.register(collection: CountriesController())
+    try api.register(collection: ProductImagesController())
 }
 
 extension Sequence {
@@ -34,4 +35,19 @@ extension Sequence {
 
         return values
     }
+    
+    func asyncFilter(
+        _ isIncluded: (Element) async throws -> Bool
+    ) async rethrows -> [Element] {
+        var values = [Element]()
+
+        for element in self {
+            if try await isIncluded(element) {
+                values.append(element)
+            }
+        }
+
+        return values
+    }
+    
 }
