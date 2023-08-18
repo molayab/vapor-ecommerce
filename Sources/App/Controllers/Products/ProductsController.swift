@@ -29,7 +29,15 @@ struct ProductsController: RouteCollection {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
         }
-        guard let product = try await Product.find(uuid, on: req.db) else {
+        
+        let model = Product.query(on: req.db).filter(\.$id == uuid)
+        model.with(\.$variants, { variant in
+            variant.with(\.$transactionItems, { transactionItem in
+                transactionItem.with(\.$transaction)
+            })
+        })
+        
+        guard let product = try await model.first() else {
             throw Abort(.notFound)
         }
         

@@ -131,9 +131,11 @@ function App() {
           <Route path='/products' element={listProducts} />
           <Route path='/products/new' element={createProduct} />
           <Route path='/products/:id' element={createProduct} />
-          <Route path='/products/new/:id/variant' element={createProductVariant} />
+          <Route path='/products/:pid/variant' element={createProductVariant} />
           <Route path='/products/:pid/variants/:id/edit' element={createProductVariant} />
+
           <Route path='/pos' element={pos} />
+
         </Routes>
       </BrowserRouter>
     </>

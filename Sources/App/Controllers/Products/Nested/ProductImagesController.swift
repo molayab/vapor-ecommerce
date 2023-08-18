@@ -27,7 +27,7 @@ struct ProductImagesController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        return try variant.asPublic().images
+        return try await variant.asPublic(on: req.db).images
     }
     
     private func createImages(req: Request) async throws -> [String: String] {

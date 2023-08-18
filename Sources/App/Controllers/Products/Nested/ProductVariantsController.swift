@@ -30,7 +30,7 @@ struct ProductVariantsController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        return try variant.asPublic()
+        return try await variant.asPublic(on: req.db)
     }
     
     /// Restricted API
@@ -60,7 +60,7 @@ struct ProductVariantsController: RouteCollection {
         return try await product.$variants
             .query(on: req.db)
             .all()
-            .map({ try $0.asPublic() })
+            .asyncMap({ try await $0.asPublic(on: req.db) })
     }
     
     /// Restricted API
@@ -95,7 +95,7 @@ struct ProductVariantsController: RouteCollection {
         variant.isAvailable = payload.availability
         
         try await variant.save(on: req.db)
-        return try variant.asPublic()
+        return try await variant.asPublic(on: req.db)
     }
     
     /// Restricted API
@@ -113,7 +113,7 @@ struct ProductVariantsController: RouteCollection {
         try ProductVariant.Create.validate(content: req)
         
         let variant = try await payload.create(for: req, product: product)
-        return try variant.asPublic()
+        return try await variant.asPublic(on: req.db)
     }
     
     /// Restricted API
@@ -143,7 +143,7 @@ struct ProductVariantsController: RouteCollection {
                 + "images/catalog/\(product.requireID().uuidString)/\(variant.requireID().uuidString)"
             try fm.removeItem(atPath: path)
         } catch {
-            throw Abort(.internalServerError)
+            req.logger.error("Error deleting variant image: \(error.localizedDescription)")
         }
         
         try await variant.delete(on: req.db)

@@ -34,34 +34,56 @@ final class ProductVariant: Model {
     @Parent(key: "product_id")
     var product: Product
     
+    @Children(for: \.$productVariant)
+    var transactionItems: [TransactionItem]
+    
     var isAvailableForSale: Bool {
         return isAvailable && stock > 0
     }
     
-    func asPublic() throws -> Public {
+    func asPublic(on db: Database) async throws -> Public {
         let id = try self.requireID().uuidString
-        let fm = FileManager.default
-        let path = DirectoryConfiguration.detect().publicDirectory
-            + "/images/catalog/" + ($product.$id.wrappedValue.uuidString) + "/"
-            + id
-        let publicPath = "/images/catalog/\($product.$id.wrappedValue.uuidString)/\(id)/"
-        let allowedExtensions = ["jpeg", "jpg", "png"]
-        let items = try fm.contentsOfDirectory(atPath: path).filter { item in
-            allowedExtensions.contains(String(item.split(separator: ".").last ?? ""))
-        }
+        let sales = try await self.$transactionItems.get(on: db).map { try $0.asPublic() }
         
-        return Public(
-            id: try requireID(),
-            product: $product.$id.wrappedValue,
-            name: name,
-            price: price,
-            salePrice: salePrice,
-            sku: sku,
-            stock: stock,
-            isAvailable: isAvailable,
-            images: items.map { publicPath + $0 },
-            tax: tax,
-            shippingCost: shippingCost)
+        do {
+            let fm = FileManager.default
+            let path = DirectoryConfiguration.detect().publicDirectory
+                + "/images/catalog/" + ($product.$id.wrappedValue.uuidString) + "/"
+                + id
+            let publicPath = "/images/catalog/\($product.$id.wrappedValue.uuidString)/\(id)/"
+            let allowedExtensions = ["jpeg", "jpg", "png"]
+            let items = try fm.contentsOfDirectory(atPath: path).filter { item in
+                allowedExtensions.contains(String(item.split(separator: ".").last ?? ""))
+            }
+            
+            return Public(
+                id: try requireID(),
+                product: $product.$id.wrappedValue,
+                name: name,
+                price: price,
+                salePrice: salePrice,
+                sku: sku,
+                stock: stock,
+                isAvailable: isAvailable,
+                images: items.map { publicPath + $0 },
+                tax: tax,
+                shippingCost: shippingCost,
+                sales: sales)
+        } catch {
+            return Public(
+                id: try requireID(),
+                product: $product.$id.wrappedValue,
+                name: name,
+                price: price,
+                salePrice: salePrice,
+                sku: sku,
+                stock: stock,
+                isAvailable: isAvailable,
+                images: [],
+                tax: tax,
+                shippingCost: shippingCost,
+                sales: sales)
+        }
     }
 }
 
@@ -124,6 +146,7 @@ extension ProductVariant {
         var images: [String]
         var tax: Double
         var shippingCost: Double?
+        var sales: [TransactionItem.Public]?
     }
 }
 

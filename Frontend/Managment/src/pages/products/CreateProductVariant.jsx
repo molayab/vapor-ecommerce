@@ -82,7 +82,7 @@ function CreateProductVariant() {
     if (id && pid) {
       fetchProductVariant(pid, id)
     }
-  }, [id])
+  }, [id, pid])
 
   const addImages = async (e) => {
     setIsLoading(true)
@@ -191,7 +191,7 @@ function CreateProductVariant() {
               <TextInput 
                 type="text" 
                 value={name}
-                onValueChange={setName} 
+                onChange={(e) => setName(e.target.value)}
                 placeholder="'Tamaño - Color', 'Capacidad - Titulo', etc..." 
                 className="border border-gray-400 px-2 py-1 rounded w-full" />
               <Subtitle className="mt-2">SKU</Subtitle>
@@ -200,23 +200,23 @@ function CreateProductVariant() {
                 name="variantSku"
                 placeholder="SKU: Numero unico de identificacion de la variante"
                 value={skuCode.sku}
-                onValueChange={(e) => setSkuCode({sku: e})}
+                onChange={(e) => setSkuCode({sku: e.target.value})}
                 className="border border-gray-400 px-2 py-1 rounded w-full" />
 
               <Flex className="mt-4">
                 <div className="w-full">
                   <Subtitle><b>Costo</b> <i>(lo que te cuesta)</i></Subtitle>
-                  <NumberInput icon={CurrencyDollarIcon} value={price} onValueChange={setPrice} placeholder="0.00" className="border border-gray-400 px-2 py-1 rounded w-full" />
+                  <NumberInput icon={CurrencyDollarIcon} value={price} onValueChange={(e) => setPrice(e)} placeholder="0.00" className="border border-gray-400 px-2 py-1 rounded w-full" />
                 </div>
                 <div className="w-full ml-4">
                   <Subtitle><b>Precio</b> <i>(lo que le cobras)</i></Subtitle>
-                  <NumberInput icon={CurrencyDollarIcon} value={salePrice} onValueChange={setSalePrice} placeholder="0.00" className="border border-gray-400 px-2 py-1 rounded w-full" />
+                  <NumberInput icon={CurrencyDollarIcon} value={salePrice} onValueChange={(e) => setSalePrice(e)} placeholder="0.00" className="border border-gray-400 px-2 py-1 rounded w-full" />
                 </div>
               </Flex>
               <Flex className="mt-4">
                 <div className="w-full">
                   <Subtitle><b>Stock</b> <i>(cantidad disponible)</i></Subtitle>
-                  <NumberInput icon={TruckIcon} value={stock} onValueChange={setStock} placeholder="Variant stock" className="border border-gray-400 px-2 py-1 rounded w-full" />
+                  <NumberInput icon={TruckIcon} value={stock} onValueChange={(e) => setStock(e)} placeholder="Variant stock" className="border border-gray-400 px-2 py-1 rounded w-full" />
                 </div>
                 <div className="w-full ml-4">
                   <Subtitle>Disponibilidad</Subtitle>
@@ -234,7 +234,7 @@ function CreateProductVariant() {
                 </div>
                 <div className="w-full ml-4">
                   <Subtitle><b>Envio</b> <i>(Costo Envio)</i></Subtitle>
-                  <NumberInput icon={CurrencyDollarIcon} placeholder="$ 0.00" value={shippingCost} onValueChange={setShippingCost} className="border border-gray-400 px-2 py-1 rounded w-full" />
+                  <NumberInput icon={CurrencyDollarIcon} placeholder="$ 0.00" value={shippingCost} onValueChange={(e) => setShippingCost(e)} className="border border-gray-400 px-2 py-1 rounded w-full" />
                 </div>
               </Flex>
 
@@ -293,7 +293,7 @@ function CreateProductVariant() {
             { images.map((image, index) => {
               if (image.dat === undefined) {
                 return (
-                  <div className="relative w-48">
+                  <div key={index} className="relative w-48">
                     <div className="absolute right-0 bottom-0 w-full z-10 bg-slate-300 rounded opacity-30 hover:opacity-100">
                       <Icon icon={TrashIcon} className="w-6 h-6 cursor-pointer" onClick={() => {
                         setImages((old) => {
@@ -305,13 +305,13 @@ function CreateProductVariant() {
                       }} />
                     </div>
                     <div className="relative z-0">
-                      <img key={index} src={RES_URL + image} className="w-48 h-48 object-cover rounded" />
+                      <img src={RES_URL + image} className="w-48 h-48 object-cover rounded" />
                     </div>
                   </div>
                 )
               } else {
                 return (
-                  <div className="relative w-48">
+                  <div key={index} className="relative w-48">
                     <div className="absolute right-0 bottom-0 w-full z-10 bg-slate-300 rounded opacity-30 hover:opacity-100">
                       <Icon icon={TrashIcon} className="w-6 h-6 cursor-pointer" onClick={() => {
                         setImages((old) => {
@@ -322,7 +322,7 @@ function CreateProductVariant() {
                       }} />
                     </div>
                     <div className="relative z-0">
-                      <img key={index} src={"data:" + image.type + ";base64," + image.dat} className="w-48 h-48 object-cover rounded" />
+                      <img src={"data:" + image.type + ";base64," + image.dat} className="w-48 h-48 object-cover rounded" />
                     </div>
                   </div>
                 )

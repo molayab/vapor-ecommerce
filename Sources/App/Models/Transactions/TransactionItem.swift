@@ -28,11 +28,10 @@ final class TransactionItem: Model {
     @Parent(key: "transaction_id")
     var transaction: Transaction
     
-    func asPublic(on db: Database) throws -> Public {
-        .init(
-            id: try requireID(),
+    func asPublic() throws -> Public {
+        return try .init(
+            id: requireID(),
             quantity: quantity,
-            productVariant: try productVariant.asPublic(),
             price: price,
             discount: discount,
             tax: tax,
@@ -45,7 +44,6 @@ extension TransactionItem {
     struct Public: Content {
         var id: UUID
         var quantity: Int
-        var productVariant: ProductVariant.Public
         var price: Double
         var discount: Double
         var tax: Double

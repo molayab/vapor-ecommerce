@@ -5,7 +5,7 @@ import { Card, Flex, Grid, Button, Title, Metric, Subtitle, List, ListItem, Sear
 import ContainerCard from '../components/ContainerCard'
 import { CashIcon, CreditCardIcon, CurrencyDollarIcon, MinusCircleIcon, SaveIcon, SearchIcon, TrashIcon } from '@heroicons/react/solid'
 import { API_URL } from '../App'
-
+import Checkout from './Checkout'
 
 export default function POS() {
     function beep() {
@@ -14,15 +14,30 @@ export default function POS() {
     }
 
     let lastScanDate = Date.now()
+    const shouldUseCache = () => {
+        return !(localStorage.getItem('products') != "undefined" 
+            || localStorage.getItem('products') != null 
+            || localStorage.getItem('products') != "null" 
+            || localStorage.getItem('products') != ""
+            || localStorage.getItem('products') != "[]"
+            || localStorage.getItem('products') != []
+            || localStorage.getItem('products') != undefined)
+    }
+
+    const [pay, setPay] = useState(false)
     const [checkoutList, setCheckoutList] = useState([])
     const [variant, setVariant] = useState(null)
-    const [products, _setProducts] = useState(localStorage.getItem('products') ? JSON.parse(localStorage.getItem('products')) : [])
+    const [products, _setProducts] = useState(shouldUseCache() ? JSON.parse(localStorage.getItem('products')) : [])
     const setProducts = (products) => {
         localStorage.setItem('products', JSON.stringify(products))
         _setProducts(products)
     }
 
     const getAllVariants = () => {
+        if (!products) {
+            return []
+        }
+
         let variants = []
         products.forEach((product) => {
             product.variants.forEach((variant) => {
@@ -64,6 +79,8 @@ export default function POS() {
         } else {
             list[index].quantity += 1
         }
+
+        beep()
         return list
     }
 
@@ -94,6 +111,12 @@ export default function POS() {
         })
     }, [])
 
+    if (pay && checkoutList.length > 0) {
+        return (
+            <Checkout checkoutList={checkoutList} />
+        )
+    }
+
     return (
         <>
         <SideMenu>
@@ -115,7 +138,7 @@ export default function POS() {
                                     <span>$ { checkoutList.reduce((total, item) => total + (item.quantity * item.salePrice * item.tax), 0) }</span>
                                 </ListItem>
                             </List>
-                            <Button color='green' size='xs' icon={CreditCardIcon} className='w-full mt-4'>Cobrar</Button>
+                            <Button onClick={ (e) => setPay(true) } disabled={checkoutList.length === 0 && !pay} color='green' size='xs' icon={CreditCardIcon} className='w-full mt-4'>Cobrar</Button>
                             <Button color='rose' size='xs' variant='secondary' icon={MinusCircleIcon} className='w-full mt-4'>Limpiar</Button>
                         </div>
                     
@@ -131,7 +154,6 @@ export default function POS() {
                                             }
                                             lastScanDate = Date.now()
                                             setQrCode(result.getText())
-                                            beep()
                                         }
                                     }} />
                             </div>
@@ -195,6 +217,10 @@ export default function POS() {
                         })}
                     </TableBody>
                 </Table>
+            </Card>
+
+            <Card>
+
             </Card>
         </SideMenu>
         

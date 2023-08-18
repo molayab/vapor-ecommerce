@@ -105,7 +105,7 @@ function CreateProduct() {
       return
     }
 
-    navigate("/products/new/" + p.id + "/variant")
+    navigate("/products/" + p.id + "/variant")
   }
   
   const createCategory = async (e) => {
@@ -244,7 +244,7 @@ function CreateProduct() {
               "Costo": variant.price,
               "Venta": variant.salePrice,
               "Ganancia": variant.salePrice - variant.price,
-              "Ventas": 0
+              "Ventas": (variant.salePrice - variant.price) * variant.sales.length,
             }
           })}
         index="label"
@@ -273,7 +273,7 @@ function CreateProduct() {
                 <TableCell>{variant.stock}</TableCell>
                 <TableCell>{dataFormatter(variant.price * variant.stock)}</TableCell>
                 <TableCell>{dataFormatter(variant.price * variant.stock * 0.16)}</TableCell>
-                <TableCell>(0) $ 0.00</TableCell>
+                <TableCell>({ variant.sales.length }) $ { variant.sales.map((sale) => sale.total).reduce((a, b) => a + b, 0) }</TableCell>
               </TableRow>
             )})}
         </TableBody>

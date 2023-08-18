@@ -71,7 +71,7 @@ function ShowProductDetails() {
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           onClick={ (e) => {
             e.preventDefault();
-            navigate(`/products/${id}/variants/add`)
+            navigate(`/products/${id}/variants`)
           }}>
           Add Variant
         </button>

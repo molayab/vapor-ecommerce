@@ -60,7 +60,9 @@ final class Product: Model {
             category: try category.asPublic(),
             reviews: try reviews.map({ try $0.asPublic() }),
             questions: [], // try questions.map({ try $0.asPublic() }),
-            variants: try await self.$variants.get(on: database).map({ try $0.asPublic() }),
+            variants: try await self.$variants
+                .get(on: database)
+                .asyncMap({ try await $0.asPublic(on: database) }),
             minimumSalePrice: try minimumSalePrice(on: database),
             averageSalePrice: try averageSalePrice(on: database),
             stock: try calculateStock(on: database),
