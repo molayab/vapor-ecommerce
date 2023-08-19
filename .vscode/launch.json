@@ -7,9 +7,9 @@
         "swift"
       ],
       "name": "Debug App",
-      "program": "${workspaceFolder:simple_cms}/.build/debug/App",
+      "program": "${workspaceFolder:vapor-ecommerce}/.build/debug/App",
       "args": [],
-      "cwd": "${workspaceFolder:simple_cms}",
+      "cwd": "${workspaceFolder:vapor-ecommerce}",
       "preLaunchTask": "swift: Build Debug App"
     },
     {
@@ -19,9 +19,9 @@
         "swift"
       ],
       "name": "Release App",
-      "program": "${workspaceFolder:simple_cms}/.build/release/App",
+      "program": "${workspaceFolder:vapor-ecommerce}/.build/release/App",
       "args": [],
-      "cwd": "${workspaceFolder:simple_cms}",
+      "cwd": "${workspaceFolder:vapor-ecommerce}",
       "preLaunchTask": "swift: Build Release App"
     }
   ]

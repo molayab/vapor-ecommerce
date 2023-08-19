@@ -29,6 +29,7 @@ function Login() {
 
     if (data.accessToken) {
       localStorage.setItem('token', data.accessToken);
+      localStorage.setItem('user', JSON.stringify(data.user))
       navigate('/dashboard');
     } else if (data.error) {
       setErrorDescriptionState(data.reason);

@@ -1,5 +1,6 @@
 import Vapor
 import Fluent
+import FluentPostgresDriver
 
 struct OrderStats: Content {
     struct Sale: Content {
@@ -7,6 +8,7 @@ struct OrderStats: Content {
         var value: Int?
         var sales: Int?
         var origin: Transaction.Origin?
+        var cost: Int?
     }
     
     var salesByProduct: [Sale]
@@ -110,74 +112,127 @@ struct OrdersController: RouteCollection {
             .paginate(for: req)
     }
     
+    /// Retricted API
+    /// GET /transactions/stats
+    /// This endpoint is used to retrieve all transactions stats.
     private func orderStats(req: Request) async throws -> OrderStats {
-        let calendar = Calendar.current
-        let months = calendar.monthSymbols
-        let txs = try await Transaction
-            .query(on: req.db)
-            .join(TransactionItem.self, on: \Transaction.$id == \TransactionItem.$transaction.$id)
-            .filter(\.$status == .paid)
-            .all()
-        
-        var salesByProduct: [OrderStats.Sale] = []
-        var salesByMonth: [OrderStats.Sale] = []
-        var salesBySource: [OrderStats.Sale] = Transaction.Origin.allCases.map {
-            OrderStats.Sale(name: $0.rawValue, value: 0)
-        }
-        
-        for tx in txs {
-            // Join transactions with items
-            let item = try tx.joined(TransactionItem.self)
+        if let psql = req.db as? PostgresDatabase {
+            let salesByMonthQuery = try await psql.simpleQuery(
+"""
+SELECT
+    to_char(date(transactions.payed_at),'MM') AS _month,
+    SUM(I.total) AS sales,
+    SUM(V.price) AS cost,
+    SUM(I.quantity)::INTEGER AS count
+FROM transactions
+INNER JOIN transaction_items AS I ON transactions.id = I.transaction_id
+INNER JOIN product_variants AS V ON I.product_variant_id = V.id
+WHERE status = 'paid'
+AND transactions.payed_at > (now() - interval '1 year')
+AND date_part('year', transactions.payed_at) = date_part('year', CURRENT_DATE)
+GROUP BY _month
+ORDER BY _month
+""").get()
+            let salesBySourceQuery = try await psql.simpleQuery(
+"""
+SELECT transactions.origin, SUM(I.total)
+FROM transactions
+INNER JOIN transaction_items AS I ON transactions.id = I.transaction_id
+INNER JOIN product_variants AS V ON I.product_variant_id = V.id
+WHERE status = 'paid'
+AND transactions.payed_at > (now() - interval '1 month')
+AND date_part('month', transactions.payed_at) = date_part('month', CURRENT_DATE)
+GROUP BY transactions.origin
+""").get()
+            let salesThisMonthQuery = try await psql.simpleQuery(
+"""
+SELECT to_char(date(transactions.created_at),'Mon') AS _month, SUM(I.total) as sales_month
+FROM transactions
+INNER JOIN transaction_items AS I ON transactions.id = I.transaction_id
+INNER JOIN product_variants AS V ON I.product_variant_id = V.id
+WHERE status = 'paid'
+AND transactions.payed_at > (now() - interval '1 month')
+AND date_part('month', transactions.payed_at) = date_part('month', CURRENT_DATE)
+GROUP BY _month
+""").get()
+            let salesByProductQuery = try await psql.simpleQuery(
+"""
+SELECT PP.title as title, SUM(I.total) as sales_month
+FROM transactions
+INNER JOIN transaction_items AS I ON transactions.id = I.transaction_id
+INNER JOIN product_variants AS V ON I.product_variant_id = V.id
+INNER JOIN products AS PP ON V.product_id = PP.id
+WHERE status = 'paid'
+AND transactions.payed_at > (now() - interval '1 year')
+GROUP BY title
+""").get()
             
-            // Group sales by product
-            let variant = try await item.$productVariant.get(on: req.db)
-            let product = try await variant.$product.get(on: req.db)
-            
-            if let index = salesByProduct.firstIndex(where: { $0.name == product.title }) {
-                if let value = salesByProduct[index].value {
-                    salesByProduct[index].value =
-                        (salesByProduct[index].value ?? 0) + (Int(item.total) * item.quantity)
+            let salesByMonth = try salesByMonthQuery.compactMap { r -> OrderStats.Sale? in
+                // Get the month name based on the month number
+                let row = PostgresRandomAccessRow(r)
+                guard let month = Int(try row["_month"].decode(String.self)) else {
+                    return nil
                 }
-            } else {
-                salesByProduct.append(.init(
-                    name: product.title,
-                    value: Int(item.total) * item.quantity))
+                
+                let calendar = Calendar.current
+                let monthNumber = calendar.shortMonthSymbols[month - 1]
+                
+                let cost = try row["cost"].decode(Double.self)
+                let sales = try row["sales"].decode(Double.self)
+                let count = try row["count"].decode(Int.self)
+                
+                return OrderStats.Sale(
+                    name: monthNumber,
+                    value: count,
+                    sales: Int(sales),
+                    origin: nil,
+                    cost: Int(cost))
+            }
+            let salesBySource = try salesBySourceQuery.map { r -> OrderStats.Sale in
+                let row = PostgresRandomAccessRow(r)
+                let origin = try row["origin"].decode(String.self)
+                let sales = try row["sum"].decode(Double.self)
+                
+                return OrderStats.Sale(
+                    name: origin,
+                    value: Int(sales),
+                    sales: nil,
+                    origin: .init(rawValue: origin))
+            }
+            let salesThisMonth = try salesThisMonthQuery.map { r -> (String, Int) in
+                let row = PostgresRandomAccessRow(r)
+                let month = try row["_month"].decode(String.self)
+                let sales = try row["sales_month"].decode(Double.self)
+                
+                return (month, Int(sales))
+            }.first ?? ("N/A", 0)
+            let salesByProduct = try salesByProductQuery.map { r -> OrderStats.Sale in
+                let row = PostgresRandomAccessRow(r)
+                let title = try row["title"].decode(String.self)
+                let sales = try row["sales_month"].decode(Double.self)
+                
+                return OrderStats.Sale(
+                    name: title,
+                    value: Int(sales),
+                    sales: nil,
+                    origin: nil)
             }
             
-            // Get annual sales by month
-            if let date = tx.payedAt {
-                let txMonth = calendar.component(.month, from: date)
-                if let index = salesByMonth.firstIndex(where: { $0.name == months[txMonth - 1] }) {
-                    if let sales = salesByMonth[index].sales {
-                        salesByMonth[index].sales =
-                            (salesByMonth[index].sales ?? 0) + (Int(item.total) * item.quantity)
-                    }
-                } else {
-                    salesByMonth.append(.init(
-                        name: months[txMonth - 1],
-                        sales: Int(item.total) * item.quantity))
-                }
-            }
-            
-            // Group sales by source
-            if let index = salesBySource.firstIndex(where: { $0.name == tx.origin.rawValue }) {
-                if let value = salesBySource[index].value {
-                    salesBySource[index].value =
-                        (salesBySource[index].value ?? 0) + (Int(item.total) * item.quantity)
-                }
-            }
+            return OrderStats(
+                salesByProduct: salesByProduct,
+                salesByMonth: salesByMonth,
+                salesThisMonth: salesThisMonth.1,
+                salesMonthTitle: salesThisMonth.0,
+                salesBySource: salesBySource,
+                lastSales: try await Transaction.query(on: req.db)
+                    .filter(\.$status == .paid)
+                    .sort(\.$payedAt, .descending)
+                    .limit(14)
+                    .all()
+                    .asyncMap { try await $0.asPublic(on: req.db) }
+            )
         }
 
-        return OrderStats(
-            salesByProduct: salesByProduct,
-            salesByMonth: salesByMonth,
-            salesThisMonth: salesByMonth.reduce(0) { $0 + ($1.sales ?? 0) },
-            salesMonthTitle: months[calendar.component(.month, from: Date()) - 1],
-            salesBySource: salesBySource,
-            lastSales: try await txs
-                .prefix(5)
-                .asyncMap {
-                    try await $0.asPublic(on: req.db)
-                })
+        throw Abort(.internalServerError)
     }
 }

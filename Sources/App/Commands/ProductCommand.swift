@@ -20,13 +20,64 @@ struct ProductCommand: Command {
             try list(using: context, signature: signature)
         case "delete":
             try delete(using: context, signature: signature)
-        case "randomize": break
-            // try randomize(using: context, signature: signature)
+        case "randomize":
+            try randomizeTxs(using: context, signature: signature)
         default:
             context.console.error("Invalid subcommand: \(signature.subcommand)")
         
         }
     }
+    
+    private func randomizeTxs(using context: CommandContext, signature: Signature) throws {
+        let faker = Faker()
+        let products = try Product.query(on: context.application.db).all().wait()
+        let categories = try Category.query(on: context.application.db).all().wait()
+        let users = try User.query(on: context.application.db).all().wait()
+        
+        var txs = [Transaction]()
+        var items = [TransactionItem]()
+        
+        for _ in 0..<1000 {
+            let product = products.randomElement()!
+            let category = categories.randomElement()!
+            let variant = try product.$variants.get(on: context.application.db).wait().randomElement()!
+            
+            let tx = Transaction()
+            tx.id = UUID()
+            tx.origin = .web
+            tx.status = .paid
+            // Get a random date between 3 year ago and now
+            tx.payedAt = Date(timeIntervalSinceNow: -TimeInterval.random(in: 0...94608000))
+            tx.shippedAt = Date()
+            tx.orderdAt = Date()
+            tx.placedIp = "127.0.0.1"
+            
+            if let user = users.randomElement() {
+                tx.$user.id = try user.requireID()
+            }
+            
+            txs.append(tx)
+            
+            
+            let item = TransactionItem()
+            item.id = UUID()
+            item.$transaction.id = try tx.requireID()
+            item.$productVariant.id = try variant.requireID()
+            item.quantity = Int.random(in: 1...10)
+            item.price = variant.price
+            item.tax = 0
+            item.discount = 0
+            item.total = item.price * Double(item.quantity)
+            
+            items.append(item)
+        }
+        
+        try txs.create(on: context.application.db).wait()
+        try items.create(on: context.application.db).wait()
+        
+    }
+    
+    
     
     private func delete(using context: CommandContext, signature: Signature) throws {
         let id = context.console.ask("Product ID?")

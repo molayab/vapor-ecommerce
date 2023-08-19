@@ -1,4 +1,4 @@
-import { Grid, Col, Flex, Card, Metric, Text, Icon, Title, Table, TableHead, TableRow, TableHeaderCell, TableBody, TableCell, Badge, Divider, Subtitle } from "@tremor/react";
+import { Grid, Col, Flex, Card, Metric, Text, Icon, Title, Table, TableHead, TableRow, TableHeaderCell, TableBody, TableCell, Badge, Divider, Subtitle, Button, List, ListItem } from "@tremor/react";
 import { DonutChart } from "@tremor/react";
 import { StatusOnlineIcon } from "@heroicons/react/outline";
 import SideMenu from "../components/SideMenu";
@@ -6,7 +6,8 @@ import { AreaChart } from "@tremor/react";
 import { CashIcon, CalculatorIcon, CreditCardIcon, CurrencyDollarIcon } from "@heroicons/react/outline";
 import { useEffect, useState } from "react";
 import { API_URL } from "../App";
-import { GlobeIcon } from "@heroicons/react/solid";
+import { GlobeIcon, PlusIcon } from "@heroicons/react/solid";
+import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
   const [salesByMonth, setSalesByMonth] = useState([])
@@ -15,6 +16,7 @@ function Dashboard() {
   const [salesMonthTitle, setSalesMonthTitle] = useState("")
   const [lastSales, setLastSales] = useState([])
   const [salesBySource, setSalesBySource] = useState([])
+  const navigate = useNavigate()
 
   const fetchOrderStats = async () => {
     const response = await fetch(`${API_URL}/orders/stats`, {
@@ -45,7 +47,7 @@ function Dashboard() {
       <SideMenu>
         <Grid numItems={1} numItemsSm={1} numItemsLg={3} className="gap-2">
           <Col numColSpan={1} numColSpanLg={3}>
-            <Card>
+            <Card decoration="top" color="purple">
               <Text>Ultimas</Text>
               <Metric>Ordenes</Metric>
 
@@ -96,12 +98,15 @@ function Dashboard() {
                     return (
                       <TableRow>
                         <TableCell>{ sale.payedAt }</TableCell>
-                        <TableCell>{ sale.items.reduce((acc, item) => acc + (item.total * item.quantity), 0) }</TableCell>
+                        <TableCell>{ dataFormatter(sale.items.reduce((acc, item) => acc + (item.total * item.quantity), 0)) }</TableCell>
                       </TableRow>
                     )
                   })}
                 </TableBody>
               </Table>
+
+              <Button className="w-full my-2">Ver todas las ventas</Button>
+              <Button className="w-full" variant="secondary">Ver todas las transacciones</Button>
           </Card>
           <Col>
             <Card>
@@ -112,22 +117,54 @@ function Dashboard() {
                 className="h-72 mt-4"
                 data={salesByMonth}
                 index="name"
-                categories={["x", "sales"]}
+                showYAxis={false}
+                categories={["cost", "sales"]}
                 colors={["rose", "green"]}
                 valueFormatter={dataFormatter}
               />
-              <Table className="mt-5">
+              <Table fontSize="xs" className="mt-0">
+                <TableHead>
+                  <TableHeaderCell>Mes</TableHeaderCell>
+                  <TableHeaderCell>Ventas</TableHeaderCell>
+                  <TableHeaderCell>Costos</TableHeaderCell>
+                  <TableHeaderCell>Utilidad</TableHeaderCell>
+                </TableHead>
                 <TableBody>
-                  <TableRow>
-                    <TableCell>Ventas Anuales</TableCell>
-                    <TableCell>$ { salesByMonth.reduce((acc, month) => acc + month.sales, 0) }</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Alain Berset</TableCell>
-                    <TableCell>President</TableCell>
-                  </TableRow>
+                {salesByMonth.map((month) => {
+                  return (
+                    <TableRow>
+                      <TableCell><strong>{ month.name }</strong></TableCell>
+                      <TableCell>
+                        <div>
+                          <small>({ month.value })</small><br />
+                          <small> { dataFormatter(month.sales) }</small>
+                        </div>
+                      </TableCell>
+                      <TableCell><small>{ dataFormatter(month.cost * -1) }</small></TableCell>
+                      <TableCell><small>{ dataFormatter(month.sales - month.cost) }</small></TableCell>
+                    </TableRow>
+                  )
+                })}
                 </TableBody>
               </Table>
+              <List className="mt-5">
+                <ListItem>
+                    <span>Ventas Anuales</span>
+                    <span>{ dataFormatter(salesByMonth.reduce((acc, month) => acc + month.sales, 0)) }</span>
+                  </ListItem>
+                  <ListItem>
+                    <span>Costos Anuales</span>
+                    <span>{ dataFormatter(salesByMonth.reduce((acc, month) => acc + month.cost, 0) * -1) }</span>
+                  </ListItem>
+                  <ListItem>
+                    <span>Utilidad Anual</span>
+                    <span>{ dataFormatter(salesByMonth.reduce((acc, month) => acc + (month.sales - month.cost), 0)) }</span>
+                  </ListItem>
+                  <ListItem>
+                    <span>Total Ventas Anuales</span>
+                    <span>{ salesByMonth.reduce((acc, month) => acc + month.value, 0) }</span>
+                  </ListItem>
+              </List>
             </Card>
           </Col>
           <Card>
@@ -139,15 +176,18 @@ function Dashboard() {
               <Icon icon={CurrencyDollarIcon} color="green" variant="solid" tooltip="Sum of Sales" size="sm" />
               <div className="w-full">
                 <Text color="green">Ventas</Text>
-                <Metric color="green">$ { salesThisMonth }</Metric>
+                <Metric color="green">{ dataFormatter(salesThisMonth) }</Metric>
               </div>
             </Flex>
             <Flex className="space-x-6">
               <Icon icon={CalculatorIcon} color="rose" variant="solid" tooltip="Sum of Sales" size="sm" />
               <div className="w-full">
+                
                 <Text color="red">Gastos</Text>
                 <Metric color="red">$ 0.00</Metric>
               </div>
+
+              <Button color="rose" icon={PlusIcon} />
             </Flex>
             <Divider className="mt-4" />
             {salesBySource.map((source, index) => {
@@ -165,11 +205,34 @@ function Dashboard() {
                   { icon }
                   <div className="w-full">
                     <Text color="green">Ventas { source.name }</Text>
-                    <Metric color="green">$ { source.value }</Metric>
+                    <Metric color="green">{ dataFormatter(source.value) }</Metric>
                   </div>
                 </Flex>
               )
             })}
+
+            <Divider className="mt-4" />
+            <Button className="w-full mb-2" color="green" size="xl" onClick={() => navigate("/pos")}>
+              Ir al modulo POS
+            </Button>
+            <Button className="w-full" color="green" variant="secondary" size="xl">Ir al modulo de ventas</Button>
+            <Divider className="mt-4" />
+            <Button className="w-full mb-2" color="blue" size="xl" onClick={() => navigate("/products/new")}>
+              Crear un nuevo producto
+            </Button>
+            <Button className="w-full mb-2" color="blue" variant="secondary" size="xl" onClick={() => navigate("/products")}>
+              Gestionar el catalogo
+            </Button>
+            <Divider className="mt-4" />
+            <Button className="w-full mb-2" color="blue" size="xl" onClick={() => navigate("/users/new/client")}>
+              Crear un nuevo cliente
+            </Button>
+            <Button className="w-full mb-2" color="blue" variant="secondary" size="xl" onClick={() => navigate("/users/new/provider")}>
+              Crear un nuevo proveedor
+            </Button>
+            <Button className="w-full mb-2" color="blue" variant="secondary" size="xl" onClick={() => navigate("/users/new/employee")}>
+              Crear un nuevo empleado
+            </Button>
           </Card>
           
           <Col numColSpan={1} numColSpanLg={3}>
