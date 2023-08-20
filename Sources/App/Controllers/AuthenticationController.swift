@@ -20,6 +20,8 @@ struct AuthenticationController: RouteCollection {
     /// POST /auth/create
     /// Creates a new user session
     private func login(req: Request) async throws -> Response {
+        try await req.ensureFeatureEnabled(.loginEnabled)
+        
         let user = try req.auth.require(User.self)
         guard user.isActive else {
             throw Abort(.unauthorized)

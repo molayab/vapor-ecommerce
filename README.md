@@ -58,27 +58,43 @@ Run migrations: docker-compose run migrate
 Stop all: docker-compose down (add -v to wipe db)
 
 # TODOs
- - [X] Add payments providers gateway 
-    - [X] Added Wompi provider (COL)
- - [X] Add orders controller 
- - [X] Add transactions controller 
- - Add POS frontend 
- - Add POS controller 
- - Add dashboard controller 
- - Create frontend for managment
- - Create store frontend 
- - Add commands for categories
- - Add commands for orders 
- - Add commands for transactions
- - Add commands for image managment
- - [X] Add finance controller 
- - Create worker for notifications
- - Create basic documentation
- - Create advance documentation
- - Add unit test
- - Add integration tests
- - Add performance tests (wkl)
- - Add configuration json 
+
+   - [X] Add payments providers gateway
+      - [X] Added Wompi provider (COL)
+   - [X] Add orders controller
+   - [X] Add transactions controller
+   - [X] Add POS frontend
+   - [X] Add POS controller
+   - [X] Add dashboard controller
+   - [X] Create frontend for managment
+   - Create store frontend
+   - Add commands for categories
+   - Add commands for orders
+   - Add commands for transactions
+   - Add commands for image managment
+   - [X] Add finance controller
+   - Create worker for notifications
+   - Create basic documentation
+   - Create advance documentation
+   - Add unit test
+   - Add integration tests
+   - Add performance tests (wkl)
+   - [X] Add configuration json
+   - Refactor controllers
+      - Refactor models
+      - Refactor routes
+      - Refactor controllers
+      - Refactor middlewares
+      - Refactor services
+   - Refactor frontend
+      - Refactor components
+      - Refactor pages
+      - Refactor hooks
+      - Refactor services
+      - Refactor utils
+      - Refactor styles
+   - [X] Add docker-compose for development
+   - Add docker-compose for production
 
 ## Routes
 

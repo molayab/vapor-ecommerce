@@ -7,6 +7,10 @@ export function Checkout({ checkoutList }) {
     const [input, setInput] = useState('0')
     const [mode, setMode] = useState('posCash')
 
+    const dataFormatter = (number) => {
+        return "$ " + Intl.NumberFormat("us").format(number).toString();
+    }
+
     const checkout = async () => {
         console.log('checkout')
 
@@ -53,7 +57,7 @@ export function Checkout({ checkoutList }) {
         <SideMenu>
             <Card>
                 <Text>Total a facturar</Text>
-                <Metric>$ { checkoutList.reduce((acc, product) => acc + (product.salePrice * product.quantity), 0) }</Metric>
+                <Metric>{ dataFormatter(checkoutList.reduce((acc, product) => acc + (product.salePrice * product.quantity), 0)) }</Metric>
                 
                 <Flex className="mb-2">
                     <TabGroup className="w-64">
@@ -71,7 +75,7 @@ export function Checkout({ checkoutList }) {
                 
 
                 <Subtitle>Cambio</Subtitle>
-                <Title>$ { Math.max(0 ,input - checkoutList.reduce((acc, product) => acc + (product.salePrice * product.quantity), 0)) }</Title>
+                <Title>{ dataFormatter(Math.max(0 ,input - checkoutList.reduce((acc, product) => acc + (product.salePrice * product.quantity), 0))) }</Title>
 
                 <Button color="green" className="w-full mt-4" onClick={ checkout }>Confirmar Pago</Button>
                 <Grid numItems={2} className="gap-4">
@@ -139,8 +143,8 @@ export function Checkout({ checkoutList }) {
                                 <TableRow key={product.id}>
                                     <TableHeaderCell>{product.name}</TableHeaderCell>
                                     <TableHeaderCell>{product.quantity}</TableHeaderCell>
-                                    <TableHeaderCell>{product.salePrice}</TableHeaderCell>
-                                    <TableHeaderCell>{product.salePrice * product.quantity}</TableHeaderCell>
+                                    <TableHeaderCell>{dataFormatter(product.salePrice)}</TableHeaderCell>
+                                    <TableHeaderCell>{dataFormatter(product.salePrice * product.quantity)}</TableHeaderCell>
                                 </TableRow>
                             ))}
                         </TableBody>

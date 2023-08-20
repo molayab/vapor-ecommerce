@@ -54,6 +54,8 @@ struct OrdersController: RouteCollection {
     /// POST /transactions/checkout/pos/:method
     /// This endpoint is used to create a new transaction.
     private func checkoutPos(req: Request) async throws -> Transaction.Public {
+        try await req.ensureFeatureEnabled(.posEnabled)
+        
         guard let methodParameter = req.parameters.get("method", as: String.self) else {
             throw Abort(.badRequest)
         }

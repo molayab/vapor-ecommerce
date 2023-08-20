@@ -21,6 +21,7 @@ func routes(_ app: Application) throws {
     try api.register(collection: SalesController())
     try api.register(collection: CountriesController())
     try api.register(collection: ProductImagesController())
+    try api.register(collection: SettingsController())
 }
 
 extension Sequence {

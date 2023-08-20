@@ -15,7 +15,7 @@ let kSiteDomain = Environment.get("SITE_DOMAIN") ?? "http://localhost:8080"
 /// Allowed origins
 let kAllowedOrigins = Environment.get("ALLOWED_ORIGINS")?
     .split(separator: ",")
-    .map { String($0) } ?? ["http://cms.localhost", "http://localhost:5173"]
+    .map { String($0) } ?? ["http://cms.localhost", "http://localhost:5173", "https://app.posthog.com"]
 
 /// JWT signer key
 let kJWTSignerKey = Environment.get("JWT_SIGNER_KEY") ?? "secret"
@@ -58,7 +58,6 @@ public func configure(_ app: Application) async throws {
     app.jwt.signers.use(.hs256(key: kJWTSignerKey))
     app.redis.configuration = try RedisConfiguration(hostname: "redis", pool: .init(
         connectionRetryTimeout: .seconds(60)))
-    app.caches.use(.memory)
     
     if app.environment == .testing {
         app.databases.use(.sqlite(.memory), as: .sqlite)
@@ -121,6 +120,7 @@ public func configure(_ app: Application) async throws {
         app.logger.error("Redis configuration not found")
     }
     
+    app.caches.use(.redis)
     try routes(app)
 }
 

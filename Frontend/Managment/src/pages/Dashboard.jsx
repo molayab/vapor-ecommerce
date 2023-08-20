@@ -75,6 +75,73 @@ function Dashboard() {
             </Card>
           </Col>
           <Card>
+            <Text>Finanazas del mes</Text>
+            <Metric>{ salesMonthTitle }</Metric>
+
+            <Divider className="mt-4" />
+            <Flex className="space-x-6">
+              <Icon icon={CurrencyDollarIcon} color="green" variant="solid" tooltip="Sum of Sales" size="sm" />
+              <div className="w-full">
+                <Text color="green">Ventas</Text>
+                <Metric color="green">{ dataFormatter(salesThisMonth) }</Metric>
+              </div>
+            </Flex>
+            <Flex className="space-x-6">
+              <Icon icon={CalculatorIcon} color="rose" variant="solid" tooltip="Sum of Sales" size="sm" />
+              <div className="w-full">
+                
+                <Text color="red">Gastos</Text>
+                <Metric color="red">$ 0.00</Metric>
+              </div>
+
+              <Button color="rose" icon={PlusIcon} />
+            </Flex>
+            <Divider className="mt-4" />
+            {salesBySource.map((source, index) => {
+              let icon = null;
+              if (source.name === "posCash") {
+                icon = <Icon icon={CashIcon} color="green" variant="solid" tooltip="Sum of Sales" size="sm" />
+              } else if (source.name === "posCard") {
+                icon = <Icon icon={CreditCardIcon} color="green" variant="solid" tooltip="Sum of Sales" size="sm" />
+              } else if (source.name === "web") {
+                icon = <Icon icon={GlobeIcon} color="green" variant="solid" tooltip="Sum of Sales" size="sm" />
+              }
+
+              return (
+                <Flex className="space-x-6" key={index}>
+                  { icon }
+                  <div className="w-full">
+                    <Text color="green">Ventas { source.name }</Text>
+                    <Metric color="green">{ dataFormatter(source.value) }</Metric>
+                  </div>
+                </Flex>
+              )
+            })}
+
+            <Divider className="mt-4" />
+            <Button className="w-full mb-2" color="green" size="xl" onClick={() => navigate("/pos")}>
+              Ir al modulo POS
+            </Button>
+            <Button className="w-full" color="green" variant="secondary" size="xl">Ir al modulo de ventas</Button>
+            <Divider className="mt-4" />
+            <Button className="w-full mb-2" color="blue" size="xl" onClick={() => navigate("/products/new")}>
+              Crear un nuevo producto
+            </Button>
+            <Button className="w-full mb-2" color="blue" variant="secondary" size="xl" onClick={() => navigate("/products")}>
+              Gestionar el catalogo
+            </Button>
+            <Divider className="mt-4" />
+            <Button className="w-full mb-2" color="blue" size="xl" onClick={() => navigate("/users/new/client")}>
+              Crear un nuevo cliente
+            </Button>
+            <Button className="w-full mb-2" color="blue" variant="secondary" size="xl" onClick={() => navigate("/users/new/provider")}>
+              Crear un nuevo proveedor
+            </Button>
+            <Button className="w-full mb-2" color="blue" variant="secondary" size="xl" onClick={() => navigate("/users/new/employee")}>
+              Crear un nuevo empleado
+            </Button>
+          </Card>
+          <Card>
             <Text>por producto</Text>
             <Metric>Ventas</Metric>
             <Divider className="mt-4" />
@@ -167,81 +234,18 @@ function Dashboard() {
               </List>
             </Card>
           </Col>
-          <Card>
-            <Text>Finanazas del mes</Text>
-            <Metric>{ salesMonthTitle }</Metric>
-
-            <Divider className="mt-4" />
-            <Flex className="space-x-6">
-              <Icon icon={CurrencyDollarIcon} color="green" variant="solid" tooltip="Sum of Sales" size="sm" />
-              <div className="w-full">
-                <Text color="green">Ventas</Text>
-                <Metric color="green">{ dataFormatter(salesThisMonth) }</Metric>
-              </div>
-            </Flex>
-            <Flex className="space-x-6">
-              <Icon icon={CalculatorIcon} color="rose" variant="solid" tooltip="Sum of Sales" size="sm" />
-              <div className="w-full">
-                
-                <Text color="red">Gastos</Text>
-                <Metric color="red">$ 0.00</Metric>
-              </div>
-
-              <Button color="rose" icon={PlusIcon} />
-            </Flex>
-            <Divider className="mt-4" />
-            {salesBySource.map((source, index) => {
-              let icon = null;
-              if (source.name === "posCash") {
-                icon = <Icon icon={CashIcon} color="green" variant="solid" tooltip="Sum of Sales" size="sm" />
-              } else if (source.name === "posCard") {
-                icon = <Icon icon={CreditCardIcon} color="green" variant="solid" tooltip="Sum of Sales" size="sm" />
-              } else if (source.name === "web") {
-                icon = <Icon icon={GlobeIcon} color="green" variant="solid" tooltip="Sum of Sales" size="sm" />
-              }
-
-              return (
-                <Flex className="space-x-6" key={index}>
-                  { icon }
-                  <div className="w-full">
-                    <Text color="green">Ventas { source.name }</Text>
-                    <Metric color="green">{ dataFormatter(source.value) }</Metric>
-                  </div>
-                </Flex>
-              )
-            })}
-
-            <Divider className="mt-4" />
-            <Button className="w-full mb-2" color="green" size="xl" onClick={() => navigate("/pos")}>
-              Ir al modulo POS
-            </Button>
-            <Button className="w-full" color="green" variant="secondary" size="xl">Ir al modulo de ventas</Button>
-            <Divider className="mt-4" />
-            <Button className="w-full mb-2" color="blue" size="xl" onClick={() => navigate("/products/new")}>
-              Crear un nuevo producto
-            </Button>
-            <Button className="w-full mb-2" color="blue" variant="secondary" size="xl" onClick={() => navigate("/products")}>
-              Gestionar el catalogo
-            </Button>
-            <Divider className="mt-4" />
-            <Button className="w-full mb-2" color="blue" size="xl" onClick={() => navigate("/users/new/client")}>
-              Crear un nuevo cliente
-            </Button>
-            <Button className="w-full mb-2" color="blue" variant="secondary" size="xl" onClick={() => navigate("/users/new/provider")}>
-              Crear un nuevo proveedor
-            </Button>
-            <Button className="w-full mb-2" color="blue" variant="secondary" size="xl" onClick={() => navigate("/users/new/employee")}>
-              Crear un nuevo empleado
-            </Button>
-          </Card>
           
-          <Col numColSpan={1} numColSpanLg={3}>
+          <Col numColSpan={1} numColSpanLg={2}>
             <Card>
-              <Text>Title</Text>
-              <Metric>KPI 5</Metric>
+              <Text>Registrados recientemente</Text>
+              <Metric>Clientes</Metric>
             </Card>
           </Col>
           
+          <Card>
+            <Text>Proximas</Text>
+            <Metric>Deudadas automatizadas</Metric>
+          </Card>
         </Grid>
       </SideMenu>
     </>

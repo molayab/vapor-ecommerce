@@ -42,8 +42,7 @@ function ListProducts() {
             <Button onClick={() => navigate("/products/new")}>Nuevo Producto</Button>
           }>
         </ContainerCard>
-
-        <Title className="mt-4">Todos los produtos</Title>
+        
         <ProductGridCard products={products.items.map((i) => ({
           id: i.id,
           title: i.title,

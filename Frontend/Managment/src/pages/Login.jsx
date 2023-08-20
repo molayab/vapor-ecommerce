@@ -1,10 +1,12 @@
 import Header from "../components/Header";
-import { API_URL } from "../App";
+import { API_URL, getAllFeatureFlags } from "../App";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, Grid, Subtitle, TextInput, Title, Callout, Text } from "@tremor/react";
+import { usePostHog } from "posthog-js/react";
 
 function Login() {
+  const postHog = usePostHog()
   const navigate = useNavigate()
   const [errorDescriptionState, setErrorDescriptionState] = useState(undefined)
 
@@ -28,11 +30,25 @@ function Login() {
     const data = await response.json();
 
     if (data.accessToken) {
+      postHog.identify(data.user.id, {
+        email: data.user.email,
+      })
+      postHog.group('role', data.user.rolesString)
+
       localStorage.setItem('token', data.accessToken);
       localStorage.setItem('user', JSON.stringify(data.user))
+
+      postHog.capture('login-success', {
+        email: data.user.email,
+        role: data.user.rolesString,
+      })
       navigate('/dashboard');
     } else if (data.error) {
       setErrorDescriptionState(data.reason);
+      postHog.capture('login-failed', {
+        email: payload.username,
+        reason: data.reason,
+      })
     }
   }
 

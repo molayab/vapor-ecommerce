@@ -15,9 +15,49 @@ import CreateClient from './pages/users/create/CreateClient'
 import CreateEmployee from './pages/users/create/CreateEmployee'
 import CreateProvider from './pages/users/create/CreateProvider'
 import POS from './pages/POS'
+import Settings from './pages/Settings'
+import Orders from './pages/Orders'
+import FeatureNotAvailable from './pages/FeatureNotAvailable'
 
 export const API_URL = 'http://localhost:8080/v1'
 export const RES_URL = 'http://localhost:8080'
+
+
+export async function isFeatureEnabled(key) {
+  const featureFlags = await getAllFeatureFlags()
+  return featureFlags.results.find((flag) => flag.key === key).active
+}
+export async function getAllFeatureFlags() {
+  // Get local feature flags check for expired flags
+  if (localStorage.getItem('featureFlags')) {
+    const localFlags = JSON.parse(localStorage.getItem('featureFlags'))
+
+    if (localFlags.expiresAt < Date.now()) {
+      localStorage.removeItem('featureFlags')
+    } else {
+      return localFlags.flags
+    }
+  }
+
+  // Get remote feature flags
+  const response = await fetch(API_URL + '/settings/flags', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  })
+
+  const data = await response.json()
+  if (data.error) {
+    return
+  }
+
+  // Save remote feature flags
+  const flags = {
+    expiresAt: Date.now() + 1000 * 60 * 60,
+    flags: data
+  }
+  localStorage.setItem('featureFlags', JSON.stringify(flags))
+  return flags.flags
+}
 
 const { fetch: originalFetch } = window;
 window.fetch = async (...args) => {
@@ -117,6 +157,24 @@ function App() {
     </RestrictedRoute>
   )
 
+  const settings = (
+    <RestrictedRoute>
+      <Settings />
+    </RestrictedRoute>
+  )
+
+  const orders = (
+    <RestrictedRoute>
+      <Orders />
+    </RestrictedRoute>
+  )
+
+  const restrictedFeature = (
+    <RestrictedRoute>
+      <FeatureNotAvailable />
+    </RestrictedRoute>
+  )
+
   return (
     <>
       <BrowserRouter>
@@ -135,7 +193,9 @@ function App() {
           <Route path='/products/:pid/variants/:id/edit' element={createProductVariant} />
 
           <Route path='/pos' element={pos} />
-
+          <Route path='/settings' element={settings} />
+          <Route path='/orders' element={orders} />
+          <Route path='/feature-not-available' element={restrictedFeature} />
         </Routes>
       </BrowserRouter>
     </>
