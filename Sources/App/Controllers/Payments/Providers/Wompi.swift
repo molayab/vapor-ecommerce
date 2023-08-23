@@ -112,16 +112,16 @@ struct Wompi: PaymentGateway {
             throw Abort(.internalServerError)
         }
         
-        let wompiRequest = url.appending(queryItems: [
+        /*let wompiRequest = url.appending(queryItems: [
             URLQueryItem(name: "public-key", value: checkout.publicKey),
             URLQueryItem(name: "currency", value: checkout.currency.rawValue),
             URLQueryItem(name: "amount-in-cents", value: String(checkout.amountInCents)),
             URLQueryItem(name: "reference", value: checkout.reference),
             URLQueryItem(name: "redirect-url", value: checkout.redirectUrl),
             URLQueryItem(name: "signature", value: checkout.signature)
-        ])
+        ])*/
         
-        return req.redirect(to: wompiRequest.absoluteString)
+        return req.redirect(to: "https://checkout.wompi.co/p/")
     }
     
     private func getRedirectionUrl(txid: String) -> String {
