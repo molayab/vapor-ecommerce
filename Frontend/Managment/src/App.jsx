@@ -18,6 +18,9 @@ import POS from './pages/POS'
 import Settings from './pages/Settings'
 import Orders from './pages/Orders'
 import FeatureNotAvailable from './pages/FeatureNotAvailable'
+import AddCost from './pages/AddCost'
+import Finances from './pages/Finances'
+import UpdateProduct from './pages/products/UpdateProduct'
 
 export const API_URL = 'http://localhost:8080/v1'
 export const RES_URL = 'http://localhost:8080'
@@ -175,6 +178,24 @@ function App() {
     </RestrictedRoute>
   )
 
+  const addCost = (
+    <RestrictedRoute>
+      <AddCost />
+    </RestrictedRoute>
+  )
+
+  const finances = (
+    <RestrictedRoute>
+      <Finances />
+    </RestrictedRoute>
+  )
+
+  const updateProduct = (
+    <RestrictedRoute>
+      <UpdateProduct />
+    </RestrictedRoute>
+  )
+
   return (
     <>
       <BrowserRouter>
@@ -188,14 +209,15 @@ function App() {
           <Route path='/users/new/employee' element={createEmployee} />
           <Route path='/products' element={listProducts} />
           <Route path='/products/new' element={createProduct} />
-          <Route path='/products/:id' element={createProduct} />
-          <Route path='/products/:pid/variant' element={createProductVariant} />
-          <Route path='/products/:pid/variants/:id/edit' element={createProductVariant} />
-
+          <Route path='/products/:id' element={updateProduct} />
+          <Route path='/products/:id/variant' element={createProductVariant} />
+          <Route path='/products/:pid/variants/:id/edit' element={updateProduct} />
           <Route path='/pos' element={pos} />
           <Route path='/settings' element={settings} />
           <Route path='/orders' element={orders} />
           <Route path='/feature-not-available' element={restrictedFeature} />
+          <Route path='/add-cost' element={addCost} />
+          <Route path='/finances' element={finances} />
         </Routes>
       </BrowserRouter>
     </>
@@ -203,3 +225,4 @@ function App() {
 }
 
 export default App
+//  <Route path='/products/:pid/variants/:id/edit' element={createProductVariant} />

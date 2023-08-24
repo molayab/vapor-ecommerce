@@ -97,7 +97,7 @@ extension ProductVariant {
         var availability: Bool
         var tax: Double
         var shippingCost: Double?
-        var images: [UploadImage]?
+        var images: [ProductImage.UploadImage]?
         
         @discardableResult
         func create(for request: Request, product: Product) async throws -> ProductVariant {

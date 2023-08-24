@@ -9,9 +9,7 @@ function Header() {
       <div className='flex-grow'></div>
       <div className='flex-none'>
         <div className='flex gap-2'>
-        
           <input type='text' className='p-2 rounded-md' placeholder='Search...' />
-
           <ul className='flex items-center gap-2'>
             <li>
               <a href='#' className='p-2 rounded-md bg-gray-200 hover:bg-gray-300'>Login</a>

@@ -3,68 +3,16 @@ import Vapor
 import SwiftGD
 import Queues
 
-struct UploadImage: Content {
-    var size: Int
-    var name: String
-    var ext: String
-    var dat: Data
-}
-
-struct ImageResizerJob: AsyncJob {
-    struct Payload: Codable {
-        let image: UploadImage
-        let parentId: UUID
-        let id: UUID
-    }
-    
-    func dequeue(_ context: QueueContext, _ payload: Payload) async throws {
-        guard let ext = payload.image.ext.split(separator: "/").last else {
-            throw Abort(.badRequest)
-        }
-        
-        let publicFolder = context.application.directory.publicDirectory
-            + "images/catalog/" + payload.parentId.uuidString + "/" + payload.id.uuidString + "/"
-        let fileManager = FileManager.default
-        let fileName = UUID().uuidString + "." + ext
-        let filePath = publicFolder + fileName
-        
-        // Write to disk the original image
-        
-        guard fileManager.fileExists(atPath: publicFolder) else {
-            try fileManager.createDirectory(atPath: publicFolder, withIntermediateDirectories: true)
-            return try await dequeue(context, payload)
-        }
-        guard fileManager.createFile(atPath: filePath, contents: payload.image.dat) else {
-            throw Abort(.notAcceptable)
-        }
-        
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            let image = try Image(data: payload.image.dat)
-
-            group.addTask {
-                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 256)
-            }
-            
-            group.addTask {
-                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 512)
-            }
-            
-            group.addTask {
-                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 1024)
-            }
-
-            try await group.waitForAll()
-        }
-    }
-
-    func error(_ context: QueueContext, _ error: Error, _ payload: Payload) async throws {
-        // If you don't want to handle errors you can simply return. You can also omit this function entirely.
-    }
-}
-
 struct ProductImage: Codable {
     static let schema = "product_images"
     static let allowedExtensions = ["jpg", "jpeg", "png"]
+    
+    struct UploadImage: Content {
+        var size: Int
+        var name: String
+        var ext: String
+        var dat: Data
+    }
 
     static func storeImageVariant(_ image: Image, _ publicFolder: String, _ fileName: String, size: Int) throws {
         guard let thumbnail = image.resizedTo(width: size) else {

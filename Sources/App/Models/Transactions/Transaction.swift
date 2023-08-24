@@ -150,6 +150,20 @@ extension Transaction {
                 try await product.save(on: req.db)
             }
             
+            // If the order is paid, add a sales record
+            if model.status == .paid {
+                let sales = try await model.$items.get(on: req.db).get()
+                try await sales.asyncMap { sale in
+                    let record = Sale()
+                    record.order = model
+                    record.currency = sale.currency
+                    record.amount = Double(sale.quantity) * sale.price
+                    record.date = Date()
+                    record.type = .sale
+                    return record
+                }.create(on: req.db)
+            }
+            
             return model
         }
     }

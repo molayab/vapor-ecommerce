@@ -38,7 +38,7 @@ struct ProductImagesController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        let images = try req.content.decode([UploadImage].self)
+        let images = try req.content.decode([ProductImage.UploadImage].self)
         for image in images {
             try await ProductImage.upload(image: image, forVariant: variant, on: req)
         }
@@ -54,7 +54,7 @@ struct ProductImagesController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        let image = try req.content.decode(UploadImage.self)
+        let image = try req.content.decode(ProductImage.UploadImage.self)
         try await ProductImage.upload(image: image, forVariant: variant, on: req)
 
         return ["status": "success"]

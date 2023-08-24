@@ -19,7 +19,7 @@ function Dashboard() {
   const navigate = useNavigate()
 
   const fetchOrderStats = async () => {
-    const response = await fetch(`${API_URL}/orders/stats`, {
+    const response = await fetch(`${API_URL}/dashboard/stats`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     })

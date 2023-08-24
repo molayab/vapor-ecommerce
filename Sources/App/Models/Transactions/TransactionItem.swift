@@ -25,6 +25,9 @@ final class TransactionItem: Model {
     @Field(key: "total")
     var total: Double
     
+    @Enum(key: "currency")
+    var currency: Currency
+    
     @Parent(key: "transaction_id")
     var transaction: Transaction
     
@@ -81,6 +84,7 @@ extension TransactionItem {
                 .field("discount", .double, .required)
                 .field("tax", .double, .required)
                 .field("total", .double, .required)
+                .field("currency", .string, .required)
                 .field("transaction_id", .uuid, .required, .references("transactions", "id"))
                 .create()
         }
