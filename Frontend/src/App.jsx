@@ -22,8 +22,9 @@ import Finances from './pages/Finances'
 import UpdateProduct from './pages/products/UpdateProduct'
 import UpdateProductVariant from './pages/products/UpdateProductVariant'
 
-export const API_URL = 'http://localhost:8080/v1'
-export const RES_URL = 'http://localhost:8080'
+const setttings = JSON.parse(sessionStorage.getItem('settings'))
+export const API_URL = setttings.apiUrl + '/v1'
+export const RES_URL = setttings.apiUrl
 
 export async function isFeatureEnabled(key) {
   const featureFlags = await getAllFeatureFlags()
