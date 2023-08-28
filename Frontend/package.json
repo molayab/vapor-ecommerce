@@ -1,0 +1,37 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@heroicons/react": "^1.0.6",
+    "@tremor/react": "^3.6.1",
+    "posthog-js": "^1.77.0",
+    "react": "^18.2.0",
+    "react-barcode": "^1.4.6",
+    "react-dom": "^18.2.0",
+    "react-native-a-beep": "^1.2.0",
+    "react-pro-sidebar": "^1.1.0-alpha.1",
+    "react-qr-reader": "^3.0.0-beta-1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.18",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react-swc": "^3.3.2",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.46.0",
+    "eslint-plugin-react": "^7.33.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "postcss": "^8.4.27",
+    "react-router-dom": "^6.14.2",
+    "tailwindcss": "^3.3.3",
+    "vite": "^4.4.8"
+  }
+}
