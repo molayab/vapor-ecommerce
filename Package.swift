@@ -46,11 +46,10 @@ let package = Package(
             .target(name: "App"),
             .product(name: "XCTVapor", package: "vapor"),
         ]),
-        
         .binaryTarget(
             name: "SwiftLintBinary",
-            url: "https://github.com/juozasvalancius/SwiftLint/releases/download/spm-accommodation/SwiftLintBinary-macos.artifactbundle.zip",
-            checksum: "cdc36c26225fba80efc3ac2e67c2e3c3f54937145869ea5dbcaa234e57fc3724"),
+            url: "https://github.com/realm/SwiftLint/releases/download/0.52.4/SwiftLintBinary-macos.artifactbundle.zip",
+            checksum: "8a8095e6235a07d00f34a9e500e7568b359f6f66a249f36d12cd846017a8c6f5"),
         .plugin(
             name: "Swiftlint",
             capability: .buildTool(),
