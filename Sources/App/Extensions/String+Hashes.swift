@@ -1,5 +1,4 @@
-import Foundation
-import CryptoKit
+import Vapor
 
 extension String {
     func sha256() -> String {
