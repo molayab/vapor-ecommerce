@@ -4,7 +4,6 @@ import FluentPostgresDriver
 import FluentSQLiteDriver
 import Vapor
 import Redis
-import CSRF
 import JWT
 import Gatekeeper
 import QueuesRedisDriver
