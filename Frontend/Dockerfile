@@ -18,4 +18,4 @@ RUN npm run build
 
 # Copy built React app
 FROM nginx:alpine
-COPY --from=react-build --chown=nginx:nginx /app/dist /usr/share/nginx/html
+COPY --from=react-build --chown=nginx:nginx /app/dist /usr/share/nginx/html/vapor
