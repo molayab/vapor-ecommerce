@@ -1,18 +1,31 @@
+import { 
+    Grid, 
+    SearchSelect, 
+    SearchSelectItem, 
+    TextInput, 
+    Title, 
+    MultiSelect, 
+    MultiSelectItem, 
+    Select, 
+    SelectItem, 
+    Button, 
+    Text 
+} from "@tremor/react"
+
 import SideMenu from "../../../components/SideMenu"
 import ContainerCard from "../../../components/ContainerCard"
-import { Grid, SearchSelect, SearchSelectItem, TextInput, Title, MultiSelect, MultiSelectItem, Select, SelectItem, Button, Text } from "@tremor/react"
 import { useEffect, useState } from "react"
-import { API_URL } from "../../../App";
-import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../../App"
+import { useNavigate } from "react-router-dom"
 
 function CreateEmployee() {
-    const [roles, setRoles] = useState([]);
-    const [allRoles, setAllRoles] = useState([]);
-    const [countries, setCountries] = useState([]);
-    const [country, setCountry] = useState('');
-    const [activated, setActivated] = useState(0);
-    const [nationalIdType, setNationalIdType] = useState('');
-    const [nationalIds, setNationalIds] = useState([]);
+    const [roles, setRoles] = useState([])
+    const [allRoles, setAllRoles] = useState([])
+    const [countries, setCountries] = useState([])
+    const [country, setCountry] = useState('')
+    const [activated, setActivated] = useState(0)
+    const [nationalIdType, setNationalIdType] = useState('')
+    const [nationalIds, setNationalIds] = useState([])
 
     const navigate = useNavigate();
 

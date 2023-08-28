@@ -1,13 +1,21 @@
-import { useEffect, useState } from "react";
+import { 
+    CheckCircleIcon, 
+    ExclamationCircleIcon, 
+    EyeIcon, 
+    EyeOffIcon, 
+    SaveIcon, 
+    TrashIcon 
+} from "@heroicons/react/solid"
+
+import { useEffect, useState } from "react"
 import { Button, Callout } from "@tremor/react"
-import { CheckCircleIcon, ExclamationCircleIcon, EyeIcon, EyeOffIcon, SaveIcon, TrashIcon } from "@heroicons/react/solid";
-import { useParams, useNavigate } from "react-router-dom";
-import { useProduct } from "../../hooks/products";
-import { deleteProduct, updateProduct } from "../../components/services/products";
-import Loader from "../../components/Loader";
-import ProductForm from "./_components/ProductForm";
-import ContainerCard from "../../components/ContainerCard";
-import SideMenu from "../../components/SideMenu";
+import { useParams, useNavigate } from "react-router-dom"
+import { useProduct } from "../../hooks/products"
+import { deleteProduct, updateProduct } from "../../components/services/products"
+import Loader from "../../components/Loader"
+import ProductForm from "./_components/ProductForm"
+import ContainerCard from "../../components/ContainerCard"
+import SideMenu from "../../components/SideMenu"
 
 function UpdateProduct() {
     const navigate = useNavigate()

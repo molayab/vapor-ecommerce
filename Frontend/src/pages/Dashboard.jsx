@@ -1,13 +1,34 @@
-import { Grid, Col, Flex, Card, Metric, Text, Icon, Title, Table, TableHead, TableRow, TableHeaderCell, TableBody, TableCell, Badge, Divider, Subtitle, Button, List, ListItem } from "@tremor/react";
-import { DonutChart } from "@tremor/react";
-import { StatusOnlineIcon } from "@heroicons/react/outline";
-import SideMenu from "../components/SideMenu";
-import { AreaChart } from "@tremor/react";
-import { CashIcon, CalculatorIcon, CreditCardIcon, CurrencyDollarIcon } from "@heroicons/react/outline";
-import { useEffect, useState } from "react";
-import { API_URL } from "../App";
-import { GlobeIcon, PlusIcon } from "@heroicons/react/solid";
-import { useNavigate } from "react-router-dom";
+import { 
+  Grid, 
+  Col, 
+  Flex, 
+  Card, 
+  Metric, 
+  Text, 
+  Icon, 
+  Title, 
+  Table, 
+  TableHead, 
+  TableRow, 
+  TableHeaderCell, 
+  TableBody, 
+  TableCell, 
+  Badge, 
+  Divider,  
+  Button, 
+  List, 
+  ListItem 
+} from "@tremor/react"
+
+import { DonutChart } from "@tremor/react"
+import { StatusOnlineIcon } from "@heroicons/react/outline"
+import { AreaChart } from "@tremor/react"
+import { CashIcon, CalculatorIcon, CreditCardIcon, CurrencyDollarIcon } from "@heroicons/react/outline"
+import { useEffect, useState } from "react"
+import { API_URL } from "../App"
+import { GlobeIcon, PlusIcon } from "@heroicons/react/solid"
+import { useNavigate } from "react-router-dom"
+import SideMenu from "../components/SideMenu"
 
 function Dashboard() {
   const [salesByMonth, setSalesByMonth] = useState([])

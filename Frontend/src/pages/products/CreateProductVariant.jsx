@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "@tremor/react";
-import { SaveAsIcon } from "@heroicons/react/solid";
-import { createVariant } from "../../components/services/variants";
-import ContainerCard from "../../components/ContainerCard";
-import ProductVariantForm from "./_components/ProductVariantForm";
-import SideMenu from "../../components/SideMenu";
+import { useState } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { Button } from "@tremor/react"
+import { SaveAsIcon } from "@heroicons/react/solid"
+import { createVariant } from "../../components/services/variants"
+import ContainerCard from "../../components/ContainerCard"
+import ProductVariantForm from "./_components/ProductVariantForm"
+import SideMenu from "../../components/SideMenu"
 
 function CreateProductVariant() {
     let { id } = useParams()

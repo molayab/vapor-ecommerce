@@ -1,12 +1,12 @@
-import SideMenu from "../../components/SideMenu";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import ContainerCard from "../../components/ContainerCard";
+import SideMenu from "../../components/SideMenu"
+import ContainerCard from "../../components/ContainerCard"
+import Loader from "../../components/Loader"
+import ProductForm from "./_components/ProductForm"
+import { useNavigate } from "react-router-dom"
+import { useState } from "react"
 import { Button, Callout } from "@tremor/react"
-import { ExclamationCircleIcon, EyeIcon, EyeOffIcon, SaveIcon  } from "@heroicons/react/solid";
-import Loader from "../../components/Loader";
-import ProductForm from "./_components/ProductForm";
-import { createProduct } from "../../components/services/products";
+import { ExclamationCircleIcon, EyeIcon, EyeOffIcon, SaveIcon } from "@heroicons/react/solid"
+import { createProduct } from "../../components/services/products"
 
 function CreateProduct() {
     const navigate = useNavigate()

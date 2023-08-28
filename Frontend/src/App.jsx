@@ -1,12 +1,10 @@
 import { useState } from 'react'
-
-import './assets/App.css'
 import { Route, BrowserRouter, Routes } from 'react-router-dom'
+
 import RestrictedRoute from './components/RestrictedRoute'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import ListUsers from './pages/users/ListUsers'
-
 import ListProducts from './pages/products/ListProducts'
 import CreateProduct from './pages/products/CreateProduct'
 import CreateProductVariant from './pages/products/CreateProductVariant'
@@ -22,9 +20,10 @@ import Finances from './pages/Finances'
 import UpdateProduct from './pages/products/UpdateProduct'
 import UpdateProductVariant from './pages/products/UpdateProductVariant'
 
+import './assets/App.css'
+
 const getDomainWithoutSubdomain = url => {
   const urlParts = new URL(url).hostname.split('.')
-
   return urlParts
     .slice(0)
     .slice(-(urlParts.length === 4 ? 3 : 2))

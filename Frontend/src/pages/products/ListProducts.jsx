@@ -1,13 +1,13 @@
 
-import SideMenu from "../../components/SideMenu";
+import SideMenu from "../../components/SideMenu"
 import ContainerCard from "../../components/ContainerCard"
 import ProductGridCard from "./_components/ProductGridCard"
-import Loader from "../../components/Loader";
-import { Button } from "@tremor/react";
+import Loader from "../../components/Loader"
+import { Button } from "@tremor/react"
 import { useProducts } from "../../hooks/products"
-import { useNavigate } from "react-router-dom";
-import { dataFormatter } from "../../helpers/dateFormatter";
-import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"
+import { currencyFormatter } from "../../helpers/dateFormatter"
+import { useEffect, useState } from "react"
 
 function ListProducts() {
     const products = useProducts()
@@ -22,8 +22,8 @@ function ListProducts() {
                 stars: i.numberOfStars,
                 subtitle: `Variantes (${i.variants.length})`,
                 stock: i.stock,
-                minimumSalePrice: dataFormatter(i.minimumSalePrice),
-                averageSalePrice: dataFormatter(i.averageSalePrice),
+                minimumSalePrice: currencyFormatter(i.minimumSalePrice),
+                averageSalePrice: currencyFormatter(i.averageSalePrice),
                 variants: i.variants || [],
                 isAvailable: i.variants.reduce((acc, v) => acc || v.isAvailable, false),
             })))

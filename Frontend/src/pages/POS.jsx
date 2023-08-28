@@ -1,11 +1,38 @@
-import React, { Component, useEffect, useState } from 'react'
-import { QrReader } from 'react-qr-reader'
+import React, { useEffect, useState } from 'react'
 import SideMenu from '../components/SideMenu'
-import { Card, Flex, Grid, Button, Title, Metric, Subtitle, List, ListItem, SearchSelect, SearchSelectItem, Icon, Table, TableHead, TableRow, TableHeaderCell, TableBody, TableCell, NumberInput } from '@tremor/react'
-import ContainerCard from '../components/ContainerCard'
-import { CashIcon, CreditCardIcon, CurrencyDollarIcon, MinusCircleIcon, SaveIcon, SearchIcon, TrashIcon } from '@heroicons/react/solid'
-import { API_URL, getAllFeatureFlags } from '../App'
 import Checkout from './Checkout'
+
+import { QrReader } from 'react-qr-reader'
+import { 
+    Card, 
+    Flex, 
+    Button, 
+    Title, 
+    Metric,
+    Subtitle, 
+    List, 
+    ListItem, 
+    SearchSelect, 
+    SearchSelectItem, 
+    Icon, 
+    Table, 
+    TableHead, 
+    TableRow, 
+    TableHeaderCell, 
+    TableBody, 
+    TableCell, 
+    NumberInput 
+} from '@tremor/react'
+
+import { 
+    CreditCardIcon, 
+    CurrencyDollarIcon, 
+    MinusCircleIcon, 
+    SearchIcon, 
+    TrashIcon 
+} from '@heroicons/react/solid'
+
+import { API_URL } from '../App'
 import { isFeatureEnabled } from "../App"
 import { useNavigate } from 'react-router-dom'
 

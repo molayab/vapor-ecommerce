@@ -1,10 +1,10 @@
 import SideMenu from "../../../components/SideMenu"
 import ContainerCard from "../../../components/ContainerCard"
-import { Grid, SearchSelect, SearchSelectItem, TextInput, Title, MultiSelect, MultiSelectItem, Select, SelectItem, Button, Text } from "@tremor/react"
+import CreateUserForm from "./_components/CreateUserForm"
+import { Button } from "@tremor/react"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { API_URL } from "../../../App"
-import CreateUserForm from "./_components/CreateUserForm"
 
 function CreateProvider() {
     const [countries, setCountries] = useState([]);

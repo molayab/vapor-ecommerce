@@ -1,9 +1,19 @@
-import { Card, Flex, Grid, NumberInput, Select, SelectItem, Subtitle, Title } from "@tremor/react";
-import { PencilIcon, TrashIcon } from "@heroicons/react/outline";
-import RateStarList from "../../../components/RateStarList";
-import { useNavigate } from "react-router-dom";
-import { RES_URL } from "../../../App";
-import { deleteProduct } from "../../../components/services/products";
+import { 
+    Card, 
+    Flex, 
+    Grid, 
+    NumberInput, 
+    Select, 
+    SelectItem, 
+    Subtitle, 
+    Title 
+} from "@tremor/react"
+
+import { PencilIcon, TrashIcon } from "@heroicons/react/outline"
+import { useNavigate } from "react-router-dom"
+import { RES_URL } from "../../../App"
+import { deleteProduct } from "../../../components/services/products"
+import RateStarList from "../../../components/RateStarList"
 
 function ProductGridCard({ products, setProducts }) {
     const navigate = useNavigate()

@@ -1,10 +1,22 @@
 import ContainerCard from "../components/ContainerCard"
 import SideMenu from "../components/SideMenu"
+
 import { API_URL } from "../App"
 import { useState, useEffect } from "react"
-import { Badge, Button, Icon, Select, SelectItem, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from "@tremor/react"
 import { PencilIcon, TrashIcon } from "@heroicons/react/solid"
-import { isFeatureEnabled } from "../App"
+import { 
+    Badge, 
+    Button, 
+    Icon, 
+    Select, 
+    SelectItem, 
+    Table, 
+    TableBody, 
+    TableCell, 
+    TableHead, 
+    TableHeaderCell, 
+    TableRow 
+} from "@tremor/react"
 
 function Orders() {
     const [orders, setOrders] = useState({ items: [] })

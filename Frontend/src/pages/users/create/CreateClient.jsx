@@ -7,16 +7,15 @@ import { useNavigate } from "react-router-dom"
 import { API_URL } from "../../../App"
 
 function CreateClient() {
-    const [roles, setRoles] = useState([]);
-    const [allRoles, setAllRoles] = useState([]);
-    const [countries, setCountries] = useState([]);
-    const [country, setCountry] = useState('');
-    const [activated, setActivated] = useState(0);
-    const [nationalIdType, setNationalIdType] = useState('');
-    const [nationalIds, setNationalIds] = useState([]);
+    const [roles, setRoles] = useState([])
+    const [allRoles, setAllRoles] = useState([])
+    const [countries, setCountries] = useState([])
+    const [country, setCountry] = useState('')
+    const [activated, setActivated] = useState(0)
+    const [nationalIdType, setNationalIdType] = useState('')
+    const [nationalIds, setNationalIds] = useState([])
 
-    const navigate = useNavigate();
-
+    const navigate = useNavigate()
     const fetchInitialData = async () => {
         let response
         response = await fetch(API_URL + '/countries', {

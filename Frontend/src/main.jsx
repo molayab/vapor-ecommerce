@@ -1,11 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
-import './assets/index.css'
+import posthog from 'posthog-js'
 
-import posthog from 'posthog-js';
 import { PostHogProvider} from 'posthog-js/react'
 import { API_URL } from './App.jsx'
+
+import './assets/index.css'
 
 (async () => {
   const settings = (await (await fetch(API_URL + '/settings', {

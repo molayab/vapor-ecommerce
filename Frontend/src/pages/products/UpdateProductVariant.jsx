@@ -1,15 +1,15 @@
-import { useNavigate, useParams } from "react-router-dom";
-import { updateVariant } from "../../components/services/variants";
-import { useVariant } from "../../hooks/variants";
-import { useEffect, useState } from "react";
-import { Button } from "@tremor/react";
-import { SaveAsIcon } from "@heroicons/react/solid";
-import { readAsDataURL, toBase64 } from "./CreateProductVariant";
-import Loader from "../../components/Loader";
-import ContainerCard from "../../components/ContainerCard";
-import SideMenu from "../../components/SideMenu";
-import ProductVariantForm from "./_components/ProductVariantForm";
-import { removeImage, uploadMultipleImages } from "../../components/services/images";
+import { useParams } from "react-router-dom"
+import { updateVariant } from "../../components/services/variants"
+import { useVariant } from "../../hooks/variants"
+import { useEffect, useState } from "react"
+import { Button } from "@tremor/react"
+import { SaveAsIcon } from "@heroicons/react/solid"
+import { readAsDataURL, toBase64 } from "./CreateProductVariant"
+import { removeImage, uploadMultipleImages } from "../../components/services/images"
+import Loader from "../../components/Loader"
+import ContainerCard from "../../components/ContainerCard"
+import SideMenu from "../../components/SideMenu"
+import ProductVariantForm from "./_components/ProductVariantForm"
 
 function UpdateProductVariant() {
     const { pid, id } = useParams()

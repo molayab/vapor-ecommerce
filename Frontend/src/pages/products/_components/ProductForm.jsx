@@ -1,14 +1,31 @@
-import React, { useEffect, useState } from "react"
-import Loader from "../../../components/Loader"
+import { 
+    Button, 
+    Card, 
+    Flex, 
+    Grid, 
+    Icon, 
+    Select, 
+    SelectItem, 
+    Subtitle, 
+    Table, 
+    TableBody, 
+    TableCell, 
+    TableHead, 
+    TableHeaderCell, 
+    TableRow, 
+    TextInput, 
+    Title 
+} from "@tremor/react"
 
+import Loader from "../../../components/Loader"
 import { useCategories } from "../../../hooks/categories"
 import { RES_URL } from "../../../App"
-import { Button, Card, Flex, Grid, Icon, SearchSelect, SearchSelectItem, Select, SelectItem, Subtitle, Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow, TextInput, Title } from "@tremor/react"
 import { CurrencyDollarIcon, TrashIcon } from "@heroicons/react/solid"
 import { BarChart } from "@tremor/react"
-import { dataFormatter } from "../../../helpers/dateFormatter"
+import { currencyFormatter } from "../../../helpers/dateFormatter"
 import { createCategory } from "../../../components/services/categories"
 import { useNavigate, useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
 
 function ProductForm({product, setProduct, onSave}) {
     let { id } = useParams()
@@ -166,7 +183,7 @@ function ProductForm({product, setProduct, onSave}) {
             colors={["rose", "green", "yellow", "purple", "red"]} 
             showXAxis={true}
             layout="vertical"
-            valueFormatter={dataFormatter}
+            valueFormatter={currencyFormatter}
         />
 
         <Table>
@@ -183,10 +200,10 @@ function ProductForm({product, setProduct, onSave}) {
                 return (
                 <TableRow>
                     <TableCell>{variant.name}</TableCell>
-                    <TableCell>{dataFormatter(variant.price)}</TableCell>
+                    <TableCell>{currencyFormatter(variant.price)}</TableCell>
                     <TableCell>{variant.stock}</TableCell>
-                    <TableCell>{dataFormatter(variant.price * variant.stock)}</TableCell>
-                    <TableCell>{dataFormatter(variant.price * variant.stock * 0.16)}</TableCell>
+                    <TableCell>{currencyFormatter(variant.price * variant.stock)}</TableCell>
+                    <TableCell>{currencyFormatter(variant.price * variant.stock * 0.16)}</TableCell>
                     <TableCell>({ variant.sales.length }) $ { variant.sales.map((sale) => sale.total).reduce((a, b) => a + b, 0) }</TableCell>
                 </TableRow>
                 )}) : <Title>No hay variantes</Title>}

@@ -1,9 +1,16 @@
-import Header from "../components/Header";
-import { API_URL, getAllFeatureFlags } from "../App";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button, Card, Grid, Subtitle, TextInput, Title, Callout, Text } from "@tremor/react";
-import { usePostHog } from "posthog-js/react";
+import { API_URL } from "../App"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { usePostHog } from "posthog-js/react"
+import { 
+  Button, 
+  Card, 
+  Subtitle, 
+  TextInput, 
+  Title, 
+  Callout, 
+  Text 
+} from "@tremor/react"
 
 function Login() {
   const postHog = usePostHog()
@@ -11,7 +18,7 @@ function Login() {
   const [errorDescriptionState, setErrorDescriptionState] = useState(undefined)
 
   const onSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
 
     const payload = {
       username: e.target.email.value,
@@ -23,7 +30,7 @@ function Login() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
-    });
+    })
 
     const data = await response.json()
 

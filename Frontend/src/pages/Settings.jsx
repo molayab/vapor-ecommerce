@@ -1,15 +1,29 @@
-import { Button, Card, Col, Divider, Flex, Grid, Icon, List, ListItem, Metric, Select, SelectItem, Subtitle, TextInput, Title } from "@tremor/react";
-import ContainerCard from "../components/ContainerCard";
-import SideMenu from "../components/SideMenu";
-import { PlusIcon, SaveIcon } from "@heroicons/react/solid";
-import { useEffect, useState } from "react";
-import { API_URL } from "../App";
-import { useCategories } from "../hooks/categories";
-import Loader from "../components/Loader";
-import { PencilIcon, TrashIcon } from "@heroicons/react/outline";
-import { createCategory, deleteCategory, updateCategory } from "../components/services/categories";
-import { dataFormatter } from "../helpers/dateFormatter";
-import { useFeatureFlags } from "../hooks/featureFlags";
+import { 
+    Button, 
+    Card, 
+    Divider, 
+    Flex, 
+    Grid, 
+    Icon, 
+    List, 
+    ListItem, 
+    Metric, 
+    Subtitle, 
+    TextInput, 
+    Title 
+} from "@tremor/react"
+
+import { PlusIcon, SaveIcon } from "@heroicons/react/solid"
+import { useEffect, useState } from "react"
+import { API_URL } from "../App"
+import { useCategories } from "../hooks/categories"
+import { PencilIcon, TrashIcon } from "@heroicons/react/outline"
+import { createCategory, deleteCategory, updateCategory } from "../components/services/categories"
+import { currencyFormatter } from "../helpers/dateFormatter"
+import { useFeatureFlags } from "../hooks/featureFlags"
+import Loader from "../components/Loader"
+import ContainerCard from "../components/ContainerCard"
+import SideMenu from "../components/SideMenu"
 
 function Settings() {
     const categories = useCategories()
@@ -202,7 +216,7 @@ ASEGURATE DE ACTUALIZAR LOS PRODUCTOS ANTES DE ELIMINAR ESTA CATEGORIA.`))
                 <List>
                     <ListItem>
                         <span className="">Costo fijo de transaccion</span>
-                        <span className="">{ dataFormatter(settings.wompi.costs.fixed) } { settings.wompi.costs.currency }</span>
+                        <span className="">{ currencyFormatter(settings.wompi.costs.fixed) } { settings.wompi.costs.currency }</span>
                     </ListItem>
                     <ListItem>
                         <span className="">Cargo de transaccion</span>

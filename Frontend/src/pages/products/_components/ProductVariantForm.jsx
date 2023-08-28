@@ -1,10 +1,25 @@
-import React, { useEffect, useState } from 'react'
-import { Card, Flex, Grid, Icon, List, ListItem, Metric, NumberInput, Select, SelectItem, Subtitle, TextInput, Title } from "@tremor/react";
-import { CurrencyDollarIcon, TrashIcon, TruckIcon, VariableIcon } from "@heroicons/react/solid";
-import { useRequestVariantSKU } from '../../../hooks/variants';
-import Loader from '../../../components/Loader';
-import { dataFormatter } from '../../../helpers/dateFormatter';
-import { RES_URL } from '../../../App';
+import { 
+    Card, 
+    Flex, 
+    Grid, 
+    Icon, 
+    List, 
+    ListItem, 
+    Metric, 
+    NumberInput, 
+    Select, 
+    SelectItem, 
+    Subtitle, 
+    TextInput, 
+    Title 
+} from "@tremor/react"
+
+import { useEffect, useState } from 'react'
+import { CurrencyDollarIcon, TrashIcon, TruckIcon, VariableIcon } from "@heroicons/react/solid"
+import { useRequestVariantSKU } from '../../../hooks/variants'
+import { currencyFormatter } from '../../../helpers/dateFormatter'
+import { RES_URL } from '../../../App'
+import Loader from '../../../components/Loader'
 
 function ProductVariantForm({ productVariant, setVariant, resources, setResources, imageHandler }) {
     const settings = JSON.parse(sessionStorage.getItem('settings'))
@@ -123,7 +138,7 @@ function ProductVariantForm({ productVariant, setVariant, resources, setResource
                     <div>
                     <Subtitle>Ganancia Neta</Subtitle>
                     <Metric>
-                        { dataFormatter(productVariant.salePrice - productVariant.price - (productVariant.salePrice * productVariant.tax) - (productVariant.salePrice * paymentFee) - fixedPaymentCost - productVariant.shippingCost) } 
+                        { currencyFormatter(productVariant.salePrice - productVariant.price - (productVariant.salePrice * productVariant.tax) - (productVariant.salePrice * paymentFee) - fixedPaymentCost - productVariant.shippingCost) } 
                     </Metric>
                     </div>
                 </Flex>
@@ -138,31 +153,31 @@ function ProductVariantForm({ productVariant, setVariant, resources, setResource
                     <List className="w-full">
                     <ListItem>
                         <span>Ganancia</span>
-                        <span>{ dataFormatter(productVariant.salePrice - productVariant.price - productVariant.shippingCost) } </span>
+                        <span>{ currencyFormatter(productVariant.salePrice - productVariant.price - productVariant.shippingCost) } </span>
                     </ListItem>
                     <ListItem>
                         <span>Costo de pasarela pagos</span>
-                        <span>{ dataFormatter((productVariant.salePrice * paymentFee) + fixedPaymentCost) }  </span>
+                        <span>{ currencyFormatter((productVariant.salePrice * paymentFee) + fixedPaymentCost) }  </span>
                     </ListItem>
                     <ListItem>
                         <span>Porcentaje pasarela de pagos</span>
-                        <span>{ dataFormatter(paymentFee * 100) }% </span>
+                        <span>{ currencyFormatter(paymentFee * 100) }% </span>
                     </ListItem>
                     <ListItem>
                         <span>Costo de envio</span>
-                        <span>{ dataFormatter(productVariant.shippingCost) } </span>
+                        <span>{ currencyFormatter(productVariant.shippingCost) } </span>
                     </ListItem>
                     <ListItem>
                         <span>Impuesto</span>
-                        <span>{ dataFormatter(productVariant.salePrice * productVariant.tax) } </span>
+                        <span>{ currencyFormatter(productVariant.salePrice * productVariant.tax) } </span>
                     </ListItem>
                     <ListItem>
                         <span>Ganancia Neta</span>
-                        <span>{ dataFormatter(productVariant.salePrice - productVariant.price - (productVariant.salePrice * productVariant.tax) - ((productVariant.salePrice * paymentFee) + fixedPaymentCost)) } </span>
+                        <span>{ currencyFormatter(productVariant.salePrice - productVariant.price - (productVariant.salePrice * productVariant.tax) - ((productVariant.salePrice * paymentFee) + fixedPaymentCost)) } </span>
                     </ListItem>
                     <ListItem>
                         <span>Ganancia Bruta</span>
-                        <span>{ dataFormatter(productVariant.salePrice - productVariant.price - ((productVariant.salePrice * paymentFee) + fixedPaymentCost)) }</span>
+                        <span>{ currencyFormatter(productVariant.salePrice - productVariant.price - ((productVariant.salePrice * paymentFee) + fixedPaymentCost)) }</span>
                     </ListItem>
                     </List>
                 </Grid>

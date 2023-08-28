@@ -1,7 +1,26 @@
-import SideMenu from "../components/SideMenu";
-import { Button, Card, Flex, Grid, Metric, NumberInput, Subtitle, Tab, TabGroup, TabList, Table, TableBody, TableHead, TableHeaderCell, TableRow, Text, Title } from "@tremor/react";
-import { useState } from "react";
-import { API_URL } from "../App";
+import { 
+    Button, 
+    Card, 
+    Flex, 
+    Grid,
+    Metric, 
+    NumberInput, 
+    Subtitle, 
+    Tab, 
+    TabGroup, 
+    TabList, 
+    Table, 
+    TableBody, 
+    TableHead, 
+    TableHeaderCell, 
+    TableRow, 
+    Text, 
+    Title 
+} from "@tremor/react"
+
+import { useState } from "react"
+import { API_URL } from "../App"
+import SideMenu from "../components/SideMenu"
 
 export function Checkout({ checkoutList }) {
     const [input, setInput] = useState('0')
