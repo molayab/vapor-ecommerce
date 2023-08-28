@@ -25,8 +25,13 @@ final class Category: Model, Content {
         self.title = title
     }
     
-    func asPublic() throws -> Public {
-        Public(id: try requireID(), title: title, createdAt: createdAt, updatedAt: updatedAt)
+    func asPublic(on db: Database) async throws -> Public {
+        Public(
+            id: try requireID(),
+            title: title,
+            products: try await $products.get(on: db).count,
+            createdAt: createdAt,
+            updatedAt: updatedAt)
     }
 }
 
@@ -38,6 +43,7 @@ extension Category {
     struct Public: Content {
         var id: UUID?
         var title: String
+        var products: Int
         var createdAt: Date?
         var updatedAt: Date?
     }

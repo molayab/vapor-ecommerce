@@ -28,15 +28,6 @@
       }
     },
     {
-      "identity" : "csrf",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/vapor-community/CSRF.git",
-      "state" : {
-        "revision" : "7ca62d39981d22694ae3c51edbc2854ae26435ea",
-        "version" : "3.1.1"
-      }
-    },
-    {
       "identity" : "fakery",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/vadymmarkov/Fakery",
@@ -106,24 +97,6 @@
       "state" : {
         "revision" : "9e929d925434b91857661bcd455d1bd53f00bf22",
         "version" : "4.13.0"
-      }
-    },
-    {
-      "identity" : "leaf",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/vapor/leaf.git",
-      "state" : {
-        "revision" : "6fe0e843c6599f5189e45c7b08739ebc5c410c3b",
-        "version" : "4.2.4"
-      }
-    },
-    {
-      "identity" : "leaf-kit",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/vapor/leaf-kit.git",
-      "state" : {
-        "revision" : "13f2fc4c8479113cd23876d9a434ef4573e368bb",
-        "version" : "1.10.2"
       }
     },
     {

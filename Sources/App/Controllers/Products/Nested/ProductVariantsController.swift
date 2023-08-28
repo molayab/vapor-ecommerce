@@ -93,6 +93,8 @@ struct ProductVariantsController: RouteCollection {
         variant.sku = payload.sku
         variant.stock = payload.stock
         variant.isAvailable = payload.availability
+        variant.tax = payload.tax
+        variant.shippingCost = payload.shippingCost
         
         try await variant.save(on: req.db)
         return try await variant.asPublic(on: req.db)

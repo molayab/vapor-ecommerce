@@ -45,10 +45,6 @@ final class Product: Model {
         let category = try await self.$category.get(on: database)
         let reviews = try await self.$reviews.get(on: database).sorted(
             by: { $0.createdAt ?? Date() > $1.createdAt ?? Date() }).prefix(100)
-        
-        let firstVariantId = try await $variants.get(on: database).first?.id?.uuidString ?? ""
-        let coverImageUrl = try "http://localhost:8080/images/catalog/"
-            + (requireID().uuidString) + "/" + firstVariantId + ".jpeg"
 
         return await Public(
             id: try requireID(),
@@ -57,7 +53,7 @@ final class Product: Model {
             createdAt: createdAt,
             updatedAt: updatedAt,
             creator: try creator?.requireID(),
-            category: try category.asPublic(),
+            category: try await category.asPublic(on: database),
             reviews: try reviews.map({ try $0.asPublic() }),
             questions: [], // try questions.map({ try $0.asPublic() }),
             variants: try await self.$variants
@@ -67,7 +63,7 @@ final class Product: Model {
             averageSalePrice: try averageSalePrice(on: database),
             stock: try calculateStock(on: database),
             numberOfStars: try numberOfStars(on: database),
-            coverImageUrl: coverImageUrl
+            isPublished: isPublished
         )
     }
     
@@ -150,6 +146,7 @@ extension Product {
         var title: String
         var description: String
         var category: UUID
+        var isPublished: Bool
         
         @discardableResult
         func create(for req: Request, user: User) async throws -> Product {
@@ -158,6 +155,7 @@ extension Product {
             model.description = description
             model.$creator.id = try user.requireID()
             model.$category.id = category
+            model.isPublished = isPublished
             try await model.create(on: req.db)
             return model
         }
@@ -167,6 +165,7 @@ extension Product {
             product.title = title
             product.description = description
             product.$category.id = category
+            product.isPublished = isPublished
             try await product.update(on: req.db)
             return product
         }
@@ -194,7 +193,7 @@ extension Product {
         var averageSalePrice: Double
         var stock: Int
         var numberOfStars: Int
-        var coverImageUrl: String?
+        var isPublished: Bool
     }
 }
 

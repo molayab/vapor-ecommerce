@@ -155,7 +155,7 @@ extension Transaction {
                 let sales = try await model.$items.get(on: req.db).get()
                 try await sales.asyncMap { sale in
                     let record = Sale()
-                    record.order = model
+                    record.$order.id = try model.requireID()
                     record.currency = sale.currency
                     record.amount = Double(sale.quantity) * sale.price
                     record.date = Date()

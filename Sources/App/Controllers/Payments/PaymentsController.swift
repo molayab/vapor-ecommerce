@@ -15,7 +15,7 @@ struct PaymentsController: RouteCollection {
         guard let providerStr = req.parameters.get("provider", as: String.self) else {
             throw Abort(.badRequest)
         }
-        guard let provider = GatewayType(rawValue: providerStr)?.gateway else {
+        guard let provider = Settings.PaymentGateway(rawValue: providerStr)?.gateway else {
             throw Abort(.badRequest)
         }
         guard let transaction = try await Transaction.find(transactionId, on: req.db) else {
@@ -35,7 +35,7 @@ struct PaymentsController: RouteCollection {
         guard let providerStr = req.parameters.get("provider", as: String.self) else {
             throw Abort(.badRequest)
         }
-        guard let provider = GatewayType(rawValue: providerStr)?.gateway else {
+        guard let provider = Settings.PaymentGateway(rawValue: providerStr)?.gateway else {
             throw Abort(.badRequest)
         }
         

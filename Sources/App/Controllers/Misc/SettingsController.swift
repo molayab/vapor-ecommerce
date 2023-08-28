@@ -35,41 +35,28 @@ struct SettingsController: RouteCollection {
         guard let flags = try await req.featureFlags.toggleFeatureFlag(flag) else {
             throw Abort(.internalServerError)
         }
+        
         return flags
     }
     
     private func updateSettings(req: Request) async throws -> Settings {
         let payload = try req.content.get(Settings.self)
         let settings = req.application.directory.workingDirectory
-        
         let data = try JSONEncoder().encode(payload)
+        
         try await req.fileio.writeFile(.init(data: data),
             at: settings + "/settings.json")
         
         return payload
     }
     
-    private func getSettings(req: Request) async throws -> Settings {
+    private func getSettings(req: Request) async throws -> Settings.Public {
         // get the settings from .json file
         let settings = req.application.directory.workingDirectory
-        
-        // create default settings if not exist
-        if !FileManager.default.fileExists(atPath: settings + "/settings.json") {
-            let defaultSettings = Settings(
-                siteName: "Vapor Shop",
-                siteDescription: "Vapor Shop is a demo e-commerce website built with Vapor 4.",
-                siteUrl: "https://vapor-shop.herokuapp.com",
-                analyticsProvider: Settings.AnalyticsProvider.posthog.configuration)
-            
-            let data = try JSONEncoder().encode(defaultSettings)
-            try await req.fileio.writeFile(.init(data: data),
-                at: settings + "/settings.json")
-        }
-        
         return try JSONDecoder().decode(
             Settings.self,
             from: try await req.fileio.collectFile(
-                at: settings + "/settings.json"))
+                at: settings + "/settings.json")).asPublic()
     }
     
 }

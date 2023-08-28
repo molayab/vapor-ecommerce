@@ -1,10 +1,5 @@
 import Vapor
 
-enum Currency: String, Codable {
-    case COP
-    case USD
-}
-
 struct PaymentEvent {
     enum Status {
         case approved
@@ -16,7 +11,7 @@ struct PaymentEvent {
     var status: Status
 }
 
-protocol PaymentGateway {
+protocol PaymentGatewayProtocol {
     var fee: Double { get }
     var fixedFee: Double { get }
     
@@ -26,4 +21,3 @@ protocol PaymentGateway {
     /// Asks the provider for the status of the payment
     func checkEvent(for req: Request) async throws -> PaymentEvent
 }
-

@@ -1,13 +1,16 @@
 import Vapor
 import Redis
 import Fluent
+import Gatekeeper
 
 struct AuthenticationController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let root = routes.grouped("auth")
+            .grouped(GatekeeperMiddleware(config: .init(maxRequests: 5, per: .minute)))
         
         // Public API
         root.post("refresh", use: refresh)
+        root.post("logout", use: logout)
         
         // Private API
         let authenticator = root.grouped(
@@ -71,16 +74,6 @@ struct AuthenticationController: RouteCollection {
     /// Logs out a user session
     func logout(req: Request) throws -> Response {
         req.auth.logout(User.self)
-        return req.redirect(to: "/")
-    }
-}
-
-extension String {
-    func fromBase64() -> String? {
-        guard let data = Data(base64Encoded: self.replacingOccurrences(of: "_", with: "="), options: Data.Base64DecodingOptions(rawValue: 0)) else {
-            return nil
-        }
-
-        return String(data: data, encoding: .utf8)
+        return Response(status: .ok)
     }
 }

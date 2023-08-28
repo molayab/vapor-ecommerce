@@ -117,7 +117,7 @@ struct ProductsController: RouteCollection {
     /// Restricted API
     /// DELETE /products/:productId
     /// Deletes a product by ID
-    private func delete(req: Request) async throws -> [String: String] {
+    internal func delete(req: Request) async throws -> [String: String] {
         guard let uuid = req.parameters.get("productId", as: UUID.self) else {
             throw Abort(.badRequest)
         }

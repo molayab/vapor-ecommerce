@@ -62,6 +62,7 @@ extension TransactionItem {
         
         func create() -> TransactionItem {
             let model = TransactionItem()
+            model.currency = .COP
             model.quantity = quantity
             model.$productVariant.id = productVariantId
             model.price = price

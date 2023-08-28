@@ -138,7 +138,7 @@ extension User {
         var name: String
         var email: String
         var password: String
-        var addresses: [Address.Create]
+        var addresses: [Address.Create]?
         
         static func validations(_ validations: inout Validations) {
             validations.add("name", as: String.self, is: !.empty)

@@ -89,7 +89,7 @@ struct UsersController: RouteCollection {
             email: payload.email,
             roles: [.noAccess],
             isActive: false,
-            addresses: payload.addresses)
+            addresses: payload.addresses ?? [])
         return try await user.create(on: req.db).asPublic(on: req.db)
     }
     

@@ -1,8 +1,6 @@
 import Vapor
 
-let kWompiSecretKey = Environment.get("WOMPI_SECRET_KEY") ?? "prod_events_0000"
-
-struct Wompi: PaymentGateway {
+struct WompiService: PaymentGatewayProtocol {
     struct EventPayload: Content {
         var event: String
         var data: EventPayloadData
@@ -49,6 +47,7 @@ struct Wompi: PaymentGateway {
         var reference: String
         var signature: String
         var redirectUrl: String
+        var expirationDate: Date
     }
     
     let fee: Double = 0.0265
@@ -70,7 +69,7 @@ struct Wompi: PaymentGateway {
         .joined(separator: "")
         
         calculatedSignature.append(String(payload.timestamp))
-        calculatedSignature.append(kWompiSecretKey)
+        calculatedSignature.append(settings.wompi.configuration.privateKey)
         
         guard let data = calculatedSignature.data(using: .utf8) else {
             throw Abort(.internalServerError)
@@ -99,32 +98,41 @@ struct Wompi: PaymentGateway {
     }
     
     func pay(transaction: Transaction.Public, req: Request) async throws -> Response {
+        let expirationDate = Date().addingTimeInterval(60 * 60 * 2)
+        let signature = transaction.id
+            + String(Int(transaction.total))
+            + "COP"
+            + expirationDate.ISO8601Format()
+            + settings.wompi.configuration.integrityKey
+        
         let checkout = WebCheckout(
-            publicKey: "",
+            publicKey: settings.wompi.configuration.publicKey,
             currency: .COP,
             amountInCents: Int(transaction.total),
             reference: transaction.id,
-            signature: "",
-            redirectUrl: getRedirectionUrl(txid: transaction.id))
+            signature: signature.sha256(),
+            redirectUrl: getRedirectionUrl(txid: transaction.id),
+            expirationDate: expirationDate)
         
         // Make a post request to wompi using HTML form
         guard let url = URL(string: "https://checkout.wompi.co/p/") else {
             throw Abort(.internalServerError)
         }
         
-        /*let wompiRequest = url.appending(queryItems: [
+        let wompiRequest = url.appending(queryItems: [
             URLQueryItem(name: "public-key", value: checkout.publicKey),
             URLQueryItem(name: "currency", value: checkout.currency.rawValue),
             URLQueryItem(name: "amount-in-cents", value: String(checkout.amountInCents)),
             URLQueryItem(name: "reference", value: checkout.reference),
             URLQueryItem(name: "redirect-url", value: checkout.redirectUrl),
-            URLQueryItem(name: "signature", value: checkout.signature)
-        ])*/
+            URLQueryItem(name: "signature%3Aintegrity", value: checkout.signature),
+            URLQueryItem(name: "expiration-time", value: checkout.expirationDate.ISO8601Format())
+        ])
         
-        return req.redirect(to: "https://checkout.wompi.co/p/")
+        return req.redirect(to: wompiRequest.absoluteString)
     }
     
     private func getRedirectionUrl(txid: String) -> String {
-        kSiteDomain + "/payments/wompi/\(txid)"
+        settings.siteUrl + "/payments/wompi/\(txid)"
     }
 }
