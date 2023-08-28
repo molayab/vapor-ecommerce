@@ -99,7 +99,8 @@ struct WompiService: PaymentGatewayProtocol {
     
     func pay(transaction: Transaction.Public, req: Request) async throws -> Response {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
         
         let expirationDate = Date().addingTimeInterval(60 * 60 * 2)
         let signature = "\(transaction.id)\(transaction.total)COP\(formatter.string(from: expirationDate))\(settings.wompi.configuration.integrityKey)"
