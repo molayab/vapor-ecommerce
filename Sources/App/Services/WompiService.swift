@@ -99,11 +99,7 @@ struct WompiService: PaymentGatewayProtocol {
     
     func pay(transaction: Transaction.Public, req: Request) async throws -> Response {
         let expirationDate = Date().addingTimeInterval(60 * 60 * 2)
-        let signature = transaction.id
-            + String(Int(transaction.total))
-            + "COP"
-            + expirationDate.ISO8601Format()
-            + settings.wompi.configuration.integrityKey
+        let signature = "\(transaction.id)\(transaction.total)COP\(expirationDate.ISO8601Format())\(settings.wompi.configuration.integrityKey)"
         
         let checkout = WebCheckout(
             publicKey: settings.wompi.configuration.publicKey,
