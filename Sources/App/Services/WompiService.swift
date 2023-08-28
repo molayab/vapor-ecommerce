@@ -98,8 +98,11 @@ struct WompiService: PaymentGatewayProtocol {
     }
     
     func pay(transaction: Transaction.Public, req: Request) async throws -> Response {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        
         let expirationDate = Date().addingTimeInterval(60 * 60 * 2)
-        let signature = "\(transaction.id)\(transaction.total)COP\(expirationDate.ISO8601Format())\(settings.wompi.configuration.integrityKey)"
+        let signature = "\(transaction.id)\(transaction.total)COP\(formatter.string(from: expirationDate))\(settings.wompi.configuration.integrityKey)"
         
         let checkout = WebCheckout(
             publicKey: settings.wompi.configuration.publicKey,
@@ -122,7 +125,7 @@ struct WompiService: PaymentGatewayProtocol {
             URLQueryItem(name: "reference", value: checkout.reference),
             URLQueryItem(name: "redirect-url", value: checkout.redirectUrl),
             URLQueryItem(name: "signature%3Aintegrity", value: checkout.signature),
-            URLQueryItem(name: "expiration-time", value: checkout.expirationDate.ISO8601Format())
+            URLQueryItem(name: "expiration-time", value: formatter.string(from: checkout.expirationDate))
         ])
         
         return req.redirect(to: wompiRequest.absoluteString)
