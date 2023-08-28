@@ -11,7 +11,7 @@ struct Settings: Content {
     var postHog: PostHog
     var analyticsProvider: AnalyticsProvider
     var wompi: Wompi
-    
+
     func asPublic() -> Public {
         Public(
             siteName: siteName,
@@ -23,31 +23,31 @@ struct Settings: Content {
             postHog: postHog.asPublic(),
             wompi: wompi.asPublic())
     }
-    
+
     struct JWT: Content {
         var signerKey: String
     }
-    
+
     struct PostHog: Content {
         var pkKey: String
         var apiKey: String
         var host: String
         var projectId: String
-        
+
         func asPublic() -> Public {
             Public(
                 apiKey: apiKey,
                 host: host,
                 projectId: projectId)
         }
-        
+
         struct Public: Content {
             var apiKey: String
             var host: String
             var projectId: String
         }
     }
-    
+
     struct Wompi: Content {
         enum Mode: String, Content {
             case test
@@ -68,18 +68,18 @@ struct Settings: Content {
             var mode: Mode
             var costs: Costs
         }
-        
+
         var mode: Mode
         var test: Configuration
         var prod: Configuration
         var costs: Costs
-        
+
         func asPublic() -> Public {
             Public(
                 mode: mode,
                 costs: costs)
         }
-        
+
         var configuration: Configuration {
             switch mode {
             case .test:
@@ -89,7 +89,7 @@ struct Settings: Content {
             }
         }
     }
-    
+
     struct Public: Content {
         var siteName: String
         var siteDescription: String
@@ -113,7 +113,7 @@ extension Settings {
     /// Payment gateways available
     enum PaymentGateway: String, CaseIterable, Content {
         case wompi
-        
+
         var gateway: PaymentGatewayProtocol {
             switch self {
             case .wompi:
@@ -131,4 +131,3 @@ extension Settings.AnalyticsProvider {
         }
     }
 }
-

@@ -3,19 +3,19 @@ import Fluent
 
 final class ProductAnswer: Model {
     static let schema = "product_answers"
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Field(key: "answer")
     var answer: String
-    
+
     @Parent(key: "question_id")
     var question: ProductQuestion
-    
+
     @Parent(key: "user_id")
     var user: User
-    
+
     func asPublic(on db: Database) async throws -> Public {
         await Public(
             id: try requireID(),
@@ -38,14 +38,14 @@ extension ProductAnswer {
             model.$user.id = user
             return model
         }
-        
+
         static func validations(_ validations: inout Validations) {
             validations.add("answer", as: String.self, is: !.empty)
             validations.add("question", as: UUID.self, is: .valid)
             validations.add("user", as: UUID.self, is: .valid)
         }
     }
-    
+
     struct Public: Content {
         var id: UUID?
         var answer: String
@@ -64,7 +64,7 @@ extension ProductAnswer {
                 .field("user_id", .uuid, .required, .references(User.schema, "id"))
                 .create()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database.schema(ProductAnswer.schema).delete()
         }

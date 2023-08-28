@@ -3,28 +3,28 @@ import Fluent
 
 final class Category: Model, Content {
     static let schema = "categories"
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Field(key: "title")
     var title: String
-    
+
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
-    
+
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
-    
+
     @Children(for: \.$category)
     var products: [Product]
-    
+
     init() { }
     init(id: UUID? = nil, title: String) {
         self.id = id
         self.title = title
     }
-    
+
     func asPublic(on db: Database) async throws -> Public {
         Public(
             id: try requireID(),
@@ -39,7 +39,7 @@ extension Category {
     struct Create: Content {
         var title: String
     }
-    
+
     struct Public: Content {
         var id: UUID?
         var title: String
@@ -47,7 +47,7 @@ extension Category {
         var createdAt: Date?
         var updatedAt: Date?
     }
-    
+
     convenience init(model: Create) {
         self.init()
         self.title = model.title
@@ -71,7 +71,7 @@ extension Category {
                 .unique(on: "title")
                 .create()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database.schema("categories").delete()
         }

@@ -8,28 +8,28 @@ final class Finance: Model {
         case income
         case expense
     }
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Field(key: "name")
     var name: String
-    
+
     @Field(key: "description")
     var description: String?
-    
+
     @Field(key: "amount")
     var amount: Double
-    
+
     @Enum(key: "currency")
     var currency: Currency
-    
+
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
-    
+
     @Timestamp(key: "updated_at", on: .update)
     var updatedAt: Date?
-    
+
     @Enum(key: "type")
     var type: FinanceType
 }
@@ -41,7 +41,7 @@ extension Finance {
         var amount: Double
         var currency: Currency
         var type: FinanceType
-        
+
         func createModel() -> Finance {
             let finance = Finance()
             finance.name = name
@@ -52,7 +52,7 @@ extension Finance {
             return finance
         }
     }
-    
+
     typealias Update = Create
     typealias Public = Create
 }
@@ -80,7 +80,7 @@ extension Finance {
                 .field("type", .string, .required)
                 .create()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database.schema(Finance.schema).delete()
         }

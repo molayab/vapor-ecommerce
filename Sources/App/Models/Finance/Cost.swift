@@ -1,8 +1,6 @@
 import Vapor
 import Fluent
 
-
-
 /// Costs are expenses that are paid periodically
 final class Cost: Model {
     /// The type of cost
@@ -10,12 +8,12 @@ final class Cost: Model {
         case fixed
         case variable
     }
-    
+
     /// How often the cost is paid
     enum Periodicity: String, Codable {
         // One time cost
         case oneTime
-        
+
         // Recurring costs
         case daily // Every day
         case weekly // Every week
@@ -25,7 +23,7 @@ final class Cost: Model {
         case quarterly // Every three months
         case semiannually // Every six months
         case yearly // Every year
-        
+
         func shouldApplyFinance(date: Date) -> Bool {
             switch self {
             case .oneTime:
@@ -62,40 +60,40 @@ final class Cost: Model {
             }
         }
     }
-    
+
     static let schema = "costs"
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Field(key: "name")
     var name: String
-    
+
     @Field(key: "amount")
     var amount: Double
-    
+
     @Enum(key: "currency")
     var currency: Currency
-    
+
     @Enum(key: "type")
     var type: CostType
-    
+
     @Enum(key: "periodicity")
     var periodicity: Periodicity
-    
+
     @Field(key: "start_date")
     var startDate: Date
-    
+
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
-    
+
     @Timestamp(key: "updated_at", on: .update)
     var updatedAt: Date?
-    
+
     /// Check if the cost should be applied as a finance
     func checkForRecurringCosts(on db: Database) async throws {
         guard periodicity.shouldApplyFinance(date: startDate) else { return }
-        
+
         let finance = Finance()
         finance.name = name
         finance.amount = amount
@@ -103,7 +101,7 @@ final class Cost: Model {
         finance.type = .expense
         try await finance.save(on: db)
     }
-    
+
     func asPublic() throws -> Public {
         Public(
             id: try requireID(),
@@ -114,7 +112,7 @@ final class Cost: Model {
             periodicity: periodicity,
             startDate: startDate)
     }
-    
+
 }
 
 extension Cost {
@@ -125,7 +123,7 @@ extension Cost {
         var type: CostType
         var periodicity: Periodicity
         var startDate: Date
-        
+
         func createModel() -> Cost {
             let cost = Cost()
             cost.name = name
@@ -137,7 +135,7 @@ extension Cost {
             return cost
         }
     }
-    
+
     typealias Update = Create
     struct Public: Content {
         var id: UUID
@@ -176,7 +174,7 @@ extension Cost {
                 .field("updated_at", .datetime)
                 .create()
         }
-        
+
         func revert(on db: Database) async throws {
             try await db.schema(Cost.schema).delete()
         }

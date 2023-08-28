@@ -9,7 +9,7 @@ struct OrderStats: Content {
         var origin: Transaction.Origin?
         var cost: Int?
     }
-    
+
     var salesByProduct: [Sale]
     var salesByMonth: [Sale]
     var salesThisMonth: Int
@@ -22,12 +22,12 @@ struct OrdersController: RouteCollection {
     func boot(routes: Vapor.RoutesBuilder) throws {
         // Public API
         let transactions = routes.grouped("orders")
-        
+
         let requiredAuth = transactions.grouped(
             UserSessionAuthenticator(),
             User.guardMiddleware())
         requiredAuth.get("mine", use: myOrders)
-        
+
         // Internal API
         let unauthorized = requiredAuth.grouped(RoleMiddleware(roles: [.admin, .manager]))
         unauthorized.get("all", use: allOrders)
@@ -35,7 +35,7 @@ struct OrdersController: RouteCollection {
         unauthorized.get("payed", use: payedOrders)
         unauthorized.get("placed", use: placedOrders)
     }
-    
+
     /// Private API
     /// GET /transactions/mine
     /// This endpoint is used to retrieve the current user's transactions.
@@ -46,7 +46,7 @@ struct OrdersController: RouteCollection {
             .all()
             .asyncMap { try await $0.asPublic(on: req.db) }
     }
-    
+
     /// Retricted API
     /// GET /transactions/all
     /// This endpoint is used to retrieve all transactions.
@@ -54,7 +54,7 @@ struct OrdersController: RouteCollection {
         return try await Transaction.query(on: req.db)
             .paginate(for: req)
     }
-    
+
     /// Retricted API
     /// GET /transactions/pending
     /// This endpoint is used to retrieve all pending transactions.
@@ -63,7 +63,7 @@ struct OrdersController: RouteCollection {
             .filter(\.$status == .pending)
             .paginate(for: req)
     }
-    
+
     /// Retricted API
     /// GET /transactions/payed
     /// This endpoint is used to retrieve all payed transactions.
@@ -72,8 +72,7 @@ struct OrdersController: RouteCollection {
             .filter(\.$status == .paid)
             .paginate(for: req)
     }
-    
-    
+
     /// Retricted API
     /// GET /transactions/placed
     /// This endpoint is used to retrieve all placed transactions.

@@ -6,29 +6,29 @@ struct UserCommand: Command {
     struct Signature: CommandSignature {
         @Argument(name: "subcommand")
         var subcommand: String
-        
+
         @Option(name: "name", short: "n")
         var name: String?
-        
+
         @Option(name: "email", short: "e")
         var email: String?
-        
+
         @Option(name: "password", short: "p")
         var password: String?
-        
+
         @Option(name: "kind", short: "k")
         var kind: String?
-        
+
         @Option(name: "roles", short: "r")
         var roles: String?
-        
+
         @Option(name: "entries", short: "c")
         var entries: Int?
-        
+
         @Flag(name: "active", short: "a")
         var isActive: Bool
     }
-    
+
     var help: String {
 """
 Handles the users in the application.
@@ -51,7 +51,7 @@ subcommands:
     --email (user email)
 """
     }
-    
+
     func run(using context: CommandContext, signature: Signature) throws {
         switch signature.subcommand {
         case "create":
@@ -68,31 +68,31 @@ subcommands:
             context.console.error("Invalid subcommand: \(signature.subcommand)")
         }
     }
-    
+
     private func update(using context: CommandContext, signature: Signature) throws {
         guard let email = signature.email else {
             context.console.error("Missing required argument: email")
             return
         }
-        
+
         let app = context.application
         let query = User.query(on: app.db)
             .filter(\.$email == email)
         let user = try query.first().wait()
-        
+
         guard let user = user else {
             context.console.error("User not found: \(email)")
             return
         }
-        
+
         if let name = signature.name {
             user.name = name
         }
-        
+
         if let kind = signature.kind {
             user.kind = User.Kind(rawValue: kind) ?? .client
         }
-        
+
         if let roles = signature.roles {
             let roles = try roles.split(separator: ",")
                 .map { String($0) }
@@ -104,23 +104,22 @@ subcommands:
                 .wait()
                 .delete(on: app.db)
                 .wait()
-            
+
             try roles.create(on: app.db).wait()
         }
-        
+
         user.isActive = signature.isActive
-        
+
         try user.save(on: app.db).wait()
         context.console.info("User updated: \(email)")
     }
-    
-    
+
     private func delete(using context: CommandContext, signature: Signature) throws {
         guard let email = signature.email else {
             context.console.error("Missing required argument: email")
             return
         }
-        
+
         let app = context.application
         let query = User.query(on: app.db)
             .filter(\.$email == email)
@@ -130,33 +129,32 @@ subcommands:
             .wait()
             .delete(on: app.db)
             .wait()
-        
+
         guard let user = user else {
             context.console.error("User not found: \(email)")
             return
         }
-        
+
         try user.delete(on: app.db).wait()
         context.console.info("User deleted: \(email)")
     }
-    
+
     private func list(using context: CommandContext, signature: Signature) throws {
         let app = context.application
         let query = User.query(on: app.db)
         let users = try query.all().wait()
-        
+
         users.forEach { user in
             context.console.info("\(user.name) <\(user.email)>")
         }
     }
-    
-    
+
     private func randomize(using context: CommandContext, signature: Signature) throws {
         guard let entries = signature.entries else {
             context.console.error("Missing required argument: entries")
             return
         }
-        
+
         let asyncProcesses = 1024
         let promise = context.application.eventLoopGroup.makeFutureWithTask {
             let loopTo = entries / asyncProcesses
@@ -173,13 +171,13 @@ subcommands:
                 signature: signature,
                 asyncProcesses: 1,
                 loopTo: remaining)
-            
+
             context.console.info("Random users created.")
         }
-        
+
         try promise.wait()
     }
-    
+
     private func bulkRandomize(using context: CommandContext,
                                signature: Signature,
                                asyncProcesses: Int,
@@ -187,13 +185,13 @@ subcommands:
         let app = context.application
         let kind = signature.kind.flatMap(User.Kind.init(rawValue:)) ?? .employee
         let faker = Faker()
-        let password = try! Bcrypt.hash(signature.password!)
-        
+        guard let password = try? Bcrypt.hash(signature.password ?? "") else { return }
+
         await withThrowingTaskGroup(of: Void.self) { group in
             (0..<asyncProcesses).forEach { index in
                 group.addTask(priority: .high) {
                     context.console.info("Spawning task \(index)...")
-                    
+
                     var roles = [Role]()
                     let requests = try (0..<loopTo).compactMap { _ in
                         let user = User()
@@ -203,14 +201,14 @@ subcommands:
                         user.password = password
                         user.kind = kind
                         user.isActive = signature.isActive
-                        
+
                         roles.append(Role(
                             role: .noAccess,
                             userId: try user.requireID()))
-                        
+
                         return user
                     }
-                    
+
                     do {
                         context.console.info("Creating users for task \(index)...")
                         try await requests.create(on: app.db)
@@ -223,7 +221,7 @@ subcommands:
             }
         }
     }
-    
+
     private func create(using context: CommandContext, signature: Signature) throws {
         guard let email = signature.email else {
             context.console.error("Missing required argument: name")
@@ -233,14 +231,14 @@ subcommands:
             context.console.error("Missing required argument: password")
             return
         }
-        
+
         let app = context.application
         let roles = signature
             .roles?
             .split(separator: ",")
             .map { AvailableRoles(rawValue: String($0))! } ?? [.noAccess]
         let kind = signature.kind.flatMap(User.Kind.init(rawValue:)) ?? .employee
-        
+
         let promise = context.application.eventLoopGroup.makeFutureWithTask {
             // Create root user if not exists
             if try await app.db.query(User.self).filter(\.$email == email).first() == nil {
@@ -253,14 +251,14 @@ subcommands:
                     isActive: signature.isActive,
                     addresses: []
                 )
-                
+
                 try await rootUser.create(on: app.db)
                 context.console.info("Root user created.")
             } else {
                 context.console.info("Root user already exists.")
             }
         }
-        
+
         try promise.wait()
     }
 }

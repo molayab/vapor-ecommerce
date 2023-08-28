@@ -3,48 +3,48 @@ import Fluent
 
 final class ProductVariant: Model {
     static let schema = "product_variants"
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Field(key: "name")
     var name: String
-    
+
     @Field(key: "is_available")
     var isAvailable: Bool
-    
+
     @Field(key: "price")
     var price: Double
-    
+
     @Field(key: "sale_price")
     var salePrice: Double
-    
+
     @Field(key: "sku")
     var sku: String?
-    
+
     @Field(key: "stock")
     var stock: Int
-    
+
     @Field(key: "tax")
     var tax: Double
-    
+
     @Field(key: "shipping_cost")
     var shippingCost: Double?
-    
+
     @Parent(key: "product_id")
     var product: Product
-    
+
     @Children(for: \.$productVariant)
     var transactionItems: [TransactionItem]
-    
+
     var isAvailableForSale: Bool {
         return isAvailable && stock > 0
     }
-    
+
     func asPublic(on db: Database) async throws -> Public {
         let id = try self.requireID().uuidString
         let sales = try await self.$transactionItems.get(on: db).map { try $0.asPublic() }
-        
+
         do {
             let fm = FileManager.default
             let path = DirectoryConfiguration.detect().publicDirectory
@@ -55,7 +55,7 @@ final class ProductVariant: Model {
             let items = try fm.contentsOfDirectory(atPath: path).filter { item in
                 allowedExtensions.contains(String(item.split(separator: ".").last ?? ""))
             }
-            
+
             return Public(
                 id: try requireID(),
                 product: $product.$id.wrappedValue,
@@ -98,7 +98,7 @@ extension ProductVariant {
         var tax: Double
         var shippingCost: Double?
         var images: [ProductImage.UploadImage]?
-        
+
         @discardableResult
         func create(for request: Request, product: Product) async throws -> ProductVariant {
             let model = ProductVariant()
@@ -112,17 +112,17 @@ extension ProductVariant {
             model.shippingCost = shippingCost
             model.$product.id = try product.requireID()
             try await model.create(on: request.db)
-            
+
             // Upload images
             if let images = images {
                 for image in images {
                     try await ProductImage.upload(image: image, forVariant: model, on: request)
                 }
             }
-            
+
             return model
         }
-        
+
         static func validations(_ validations: inout Validations) {
             validations.add("name", as: String.self, is: !.empty)
             validations.add("price", as: Double.self, is: .valid)
@@ -133,7 +133,7 @@ extension ProductVariant {
             validations.add("shippingCost", as: Double?.self, required: false)
         }
     }
-    
+
     struct Public: Content {
         var id: UUID?
         var product: UUID?
@@ -167,7 +167,7 @@ extension ProductVariant {
                 .unique(on: "sku")
                 .create()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database.schema("product_variants").delete()
         }

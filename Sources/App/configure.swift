@@ -53,23 +53,23 @@ public func configure(_ app: Application) async throws {
                 atPath: settingsPath,
                 contents: try JSONEncoder()
                     .encode(settings))
-        
+
         app.logger.info("Created default settings.json file")
     }
-    
+
     // load settings
     let data = try Data(contentsOf: URL(fileURLWithPath: settingsPath))
     settings = try JSONDecoder().decode(Settings.self, from: data)
-    
+
     app.commands.use(UserCommand(), as: "users")
     app.commands.use(ProductCommand(), as: "products")
     app.commands.use(RoleCommand(), as: "roles")
-    
+
     app.routes.defaultMaxBodySize = "256mb"
     app.jwt.signers.use(.hs256(key: settings.jwt.signerKey))
     app.redis.configuration = try RedisConfiguration(hostname: "redis", pool: .init(
         connectionRetryTimeout: .seconds(60)))
-    
+
     if app.environment == .testing {
         app.databases.use(.sqlite(.memory), as: .sqlite)
     } else {
@@ -98,7 +98,7 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(Finance.CreateMigration())
     app.migrations.add(Sale.CreateMigration())
     try await app.autoMigrate()
-    
+
     let corsConfiguration = CORSMiddleware.Configuration(
         allowedOrigin: .any(settings.allowedOrigins),
         allowedMethods: [.GET, .POST, .PUT, .OPTIONS, .DELETE, .PATCH],
@@ -121,12 +121,12 @@ public func configure(_ app: Application) async throws {
     app.middleware.use(cors, at: .beginning)
     app.middleware.use(GatekeeperMiddleware(config: .init(maxRequests: 100, per: .minute)))
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-    
+
     if let configuration = app.redis.configuration {
         app.queues.use(.redis(configuration))
         app.queues.schedule(CostShedulerJob()).daily().at(.midnight)
         app.queues.add(ImageResizerJob())
-        
+
         try app.queues.startInProcessJobs(on: .default)
         try app.queues.startScheduledJobs()
         app.logger.info("Redis is configured")
@@ -134,7 +134,7 @@ public func configure(_ app: Application) async throws {
     } else {
         app.logger.error("Redis configuration not found")
     }
-    
+
     app.caches.use(.redis)
     try routes(app)
 }

@@ -4,10 +4,10 @@ import Vapor
 func routes(_ app: Application) throws {
     let api = app.grouped("v1")
 
-    app.get { req in
+    app.get { _ in
         return "It works! This is the API endpoint. Please refer to the documentation for more information."
     }
-    
+
     try api.register(collection: AuthenticationController())
     try api.register(collection: UsersController())
     try api.register(collection: CategoriesController())

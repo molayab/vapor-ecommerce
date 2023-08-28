@@ -1,6 +1,7 @@
 import Vapor
 import Fluent
 
+// swiftlint:disable:next type_body_length
 enum Country: String, Codable, CaseIterable {
     case afghanistan = "AF"
     case albania = "AL"
@@ -495,7 +496,7 @@ extension Country {
         case .zimbabwe: return "Zimbabwe"
         }
     }
-    
+
     func asPublic() -> CountryContent {
         return CountryContent(code: self.rawValue, name: self.name)
     }
@@ -505,4 +506,3 @@ struct CountryContent: Content {
     let code: String
     let name: String
 }
-

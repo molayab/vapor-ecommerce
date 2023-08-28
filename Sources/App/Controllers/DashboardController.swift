@@ -6,7 +6,6 @@ struct DashboardController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         // Public API
         let transactions = routes.grouped("dashboard")
-        
         let requiredAuth = transactions.grouped(
             UserSessionAuthenticator(),
             User.guardMiddleware())
@@ -17,10 +16,8 @@ struct DashboardController: RouteCollection {
     func index(req: Request) throws -> EventLoopFuture<View> {
         return req.view.render("Dashboard/index")
     }
-    
-    /// Retricted API
-    /// GET /dashboard/stats
-    /// This endpoint is used to retrieve all transactions stats.
+
+    // swiftlint:disable:next function_body_length
     private func stats(req: Request) async throws -> OrderStats {
         if let psql = req.db as? PostgresDatabase {
             let salesByMonthQuery = try await psql.simpleQuery(
@@ -72,21 +69,21 @@ WHERE status = 'paid'
 AND transactions.payed_at > (now() - interval '1 year')
 GROUP BY title
 """).get()
-            
-            let salesByMonth = try salesByMonthQuery.compactMap { r -> OrderStats.Sale? in
+
+            let salesByMonth = try salesByMonthQuery.compactMap { rowContext -> OrderStats.Sale? in
                 // Get the month name based on the month number
-                let row = PostgresRandomAccessRow(r)
+                let row = PostgresRandomAccessRow(rowContext)
                 guard let month = Int(try row["_month"].decode(String.self)) else {
                     return nil
                 }
-                
+
                 let calendar = Calendar.current
                 let monthNumber = calendar.shortMonthSymbols[month - 1]
-                
+
                 let cost = try row["cost"].decode(Double.self)
                 let sales = try row["sales"].decode(Double.self)
                 let count = try row["count"].decode(Int.self)
-                
+
                 return OrderStats.Sale(
                     name: monthNumber,
                     value: count,
@@ -94,36 +91,36 @@ GROUP BY title
                     origin: nil,
                     cost: Int(cost))
             }
-            let salesBySource = try salesBySourceQuery.map { r -> OrderStats.Sale in
-                let row = PostgresRandomAccessRow(r)
+            let salesBySource = try salesBySourceQuery.map { rowContext -> OrderStats.Sale in
+                let row = PostgresRandomAccessRow(rowContext)
                 let origin = try row["origin"].decode(String.self)
                 let sales = try row["sum"].decode(Double.self)
-                
+
                 return OrderStats.Sale(
                     name: origin,
                     value: Int(sales),
                     sales: nil,
                     origin: .init(rawValue: origin))
             }
-            let salesThisMonth = try salesThisMonthQuery.map { r -> (String, Int) in
-                let row = PostgresRandomAccessRow(r)
+            let salesThisMonth = try salesThisMonthQuery.map { rowContext -> (String, Int) in
+                let row = PostgresRandomAccessRow(rowContext)
                 let month = try row["_month"].decode(String.self)
                 let sales = try row["sales_month"].decode(Double.self)
-                
+
                 return (month, Int(sales))
             }.first ?? ("N/A", 0)
-            let salesByProduct = try salesByProductQuery.map { r -> OrderStats.Sale in
-                let row = PostgresRandomAccessRow(r)
+            let salesByProduct = try salesByProductQuery.map { rowContext -> OrderStats.Sale in
+                let row = PostgresRandomAccessRow(rowContext)
                 let title = try row["title"].decode(String.self)
                 let sales = try row["sales_month"].decode(Double.self)
-                
+
                 return OrderStats.Sale(
                     name: title,
                     value: Int(sales),
                     sales: nil,
                     origin: nil)
             }
-            
+
             return OrderStats(
                 salesByProduct: salesByProduct,
                 salesByMonth: salesByMonth,

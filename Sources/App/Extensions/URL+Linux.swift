@@ -7,7 +7,7 @@ extension URL {
         guard var urlComponents = URLComponents(url: self, resolvingAgainstBaseURL: true) else {
             return self
         }
-        
+
         urlComponents.queryItems = queryItems
         return urlComponents.url ?? self
     }

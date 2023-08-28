@@ -3,28 +3,28 @@ import Vapor
 
 final class Address: Model {
     static var schema: String = "addresses"
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Field(key: "street")
     var street: String?
-    
+
     @Field(key: "city")
     var city: String?
-    
+
     @Field(key: "state")
     var state: String?
-    
+
     @Field(key: "zip")
     var zip: String?
-    
+
     @Enum(key: "country")
     var country: Country
-    
+
     @Parent(key: "user_id")
     var user: User
-    
+
     func asPublic() -> Public {
         Public(
             street: street,
@@ -43,7 +43,7 @@ extension Address {
         var state: String?
         var zip: String?
         var country: Country
-        
+
         func createModel(withUserId id: Address.IDValue) -> Address {
             let model = Address()
             model.$user.id = id
@@ -54,9 +54,9 @@ extension Address {
             model.country = country
             return model
         }
-    
+
     }
-    
+
     typealias Create = Public
 }
 
@@ -83,7 +83,7 @@ extension Address {
                 .field("user_id", .uuid, .required, .references("users", "id"))
                 .create()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database.schema(schema).delete()
         }

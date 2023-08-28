@@ -8,38 +8,45 @@ struct WompiService: PaymentGatewayProtocol {
         var timestamp: Int
         var signature: EventSignature
     }
-    
+
     struct EventSignature: Content {
         var checksum: String
         var properties: [String]
     }
-    
+
     struct EventPayloadData: Content {
         var transaction: EventPayloadTransaction
     }
-    
+
     struct EventPayloadTransaction: Content {
         var id: String
-        var amount_in_cents: Int
+        var amountInCents: Int
         var reference: String
-        var customer_email: String
+        var customerEmail: String
         var currency: String
-        var payment_method_type: String
+        var paymentMethodType: String
         var status: String
-        
+
         var dictionary: [String: String] {
             [
                 "id": id,
-                "amount_in_cents": "\(amount_in_cents)",
+                "amount_in_cents": "\(amountInCents)",
                 "reference": reference,
-                "customer_email": customer_email,
+                "customer_email": customerEmail,
                 "currency": currency,
-                "payment_method_type": payment_method_type,
+                "payment_method_type": paymentMethodType,
                 "status": status
             ]
         }
+
+        enum CodingKeys: String, CodingKey {
+            case id, reference, currency, status
+            case amountInCents = "amount_in_cents"
+            case customerEmail = "customer_email"
+            case paymentMethodType = "payment_method_type"
+        }
     }
-    
+
     struct WebCheckout {
         var publicKey: String
         var currency: Currency
@@ -49,16 +56,16 @@ struct WompiService: PaymentGatewayProtocol {
         var redirectUrl: String
         var expirationDate: Date
     }
-    
+
     let fee: Double = 0.0265
     let fixedFee: Double = 700
-    
+
     func checkEvent(for req: Request) async throws -> PaymentEvent {
         let payload = try req.content.decode(EventPayload.self)
         guard payload.event == "transaction.updated" else {
             throw Abort(.badRequest)
         }
-        
+
         // Validate signature
         let signature = req.headers.first(name: "X-Event-Checksum")!
         let dict = payload.data.transaction.dictionary
@@ -67,19 +74,19 @@ struct WompiService: PaymentGatewayProtocol {
             return dict[String(key)]
         }
         .joined(separator: "")
-        
+
         calculatedSignature.append(String(payload.timestamp))
         calculatedSignature.append(settings.wompi.configuration.privateKey)
-        
+
         guard let data = calculatedSignature.data(using: .utf8) else {
             throw Abort(.internalServerError)
         }
-        
+
         let hashedSignature = SHA256.hash(data: data).hex
         guard hashedSignature == signature else {
             throw Abort(.badRequest)
         }
-        
+
         // Check if the event status
         if payload.data.transaction.status == "APPROVED" {
             return .init(
@@ -96,15 +103,15 @@ struct WompiService: PaymentGatewayProtocol {
                 status: .inProgress)
         }
     }
-    
+
     func pay(transaction: Transaction.Public, req: Request) async throws -> Response {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        
+
         let expirationDate = Date().addingTimeInterval(60 * 60 * 2)
         let signature = "\(transaction.id)\(transaction.total)COP\(formatter.string(from: expirationDate))\(settings.wompi.configuration.integrityKey)"
-        
+
         let checkout = WebCheckout(
             publicKey: settings.wompi.configuration.publicKey,
             currency: .COP,
@@ -113,12 +120,12 @@ struct WompiService: PaymentGatewayProtocol {
             signature: signature.sha256(),
             redirectUrl: getRedirectionUrl(txid: transaction.id),
             expirationDate: expirationDate)
-        
+
         // Make a post request to wompi using HTML form
         guard let url = URL(string: "https://checkout.wompi.co/p/") else {
             throw Abort(.internalServerError)
         }
-        
+
         let wompiRequest = url.appending(queryItems: [
             URLQueryItem(name: "public-key", value: checkout.publicKey),
             URLQueryItem(name: "currency", value: checkout.currency.rawValue),
@@ -128,10 +135,10 @@ struct WompiService: PaymentGatewayProtocol {
             URLQueryItem(name: "signature%3Aintegrity", value: checkout.signature),
             URLQueryItem(name: "expiration-time", value: formatter.string(from: checkout.expirationDate))
         ])
-        
+
         return req.redirect(to: wompiRequest.absoluteString)
     }
-    
+
     private func getRedirectionUrl(txid: String) -> String {
         settings.siteUrl + "/payments/wompi/\(txid)"
     }

@@ -3,40 +3,40 @@ import Fluent
 
 final class Product: Model {
     static let schema = "products"
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Field(key: "title")
     var title: String
-    
+
     @Field(key: "description")
     var description: String
-    
+
     @Timestamp(key: "createdAt", on: .create)
     var createdAt: Date?
-    
+
     @Timestamp(key: "updatedAt", on: .update)
     var updatedAt: Date?
-    
+
     @Field(key: "is_published")
     var isPublished: Bool
-    
+
     @OptionalParent(key: "creator_user_id")
     var creator: User?
-    
+
     @Parent(key: "category_id")
     var category: Category
-    
+
     @Children(for: \.$product)
     var reviews: [ProductReview]
-    
+
     @Children(for: \.$product)
     var questions: [ProductQuestion]
-    
+
     @Field(key: "cover_image_url")
     var coverImageUrl: String?
-    
+
     @Children(for: \.$product)
     var variants: [ProductVariant]
 
@@ -66,7 +66,7 @@ final class Product: Model {
             isPublished: isPublished
         )
     }
-    
+
     func numberOfStars(on database: Database) async throws -> Int {
         return try await withCheckedThrowingContinuation({ next in
             $reviews.get(on: database).whenComplete { result in
@@ -81,8 +81,7 @@ final class Product: Model {
             }
         })
     }
-    
-    
+
     func calculateStock(on database: Database) async throws -> Int {
         return try await withCheckedThrowingContinuation({ next in
             $variants.get(on: database).whenComplete { result in
@@ -108,7 +107,7 @@ final class Product: Model {
             }
         })
     }
-    
+
     func averageSalePrice(on database: Database) async throws -> Double {
         return try await withCheckedThrowingContinuation({ next in
             $variants.get(on: database).whenComplete { result in
@@ -117,7 +116,7 @@ final class Product: Model {
                     guard variants.count > 0 else {
                         return next.resume(returning: 0)
                     }
-                    
+
                     next.resume(returning: variants.reduce(0, { $0 + $1.salePrice }) / Double(variants.count))
                 case .failure(let error):
                     next.resume(throwing: error)
@@ -125,7 +124,7 @@ final class Product: Model {
             }
         })
     }
-    
+
     func minimumSalePrice(on database: Database) async throws -> Double {
         return try await withCheckedThrowingContinuation({ next in
             $variants.get(on: database).whenComplete { result in
@@ -138,7 +137,7 @@ final class Product: Model {
             }
         })
     }
-    
+
 }
 
 extension Product {
@@ -147,7 +146,7 @@ extension Product {
         var description: String
         var category: UUID
         var isPublished: Bool
-        
+
         @discardableResult
         func create(for req: Request, user: User) async throws -> Product {
             let model = Product()
@@ -159,7 +158,7 @@ extension Product {
             try await model.create(on: req.db)
             return model
         }
-        
+
         @discardableResult
         func update(for req: Request, product: Product) async throws -> Product {
             product.title = title
@@ -169,7 +168,7 @@ extension Product {
             try await product.update(on: req.db)
             return product
         }
-        
+
         static func validations(_ validations: inout Validations) {
             validations.add("title", as: String.self, is: !.empty)
             validations.add("description", as: String.self, is: !.empty)
@@ -177,7 +176,7 @@ extension Product {
             validations.add("isPublished", as: Bool.self, is: .valid)
         }
     }
-    
+
     struct Public: Content {
         var id: UUID?
         var title: String
@@ -213,7 +212,7 @@ extension Product {
                 .field("updatedAt", .datetime)
                 .create()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database.schema("products").delete()
         }

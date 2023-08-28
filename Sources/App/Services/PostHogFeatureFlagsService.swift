@@ -16,17 +16,17 @@ struct PostHogFeatureFlagsService {
     let apiKey: String
     let appId: String
     let request: Request
-    
+
     enum Flag: String, Codable, CaseIterable {
         case posEnabled = "cms_pos_enabled"
         case loginEnabled = "cms_login_enabled"
         case autocaptureEnabled = "cms_autocapture_enabled"
         case frontendEnabled = "frontend_site_enabled"
         case paymentWompiEnabled = "cms_payment_wompi_enabled"
-        
+
         var key: String { rawValue }
     }
-    
+
     func isAllowed(_ flag: Flag, alreadyTried: Bool = false) async throws -> Bool {
         guard let featureFlags = try await cachedFlags() else {
             try await fetchRemoteFlags()
@@ -37,14 +37,14 @@ struct PostHogFeatureFlagsService {
                 .first(where: { $0.key == flag.key }) else {
             return true
         }
-        
+
         guard !alreadyTried else {
             throw Abort(.internalServerError)
         }
-        
+
         return featureFlag.active
     }
-    
+
     /**
      * Fetches the feature flags from the cache. It will fetch the remote
      * flags if the cache is empty.
@@ -54,14 +54,14 @@ struct PostHogFeatureFlagsService {
             try await fetchRemoteFlags()
             return try await getAllFeatureFlags(alreadyTried: true)
         }
-        
+
         guard !alreadyTried else {
             throw Abort(.internalServerError)
         }
-        
+
         return featureFlags
     }
-    
+
     /**
      * Toggle a feature flag.
      */
@@ -72,7 +72,7 @@ struct PostHogFeatureFlagsService {
             .first(where: { $0.key == flag.key }) else {
                 return nil
         }
-        
+
         let uri = URI("\(hostname)/api/projects/\(appId)/feature_flags/\(featureFlags.id)")
         let response = try await request
             .client
@@ -83,20 +83,20 @@ struct PostHogFeatureFlagsService {
                 content: [
                     "active": !featureFlags.active
                 ])
-        
+
         request.logger.info("[PostHogFeatureFlagsService] Toggle: \(response.status)")
         return try await getAllFeatureFlags()
     }
-    
+
     private func fetchRemoteFlags() async throws {
         // Warning: this will only fetch the first 1000 flags
         let uri = URI("\(hostname)/api/projects/\(appId)/feature_flags?limit=1000")
         let response = try await request
             .client
             .get(uri, headers: ["Authorization": "Bearer \(apiKey)"])
-        
+
         request.logger.info("[PostHogFeatureFlagsService] Fetch: \(response.status)")
-        
+
         guard response.status == .ok else { return }
         let featureFlags = try response
             .content
@@ -105,10 +105,10 @@ struct PostHogFeatureFlagsService {
             "featureFlags",
             to: featureFlags,
             expiresIn: .minutes(15))
-        
+
         request.logger.info("[PostHogFeatureFlagsService] Cached: \(featureFlags)")
     }
-    
+
     private func cachedFlags() async throws -> PostHogFeatureFlags? {
         request.logger.info("[PostHogFeatureFlagsService] Getting cached flags")
         return try await request.cache.get(
@@ -126,7 +126,7 @@ extension Request {
             appId: settings.postHog.projectId,
             request: self)
     }
-    
+
     /**
      * Ensures that a feature flag is enabled, otherwise it will throw an
      * `Abort` error.

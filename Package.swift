@@ -33,6 +33,7 @@ let package = Package(
                 .product(name: "Fakery", package: "Fakery"),
                 .product(name: "Gatekeeper", package: "gatekeeper"),
                 .product(name: "QueuesRedisDriver", package: "queues-redis-driver"),
+                .target(name: "Swiftlint")
             ],
             swiftSettings: [
                 // Enable better optimizations when building in Release configuration. Despite the use of
@@ -44,6 +45,17 @@ let package = Package(
         .testTarget(name: "AppTests", dependencies: [
             .target(name: "App"),
             .product(name: "XCTVapor", package: "vapor"),
-        ])
+        ]),
+        
+        .binaryTarget(
+            name: "SwiftLintBinary",
+            url: "https://github.com/juozasvalancius/SwiftLint/releases/download/spm-accommodation/SwiftLintBinary-macos.artifactbundle.zip",
+            checksum: "cdc36c26225fba80efc3ac2e67c2e3c3f54937145869ea5dbcaa234e57fc3724"),
+        .plugin(
+            name: "Swiftlint",
+            capability: .buildTool(),
+            dependencies: ["SwiftLintBinary"]
+        ),
+        
     ]
 )

@@ -3,34 +3,34 @@ import Vapor
 
 final class TransactionItem: Model {
     static var schema: String = "transaction_items"
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Field(key: "quantity")
     var quantity: Int
-    
+
     @Parent(key: "product_variant_id")
     var productVariant: ProductVariant
-    
+
     @Field(key: "price")
     var price: Double
-    
+
     @Field(key: "discount")
     var discount: Double
-    
+
     @Field(key: "tax")
     var tax: Double
-    
+
     @Field(key: "total")
     var total: Double
-    
+
     @Enum(key: "currency")
     var currency: Currency
-    
+
     @Parent(key: "transaction_id")
     var transaction: Transaction
-    
+
     func asPublic() throws -> Public {
         return try .init(
             id: requireID(),
@@ -52,14 +52,14 @@ extension TransactionItem {
         var tax: Double
         var total: Double
     }
-    
+
     struct Create: Content {
         var quantity: Int
         var productVariantId: UUID
         var price: Double
         var discount: Double
         var tax: Double
-        
+
         func create() -> TransactionItem {
             let model = TransactionItem()
             model.currency = .COP
@@ -89,7 +89,7 @@ extension TransactionItem {
                 .field("transaction_id", .uuid, .required, .references("transactions", "id"))
                 .create()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database.schema(schema).delete()
         }

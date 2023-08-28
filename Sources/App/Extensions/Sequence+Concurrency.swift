@@ -12,7 +12,7 @@ extension Sequence {
 
         return values
     }
-    
+
     func asyncFilter(
         _ isIncluded: (Element) async throws -> Bool
     ) async rethrows -> [Element] {

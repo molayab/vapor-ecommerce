@@ -3,22 +3,22 @@ import Fluent
 
 final class ProductQuestion: Model {
     static let schema = "product_questions"
-    
+
     @ID(key: .id)
     var id: UUID?
-    
+
     @Field(key: "question")
     var question: String
-    
+
     @Parent(key: "product_id")
     var product: Product
-    
+
     @Children(for: \.$question)
     var answers: [ProductAnswer]
-    
+
     @Parent(key: "user_id")
     var user: User
-    
+
     func asPublic(on db: Database) async throws -> Public {
         await Public(
             id: try requireID(),
@@ -33,18 +33,18 @@ final class ProductQuestion: Model {
 extension ProductQuestion {
     struct Create: Content, Validatable {
         var question: String
-        
+
         var model: ProductQuestion {
             let model = ProductQuestion()
             model.question = question
             return model
         }
-        
+
         static func validations(_ validations: inout Validations) {
             validations.add("question", as: String.self, is: !.empty)
         }
     }
-    
+
     struct Public: Content {
         var id: UUID?
         var question: String
@@ -64,7 +64,7 @@ extension ProductQuestion {
                 .field("user_id", .uuid, .required, .references(User.schema, "id"))
                 .create()
         }
-        
+
         func revert(on database: Database) async throws {
             try await database.schema(ProductQuestion.schema).delete()
         }

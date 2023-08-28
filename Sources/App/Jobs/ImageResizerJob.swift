@@ -13,20 +13,20 @@ struct ImageResizerJob: AsyncJob {
         /// The ID of the image a.k.a. the variant ID
         let id: UUID
     }
-    
+
     func dequeue(_ context: QueueContext, _ payload: Payload) async throws {
         guard let ext = payload.image.ext.split(separator: "/").last else {
             throw Abort(.badRequest)
         }
-        
+
         let publicFolder = context.application.directory.publicDirectory
             + "images/catalog/" + payload.parentId.uuidString + "/" + payload.id.uuidString + "/"
         let fileManager = FileManager.default
         let fileName = UUID().uuidString + "." + ext
         let filePath = publicFolder + fileName
-        
+
         // Write to disk the original image
-        
+
         guard fileManager.fileExists(atPath: publicFolder) else {
             try fileManager.createDirectory(atPath: publicFolder, withIntermediateDirectories: true)
             return try await dequeue(context, payload)
@@ -34,18 +34,18 @@ struct ImageResizerJob: AsyncJob {
         guard fileManager.createFile(atPath: filePath, contents: payload.image.dat) else {
             throw Abort(.notAcceptable)
         }
-        
+
         try await withThrowingTaskGroup(of: Void.self) { group in
             let image = try Image(data: payload.image.dat)
 
             group.addTask {
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 256)
             }
-            
+
             group.addTask {
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 512)
             }
-            
+
             group.addTask {
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 1024)
             }
