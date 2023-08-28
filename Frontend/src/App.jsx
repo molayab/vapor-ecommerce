@@ -22,9 +22,18 @@ import Finances from './pages/Finances'
 import UpdateProduct from './pages/products/UpdateProduct'
 import UpdateProductVariant from './pages/products/UpdateProductVariant'
 
-const setttings = JSON.parse(sessionStorage.getItem('settings'))
-export const API_URL = setttings.apiUrl + '/v1'
-export const RES_URL = setttings.apiUrl
+const getDomainWithoutSubdomain = url => {
+  const urlParts = new URL(url).hostname.split('.')
+
+  return urlParts
+    .slice(0)
+    .slice(-(urlParts.length === 4 ? 3 : 2))
+    .join('.')
+}
+
+const apiUrl = "https://api." + getDomainWithoutSubdomain(window.location.href)
+export const API_URL = apiUrl + '/v1'
+export const RES_URL = apiUrl
 
 export async function isFeatureEnabled(key) {
   const featureFlags = await getAllFeatureFlags()
