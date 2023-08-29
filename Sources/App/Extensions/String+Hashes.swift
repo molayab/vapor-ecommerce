@@ -1,4 +1,5 @@
 import Vapor
+import Fluent
 
 extension String {
     func sha256() -> String {

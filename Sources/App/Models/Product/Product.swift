@@ -40,7 +40,8 @@ final class Product: Model {
     @Children(for: \.$product)
     var variants: [ProductVariant]
 
-    func asPublic(on database: Database) async throws -> Public {
+    func asPublic(on request: Request) async throws -> Public {
+        let database = request.db
         let creator = try await self.$creator.get(on: database)
         let category = try await self.$category.get(on: database)
         let reviews = try await self.$reviews.get(on: database).sorted(
@@ -58,7 +59,7 @@ final class Product: Model {
             questions: [], // try questions.map({ try $0.asPublic() }),
             variants: try await self.$variants
                 .get(on: database)
-                .asyncMap({ try await $0.asPublic(on: database) }),
+                .asyncMap({ try await $0.asPublic(request: request) }),
             minimumSalePrice: try minimumSalePrice(on: database),
             averageSalePrice: try averageSalePrice(on: database),
             stock: try calculateStock(on: database),

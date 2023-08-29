@@ -41,7 +41,7 @@ struct ProductsController: RouteCollection {
             throw Abort(.notFound)
         }
 
-        return try await product.asPublic(on: req.db)
+        return try await product.asPublic(on: req)
     }
 
     /// Public API
@@ -57,7 +57,7 @@ struct ProductsController: RouteCollection {
 
         var items = [Product.Public]()
         for product in products.items {
-            items.append(try await product.asPublic(on: req.db))
+            items.append(try await product.asPublic(on: req))
         }
 
         return Page<Product.Public>(
@@ -77,7 +77,7 @@ struct ProductsController: RouteCollection {
 
         return try await products
             .asyncFilter { try await $0.isAvailable(on: req.db) }
-            .asyncMap { try await $0.asPublic(on: req.db) }
+            .asyncMap { try await $0.asPublic(on: req) }
     }
 
     /// Restricted API
@@ -90,7 +90,7 @@ struct ProductsController: RouteCollection {
         try Product.Create.validate(content: req)
         let product = try await payload.create(for: req, user: user)
 
-        return try await product.asPublic(on: req.db)
+        return try await product.asPublic(on: req)
     }
 
     /// Restricted API
@@ -109,7 +109,7 @@ struct ProductsController: RouteCollection {
         try Product.Create.validate(content: req)
         try await payload.update(for: req, product: product)
 
-        return try await product.asPublic(on: req.db)
+        return try await product.asPublic(on: req)
     }
 
     /// Restricted API
@@ -125,10 +125,11 @@ struct ProductsController: RouteCollection {
 
         for variant in try await product.$variants.get(on: req.db) {
             do {
-                let fm = FileManager.default
                 let path = try req.application.directory.publicDirectory
                     + "images/catalog/\(product.requireID().uuidString)"
-                try fm.removeItem(atPath: path)
+
+                // NOT SURE IF WORKS WELL FOR DIRECTORIES
+                try await req.application.fileio.remove(path: path, eventLoop: req.eventLoop.next()).get()
             } catch {
                 throw Abort(.internalServerError)
             }

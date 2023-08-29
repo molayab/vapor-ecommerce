@@ -21,33 +21,35 @@ struct ImageResizerJob: AsyncJob {
 
         let publicFolder = context.application.directory.publicDirectory
             + "images/catalog/" + payload.parentId.uuidString + "/" + payload.id.uuidString + "/"
-        let fileManager = FileManager.default
         let fileName = UUID().uuidString + "." + ext
         let filePath = publicFolder + fileName
 
         // Write to disk the original image
 
-        guard fileManager.fileExists(atPath: publicFolder) else {
-            try fileManager.createDirectory(atPath: publicFolder, withIntermediateDirectories: true)
-            return try await dequeue(context, payload)
+        do {
+            try await context.application.fileio.createDirectory(path: publicFolder, mode: 0644, eventLoop: context.eventLoop.next()).get()
+        } catch {
+            context.logger.error("Error creating directory: \(error)")
         }
-        guard fileManager.createFile(atPath: filePath, contents: payload.image.dat) else {
-            throw Abort(.notAcceptable)
-        }
+
+        try await context.application.fileio.write(
+            fileHandle: .init(path: filePath),
+            buffer: ByteBuffer(data: payload.image.dat),
+            eventLoop: context.eventLoop.next()).get()
 
         try await withThrowingTaskGroup(of: Void.self) { group in
             let image = try Image(data: payload.image.dat)
 
             group.addTask {
-                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 256)
+                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 256, app: context.application)
             }
 
             group.addTask {
-                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 512)
+                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 512, app: context.application)
             }
 
             group.addTask {
-                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 1024)
+                try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 1024, app: context.application)
             }
 
             try await group.waitForAll()

@@ -1,4 +1,5 @@
 import NIOSSL
+import NIO
 import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
@@ -8,58 +9,30 @@ import JWT
 import Gatekeeper
 import QueuesRedisDriver
 
-// Application persistent settings, default values:
-var settings = Settings(
-    siteName: "Vapor CMS",
-    siteDescription: "Vapor CMS is a content management system built with Vapor 4.",
-    siteUrl: Environment.get("SITE_DOMAIN") ?? "http://localhost:5173",
-    apiUrl: Environment.get("API_DOMAIN") ?? "http://localhost:8080",
-    allowedOrigins: [
-        "http://cms.localhost",
-        "http://localhost:5173",
-        "https://app.posthog.com"],
-    jwt: Settings.JWT(signerKey: UUID().uuidString.sha256()),
-    postHog: Settings.PostHog(
-        pkKey: Environment.get("POSTHOG_PK_KEY") ?? "",
-        apiKey: Environment.get("POSTHOG_API_KEY") ?? "",
-        host: Environment.get("POSTHOG_HOST") ?? "",
-        projectId: Environment.get("POSTHOG_PROJECT_ID") ?? ""),
-    analyticsProvider: .posthog,
-    wompi: Settings.Wompi(
-        mode: .test,
-        test: Settings.Wompi.Configuration(
-            publicKey: Environment.get("WOMPI_TEST_PUBLIC_KEY") ?? "",
-            privateKey: Environment.get("WOMPI_TEST_PRIVATE_KEY") ?? "",
-            eventsKey: Environment.get("WOMPI_TEST_EVENTS_KEY") ?? "",
-            integrityKey: Environment.get("WOMPI_TEST_INTEGRITY_KEY") ?? ""),
-        prod: Settings.Wompi.Configuration(
-            publicKey: Environment.get("WOMPI_PUBLIC_KEY") ?? "",
-            privateKey: Environment.get("WOMPI_PRIVATE_KEY") ?? "",
-            eventsKey: Environment.get("WOMPI_EVENTS_KEY") ?? "",
-            integrityKey: Environment.get("WOMPI_INTEGRITY_KEY") ?? ""),
-        costs: Settings.Wompi.Costs(
-            currency: .COP,
-            fixed: 500,
-            fee: 0.03)))
+// Application persistent settings
+var settings: Settings!
 
 // configures your application
 public func configure(_ app: Application) async throws {
     // create default settings if not exist
     let settingsPath = app.directory.workingDirectory + "/settings.json"
-    if !FileManager.default.fileExists(atPath: settingsPath) {
-        FileManager
-            .default
-            .createFile(
-                atPath: settingsPath,
-                contents: try JSONEncoder()
-                    .encode(settings))
-
-        app.logger.info("Created default settings.json file")
-    }
 
     // load settings
-    let data = try Data(contentsOf: URL(fileURLWithPath: settingsPath))
-    settings = try JSONDecoder().decode(Settings.self, from: data)
+    let fileHandle = try NIOFileHandle(path: settingsPath)
+    let fileRegion = try FileRegion(fileHandle: fileHandle)
+
+    let result = try await app.fileio.read(
+        fileRegion: fileRegion,
+        allocator: ByteBufferAllocator(),
+        eventLoop: app.eventLoopGroup.next()).get()
+    try fileHandle.close()
+
+    settings = try ContentConfiguration
+        .default()
+        .requireDecoder(for: .json)
+        .decode(Settings.self,
+                from: result,
+                headers: .init())
 
     app.commands.use(UserCommand(), as: "users")
     app.commands.use(ProductCommand(), as: "products")
@@ -74,7 +47,7 @@ public func configure(_ app: Application) async throws {
         app.databases.use(.sqlite(.memory), as: .sqlite)
     } else {
         app.databases.use(.postgres(configuration: SQLPostgresConfiguration(
-            hostname: Environment.get("DATABASE_HOST") ?? "db",
+            hostname: Environment.get("DATABASE_HOST") ?? "localhost",
             port: Environment.get("DATABASE_PORT")
                 .flatMap(Int.init(_:)) ?? SQLPostgresConfiguration.ianaPortNumber,
             username: Environment.get("DATABASE_USERNAME") ?? "vapor_username",

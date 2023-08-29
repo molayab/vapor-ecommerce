@@ -1,5 +1,6 @@
 import Fluent
 import Vapor
+import NIO
 
 struct SettingsController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
@@ -13,7 +14,6 @@ struct SettingsController: RouteCollection {
             UserSessionAuthenticator(),
             User.guardMiddleware(),
             RoleMiddleware(roles: [.admin]))
-        restricted.patch(use: updateSettings)
         restricted.get("flags", use: getAllFeatureFlags)
         restricted.patch("flags", ":flag", use: toggleFeatureFlag)
     }
@@ -39,24 +39,15 @@ struct SettingsController: RouteCollection {
         return flags
     }
 
-    private func updateSettings(req: Request) async throws -> Settings {
-        let payload = try req.content.get(Settings.self)
-        let settings = req.application.directory.workingDirectory
-        let data = try JSONEncoder().encode(payload)
-
-        try await req.fileio.writeFile(.init(data: data),
-            at: settings + "/settings.json")
-
-        return payload
-    }
-
     private func getSettings(req: Request) async throws -> Settings.Public {
         // get the settings from .json file
         let settings = req.application.directory.workingDirectory
-        return try JSONDecoder().decode(
-            Settings.self,
-            from: try await req.fileio.collectFile(
-                at: settings + "/settings.json")).asPublic()
+        return try ContentConfiguration()
+            .requireDecoder(for: .json)
+            .decode(Settings.self,
+                    from: try await req.fileio.collectFile(
+                        at: settings + "/settings.json"),
+                    headers: .init()).asPublic()
     }
 
 }

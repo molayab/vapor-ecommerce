@@ -1,4 +1,5 @@
-import Foundation
+import Vapor
+import Fluent
 
 extension Sequence {
     func asyncMap<T>(

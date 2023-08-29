@@ -16,12 +16,12 @@ final class ProductAnswer: Model {
     @Parent(key: "user_id")
     var user: User
 
-    func asPublic(on db: Database) async throws -> Public {
+    func asPublic(on request: Request) async throws -> Public {
         await Public(
             id: try requireID(),
             answer: answer,
-            question: try question.asPublic(on: db),
-            user: try user.asPublic(on: db)
+            question: try question.asPublic(on: request),
+            user: try user.asPublic(on: request.db)
         )
     }
 }

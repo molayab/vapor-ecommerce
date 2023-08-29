@@ -30,7 +30,7 @@ struct ProductVariantsController: RouteCollection {
             throw Abort(.notFound)
         }
 
-        return try await variant.asPublic(on: req.db)
+        return try await variant.asPublic(request: req)
     }
 
     /// Restricted API
@@ -60,7 +60,7 @@ struct ProductVariantsController: RouteCollection {
         return try await product.$variants
             .query(on: req.db)
             .all()
-            .asyncMap({ try await $0.asPublic(on: req.db) })
+            .asyncMap({ try await $0.asPublic(request: req) })
     }
 
     /// Restricted API
@@ -97,7 +97,7 @@ struct ProductVariantsController: RouteCollection {
         variant.shippingCost = payload.shippingCost
 
         try await variant.save(on: req.db)
-        return try await variant.asPublic(on: req.db)
+        return try await variant.asPublic(request: req)
     }
 
     /// Restricted API
@@ -115,7 +115,7 @@ struct ProductVariantsController: RouteCollection {
         try ProductVariant.Create.validate(content: req)
 
         let variant = try await payload.create(for: req, product: product)
-        return try await variant.asPublic(on: req.db)
+        return try await variant.asPublic(request: req)
     }
 
     /// Restricted API
@@ -139,13 +139,20 @@ struct ProductVariantsController: RouteCollection {
                 throw Abort(.notFound)
         }
 
-        do {
-            let fm = FileManager.default
-            let path = try req.application.directory.publicDirectory
-                + "images/catalog/\(product.requireID().uuidString)/\(variant.requireID().uuidString)"
-            try fm.removeItem(atPath: path)
-        } catch {
-            req.logger.error("Error deleting variant image: \(error.localizedDescription)")
+        let path = try req.application.directory.publicDirectory
+            + "images/catalog/\(product.requireID().uuidString)/\(variant.requireID().uuidString)"
+
+        for entry in try await req.application.fileio.listDirectory(
+            path: path,
+            eventLoop: req.eventLoop.next()).get() {
+
+            do {
+                try await req.application.fileio.remove(
+                    path: path + "/" + entry.name,
+                    eventLoop: req.eventLoop.next()).get()
+            } catch {
+                req.logger.error("Error deleting variant image: \(error.localizedDescription)")
+            }
         }
 
         try await variant.delete(on: req.db)

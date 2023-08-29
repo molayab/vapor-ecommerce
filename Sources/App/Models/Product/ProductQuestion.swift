@@ -19,13 +19,13 @@ final class ProductQuestion: Model {
     @Parent(key: "user_id")
     var user: User
 
-    func asPublic(on db: Database) async throws -> Public {
+    func asPublic(on request: Request) async throws -> Public {
         await Public(
             id: try requireID(),
             question: question,
-            product: try product.asPublic(on: db),
-            user: try user.asPublic(on: db),
-            answers: try answers.asyncMap { try await $0.asPublic(on: db) }
+            product: try product.asPublic(on: request),
+            user: try user.asPublic(on: request.db),
+            answers: try answers.asyncMap { try await $0.asPublic(on: request) }
         )
     }
 }

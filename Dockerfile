@@ -6,9 +6,16 @@ FROM swift:5.8-jammy as build
 # Install OS updates and, if needed, sqlite3
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
     && apt-get -q update \
-    && apt-get -q dist-upgrade -y\
-    && apt-get -q install -y libgd-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get -q dist-upgrade -y \
+    && apt-get -q install -y \
+      ca-certificates \
+      tzdata \
+      libgd-dev \
+# If your app or its dependencies import FoundationNetworking, also install `libcurl4`.
+      # libcurl4 \
+# If your app or its dependencies import FoundationXML, also install `libxml2`.
+      # libxml2 \
+    && rm -r /var/lib/apt/lists/*
 
 # Set up a build area
 WORKDIR /build

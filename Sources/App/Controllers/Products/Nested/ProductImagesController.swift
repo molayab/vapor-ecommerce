@@ -27,7 +27,7 @@ struct ProductImagesController: RouteCollection {
             throw Abort(.notFound)
         }
 
-        return try await variant.asPublic(on: req.db).images
+        return try await variant.asPublic(request: req).images
     }
 
     private func createImages(req: Request) async throws -> [String: String] {
@@ -77,7 +77,6 @@ struct ProductImagesController: RouteCollection {
             throw Abort(.badRequest)
         }
 
-        let fm = FileManager.default
         let publicPath = try req.application.directory.publicDirectory
             + "/images/catalog/"
             + variant.$product.$id.wrappedValue.uuidString + "/"
@@ -90,17 +89,16 @@ struct ProductImagesController: RouteCollection {
             throw Abort(.badRequest)
         }
 
-        do {
-            try fm.enumerator(atPath: publicPath)?.forEach { file in
-                guard let file = file as? String else { return }
-                guard file.contains(fileId) else { return }
+        let entries = try await req.application.fileio.listDirectory(
+            path: publicPath,
+            eventLoop: req.eventLoop.next()).get()
+        for entry in entries {
+            guard entry.name.contains(fileId) else { continue }
 
-                let path = publicPath + "/" + file
-                try fm.removeItem(atPath: path)
-            }
-        } catch {
-            req.logger.error("\(error.localizedDescription)")
-            throw Abort(.internalServerError)
+            let path = publicPath + "/" + entry.name
+            try await req.application.fileio.remove(
+                path: path,
+                eventLoop: req.eventLoop.next()).get()
         }
 
         return ["status": "success"]

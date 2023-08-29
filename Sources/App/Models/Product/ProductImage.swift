@@ -14,15 +14,18 @@ struct ProductImage: Codable {
         var dat: Data
     }
 
-    static func storeImageVariant(_ image: Image, _ publicFolder: String, _ fileName: String, size: Int) throws {
+    static func storeImageVariant(_ image: Image, _ publicFolder: String, _ fileName: String, size: Int, app: Application) throws {
         guard let thumbnail = image.resizedTo(width: size) else {
             throw Abort(.internalServerError)
         }
 
-        let url = URL(fileURLWithPath: publicFolder + "t\(size)_" + fileName)
-        guard thumbnail.write(to: url) else {
-            throw Abort(.notAcceptable)
-        }
+        let path = publicFolder + "t\(size)_" + fileName
+        let data = try thumbnail.export(as: .jpg(quality: 80))
+
+        try app.fileio.write(
+            fileHandle: .init(path: path),
+            buffer: ByteBuffer(data: data),
+            eventLoop: app.eventLoopGroup.next()).wait()
     }
 
     @discardableResult

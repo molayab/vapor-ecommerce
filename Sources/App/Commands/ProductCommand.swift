@@ -29,7 +29,6 @@ struct ProductCommand: Command {
     }
 
     private func randomizeTxs(using context: CommandContext, signature: Signature) throws {
-        let faker = Faker()
         let products = try Product.query(on: context.application.db).all().wait()
         let categories = try Category.query(on: context.application.db).all().wait()
         let users = try User.query(on: context.application.db).all().wait()
@@ -39,7 +38,6 @@ struct ProductCommand: Command {
 
         for _ in 0..<1000 {
             let product = products.randomElement()!
-            let category = categories.randomElement()!
             let variant = try product.$variants.get(on: context.application.db).wait().randomElement()!
 
             let tx = Transaction()

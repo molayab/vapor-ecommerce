@@ -1,4 +1,5 @@
-import Foundation
+import Vapor
+import Fluent
 
 extension String {
     func fromBase64() -> String? {

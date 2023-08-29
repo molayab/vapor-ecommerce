@@ -50,7 +50,7 @@ struct ProductQuestionsController: RouteCollection {
         question.user = user
 
         try await question.save(on: req.db)
-        return try await question.asPublic(on: req.db)
+        return try await question.asPublic(on: req)
     }
 
     /// Private API
@@ -95,6 +95,6 @@ struct ProductQuestionsController: RouteCollection {
         let payload = try req.content.decode(ProductQuestion.Create.self)
         question.question = payload.question
         try await question.save(on: req.db)
-        return try await question.asPublic(on: req.db)
+        return try await question.asPublic(on: req)
     }
 }

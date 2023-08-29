@@ -41,19 +41,21 @@ final class ProductVariant: Model {
         return isAvailable && stock > 0
     }
 
-    func asPublic(on db: Database) async throws -> Public {
+    func asPublic(request: Request) async throws -> Public {
         let id = try self.requireID().uuidString
-        let sales = try await self.$transactionItems.get(on: db).map { try $0.asPublic() }
+        let sales = try await self.$transactionItems.get(on: request.db).map { try $0.asPublic() }
 
         do {
-            let fm = FileManager.default
             let path = DirectoryConfiguration.detect().publicDirectory
                 + "/images/catalog/" + ($product.$id.wrappedValue.uuidString) + "/"
                 + id
             let publicPath = "/images/catalog/\($product.$id.wrappedValue.uuidString)/\(id)/"
             let allowedExtensions = ["jpeg", "jpg", "png"]
-            let items = try fm.contentsOfDirectory(atPath: path).filter { item in
-                allowedExtensions.contains(String(item.split(separator: ".").last ?? ""))
+
+            let items = try await request.application.fileio.listDirectory(
+                path: path,
+                eventLoop: request.eventLoop.next()).get().filter { entry in
+                    allowedExtensions.contains(String(entry.name.split(separator: ".").last ?? ""))
             }
 
             return Public(
@@ -65,7 +67,7 @@ final class ProductVariant: Model {
                 sku: sku,
                 stock: stock,
                 isAvailable: isAvailable,
-                images: items.map { publicPath + $0 },
+                images: items.map { publicPath + $0.name },
                 tax: tax,
                 shippingCost: shippingCost,
                 sales: sales)

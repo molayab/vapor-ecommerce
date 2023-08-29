@@ -42,9 +42,7 @@ struct AuthenticationController: RouteCollection {
 
         let response = Response(status: .ok)
         response.cookies["refresh"] = cookie
-        response.body = await Response.Body(
-            data: try JSONEncoder().encode(
-                authorization.asPublic(on: req)))
+        try response.content.encode(await authorization.asPublic(on: req))
 
         return response
     }
@@ -59,8 +57,7 @@ struct AuthenticationController: RouteCollection {
 
         let authorization = try await Auth.refresh(in: req, token: refresh)
         let response = Response(status: .ok)
-        response.body = .init(
-            data: try JSONEncoder().encode(await authorization.asPublic(on: req)))
+        try response.content.encode(await authorization.asPublic(on: req))
         response.cookies["refresh"] = HTTPCookies.Value(
             string: authorization.refreshToken,
             expires: .distantFuture,

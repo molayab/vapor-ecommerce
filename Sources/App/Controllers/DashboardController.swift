@@ -13,10 +13,6 @@ struct DashboardController: RouteCollection {
         unauthorized.get("stats", use: stats)
     }
 
-    func index(req: Request) throws -> EventLoopFuture<View> {
-        return req.view.render("Dashboard/index")
-    }
-
     // swiftlint:disable:next function_body_length
     private func stats(req: Request) async throws -> OrderStats {
         if let psql = req.db as? PostgresDatabase {
