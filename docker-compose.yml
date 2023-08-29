@@ -19,7 +19,7 @@ version: '3.8'
 volumes:
   db_data:
   pgadmin:
-  vapor_public:
+  vapor_images:
 
 x-shared_environment: &shared_environment
   LOG_LEVEL: ${LOG_LEVEL:-debug}
@@ -56,8 +56,10 @@ services:
     networks:
       - vapor
       - vapor_database
+    ports:
+        - '8080:80'
     volumes:
-      - vapor_public:/app/Public
+      - vapor_images:/app/Public/images
     command: ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "80"]
     
   migrate:
