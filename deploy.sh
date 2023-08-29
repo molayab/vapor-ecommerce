@@ -42,7 +42,6 @@ if [ "$prod" = "prod" ]; then
     docker-compose -f docker-compose.yml down -v || echo "Error stopping vapor stack"
     docker-compose -f docker-compose.yml build --progress=plain || echo "Error building vapor stack"
     docker-compose -f docker-compose.yml up -d --remove-orphans
-    docker system prune -a -f
 elif [ "$dev" = "dev" ]; then
 # This is development, it will not build neither run the vapor container, it will only run the database and redis containers
 # you MUST run vapor manually and in DEBUG mode
