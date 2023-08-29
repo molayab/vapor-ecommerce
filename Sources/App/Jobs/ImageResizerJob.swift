@@ -2,6 +2,7 @@ import Vapor
 import Fluent
 import SwiftGD
 import Queues
+import NIO
 
 /// A job that resizes an image and saves it to disk
 struct ImageResizerJob: AsyncJob {
@@ -24,18 +25,14 @@ struct ImageResizerJob: AsyncJob {
         let fileName = UUID().uuidString + "." + ext
         let filePath = publicFolder + fileName
 
-        // Write to disk the original image
-
-        do {
-            try await context.application.fileio.createDirectory(path: publicFolder, mode: 0644, eventLoop: context.eventLoop.next()).get()
-        } catch {
-            context.logger.error("Error creating directory: \(error)")
+        let fileManager = FileManager.default
+        guard fileManager.fileExists(atPath: publicFolder) else {
+            try fileManager.createDirectory(atPath: publicFolder, withIntermediateDirectories: true)
+            return try await dequeue(context, payload)
         }
-
-        try await context.application.fileio.write(
-            fileHandle: .init(path: filePath),
-            buffer: ByteBuffer(data: payload.image.dat),
-            eventLoop: context.eventLoop.next()).get()
+        guard fileManager.createFile(atPath: filePath, contents: payload.image.dat) else {
+            throw Abort(.notAcceptable)
+        }
 
         try await withThrowingTaskGroup(of: Void.self) { group in
             let image = try Image(data: payload.image.dat)

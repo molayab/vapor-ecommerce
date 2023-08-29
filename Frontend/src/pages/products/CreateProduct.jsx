@@ -30,7 +30,7 @@ function CreateProduct() {
             setErrors({})
             setIsLoading(true)
             
-            let response = await createProduct({ ...localProduct, isPublished: isPublished, category: localProduct.category.id })
+            let response = await createProduct({ ...localProduct, isPublished: isPublished })
             let data = await response.json()
             if (data.id) {
                 setIsLoading(false)

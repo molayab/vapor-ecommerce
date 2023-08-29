@@ -185,6 +185,9 @@ export default function POS() {
                         <Flex className='justify-center w-48'>
                             <div className="w-48 h-48 rounded">
                                 <QrReader
+                                    constraints={{
+                                        facingMode: 'environment'
+                                    }}
                                     ViewFinder={ViewFinder}
                                     scanDelay={1500}
                                     onResult={(result) => {

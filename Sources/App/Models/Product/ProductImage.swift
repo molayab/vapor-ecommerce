@@ -22,10 +22,9 @@ struct ProductImage: Codable {
         let path = publicFolder + "t\(size)_" + fileName
         let data = try thumbnail.export(as: .jpg(quality: 80))
 
-        try app.fileio.write(
-            fileHandle: .init(path: path),
-            buffer: ByteBuffer(data: data),
-            eventLoop: app.eventLoopGroup.next()).wait()
+        guard FileManager.default.createFile(atPath: path, contents: data) else {
+            throw Abort(.notAcceptable)
+        }
     }
 
     @discardableResult
