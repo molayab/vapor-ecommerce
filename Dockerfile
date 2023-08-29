@@ -67,8 +67,8 @@ WORKDIR /app
 
 # Copy built executable and any staged resources from builder
 COPY --from=build --chown=vapor:vapor /staging /app
-COPY --chown=vapor:vapor settings.json /app
-COPY --chown=vapor:vapor .env /app
+COPY --chown=vapor:vapor --chmod=600 settings.json /app
+COPY --chown=vapor:vapor --chmod=600 .env /app
 
 # Ensure all further commands run as the vapor user
 USER vapor:vapor
