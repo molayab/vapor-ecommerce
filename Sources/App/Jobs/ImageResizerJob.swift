@@ -3,6 +3,7 @@ import Fluent
 import SwiftGD
 import Queues
 import NIO
+import Foundation
 
 /// A job that resizes an image and saves it to disk
 struct ImageResizerJob: AsyncJob {
@@ -17,6 +18,7 @@ struct ImageResizerJob: AsyncJob {
 
     func dequeue(_ context: QueueContext, _ payload: Payload) async throws {
         guard let ext = payload.image.ext.split(separator: "/").last else {
+            context.logger.error(" !!! Could not get extension from: \(payload.image.ext)")
             throw Abort(.badRequest)
         }
 
@@ -27,10 +29,12 @@ struct ImageResizerJob: AsyncJob {
 
         let fileManager = FileManager.default
         guard fileManager.fileExists(atPath: publicFolder) else {
+            context.logger.info(" !!! Creating directory: \(publicFolder)")
             try fileManager.createDirectory(atPath: publicFolder, withIntermediateDirectories: true)
             return try await dequeue(context, payload)
         }
         guard fileManager.createFile(atPath: filePath, contents: payload.image.dat) else {
+            context.logger.error(" !!! Could not create file: \(filePath)")
             throw Abort(.notAcceptable)
         }
 
@@ -38,15 +42,21 @@ struct ImageResizerJob: AsyncJob {
             let image = try Image(data: payload.image.dat)
 
             group.addTask {
+                context.logger.info(" !!! Resizing image: \(filePath)")
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 256, app: context.application)
+                context.logger.info(" !!! Resized image: \(filePath)")
             }
 
             group.addTask {
+                context.logger.info(" !!! Resizing image: \(filePath)")
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 512, app: context.application)
+                context.logger.info(" !!! Resized image: \(filePath)")
             }
 
             group.addTask {
+                context.logger.info(" !!! Resizing image: \(filePath)")
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 1024, app: context.application)
+                context.logger.info(" !!! Resized image: \(filePath)")
             }
 
             try await group.waitForAll()

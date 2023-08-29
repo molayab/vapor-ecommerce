@@ -38,7 +38,7 @@ public func configure(_ app: Application) async throws {
     app.commands.use(ProductCommand(), as: "products")
     app.commands.use(RoleCommand(), as: "roles")
 
-    app.routes.defaultMaxBodySize = "256mb"
+    app.routes.defaultMaxBodySize = "100mb"
     app.jwt.signers.use(.hs256(key: settings.jwt.signerKey))
     app.redis.configuration = try RedisConfiguration(hostname: "redis", pool: .init(
         connectionRetryTimeout: .seconds(60)))
@@ -96,12 +96,17 @@ public func configure(_ app: Application) async throws {
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
     if let configuration = app.redis.configuration {
+        var logger = app.logger
+        logger.logLevel = .error
+
+        app.queues.configuration = .init(logger: logger)
         app.queues.use(.redis(configuration))
         app.queues.schedule(CostShedulerJob()).daily().at(.midnight)
         app.queues.add(ImageResizerJob())
 
         try app.queues.startInProcessJobs(on: .default)
         try app.queues.startScheduledJobs()
+
         app.logger.info("Redis is configured")
         app.logger.info("Queues are configured")
     } else {

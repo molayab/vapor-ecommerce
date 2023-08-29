@@ -108,7 +108,7 @@ services:
     image: postgres:alpine
     restart: always
     volumes:
-      - db_data:/var/lib/postgresql/data/pgdata
+      - db_data:/var/lib/postgresql/data
     environment:
       PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_USER: ${VAPOR_DATABASE_USERNAME:-vapor_username}

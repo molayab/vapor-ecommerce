@@ -2,6 +2,7 @@ import Fluent
 import Vapor
 import SwiftGD
 import Queues
+import Foundation
 
 struct ProductImage: Codable {
     static let schema = "product_images"
