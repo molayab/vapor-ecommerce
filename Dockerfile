@@ -39,8 +39,6 @@ RUN find -L "$(swift build --package-path /build -c release --show-bin-path)/" -
 # Ensure that by default, neither the directory nor any of its contents are writable.
 RUN [ -d /build/Public ] && { mv /build/Public ./Public && chmod -R a-w ./Public; } || true
 RUN [ -d /build/Resources ] && { mv /build/Resources ./Resources && chmod -R a-w ./Resources; } || true
-RUN [ -e /build/settings.json ] && { cp /settings.json ./settings.json && chmod a-w ./settings.json; } || true
-RUN [ -e /build/.env ] && { cp /.env ./.env && chmod a-w ./.env; } || true
 
 # ================================
 # Run image
@@ -69,6 +67,8 @@ WORKDIR /app
 
 # Copy built executable and any staged resources from builder
 COPY --from=build --chown=vapor:vapor /staging /app
+COPY --chown=vapor:vapor settings.json /app
+COPY --chown=vapor:vapor .env /app
 
 # Ensure all further commands run as the vapor user
 USER vapor:vapor
