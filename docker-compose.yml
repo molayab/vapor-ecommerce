@@ -118,7 +118,9 @@ services:
       POSTGRES_PASSWORD: ${VAPOR_DATABASE_PASSWORD:-vapor_password}
       POSTGRES_DB: ${VAPOR_DATABASE_NAME:-vapor_database}
     networks:
-      - vapor_database
+      vapor_database:
+        aliases:
+          - db
 
   pgadmin:
     image: dpage/pgadmin4
