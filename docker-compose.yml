@@ -45,9 +45,7 @@ services:
       context: .
     restart: always
     deploy:
-      replicas: 1
-    ports:
-      - '8080:80'
+      replicas: 2
     environment:
       <<: *shared_environment
     depends_on:
