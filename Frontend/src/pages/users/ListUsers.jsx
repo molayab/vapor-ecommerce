@@ -14,7 +14,7 @@ import UsersTable from "../../components/UsersTable";
 import Loader from "../../components/Loader";
 
 function ListUsers() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const [users, setUsers] = useState({items: []})
   const [page, setPage] = useState(1)
   const [currentTab, setCurrentTab] = useState(0)
@@ -84,11 +84,11 @@ function ListUsers() {
     onIndexChange(currentTab, 1)
   }, [])
 
-  if (users.items.length === 0) {
+  /*if (users.items.length === 0) {
     return (
       <Loader />
     )
-  }
+  }*/
 
   return (
       <>

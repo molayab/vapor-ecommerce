@@ -47,7 +47,7 @@ elif [ "$dev" = "dev" ]; then
 # you MUST run vapor manually and in DEBUG mode
     echo "Deploying development stack"
     docker network create vapor --driver bridge --attachable || echo "Network already exists"
-    docker-compose -f docker-compose.yml down -v || echo "Error stopping vapor stack"
+    docker-compose -f docker-compose.yml down || echo "Error stopping vapor stack"
     docker-compose -f docker-compose.yml up db redis pgadmin redis-commander
 else
     echo "Invalid option"

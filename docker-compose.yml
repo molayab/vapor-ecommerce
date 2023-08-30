@@ -45,7 +45,9 @@ services:
       context: .
     restart: always
     deploy:
-      replicas: 2
+      replicas: 1
+    ports:
+      - '8080:80'
     environment:
       <<: *shared_environment
     depends_on:
@@ -54,7 +56,7 @@ services:
     networks:
       - vapor
     volumes:
-      - vapor_images:/app/Public/images
+      - vapor_images:/app/Public/images:rw
     command: ["serve", "--env", "production", "--hostname", "0.0.0.0", "--port", "80"]
     
   migrate:
