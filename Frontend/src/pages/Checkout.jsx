@@ -1,6 +1,7 @@
 import { 
     Button, 
     Card, 
+    Divider, 
     Flex, 
     Grid,
     Metric, 
@@ -15,12 +16,14 @@ import {
     TableHeaderCell, 
     TableRow, 
     Text, 
+    TextInput, 
     Title 
 } from "@tremor/react"
 
 import { useState } from "react"
 import { API_URL } from "../App"
 import SideMenu from "../components/SideMenu"
+import Keypad from "../components/Keypad"
 
 export function Checkout({ checkoutList }) {
     const [input, setInput] = useState('0')
@@ -92,58 +95,22 @@ export function Checkout({ checkoutList }) {
                     </div>
                 </Flex>
                 
+                <Title>Datos de facturacion</Title>
+                <TextInput className="w-full mt-4" placeholder="Nombre del cliente" />
+                <TextInput className="w-full mt-4" placeholder="Email del cliente" />
 
+                <Divider />
                 <Subtitle>Cambio</Subtitle>
                 <Title>{ dataFormatter(Math.max(0 ,input - checkoutList.reduce((acc, product) => acc + (product.salePrice * product.quantity), 0))) }</Title>
 
-                <Button color="green" className="w-full mt-4" onClick={ checkout }>Confirmar Pago</Button>
+                <Button color="green" size="xl" className="w-full mt-4" onClick={ checkout }>Confirmar Pago</Button>
                 <Grid numItems={2} className="gap-4">
-
-                    <Button variant="secondary" color="blue" className="w-full mt-4">Editar Orden</Button>
-                    <Button variant="secondary" color="rose" className="w-full mt-4">Cancelar Orden</Button>
+                    <Button size="sm" variant="secondary" color="blue" className="w-full mt-4">Editar Orden</Button>
+                    <Button size="sm" variant="secondary" color="rose" className="w-full mt-4">Cancelar Orden</Button>
                 </Grid>
             </Card>
             <Grid numItems={1} numItemsSm={2} className="mt-4 gap-4">
-                <Card>
-                    <Grid numItems={3} className="gap-2">
-                        <Button onClick={ () => onNumberPadClick(1) }>
-                            1
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick(2) }>
-                            2
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick(3) }>
-                            3
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick(4) }>
-                            4
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick(5) }>
-                            5
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick(6) }>
-                            6
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick(7) }>
-                            7
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick(8) }>
-                            8
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick(9) }>
-                            9
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick(0) }>
-                            0
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick('ENTER') }>
-                            ENTER
-                        </Button>
-                        <Button onClick={ () => onNumberPadClick('DEL') }>
-                            DEL
-                        </Button>
-                    </Grid>
-                </Card>
+                <Keypad onNumberPadClick={ onNumberPadClick } />
 
                 <Card>
                     <Title>Productos</Title>

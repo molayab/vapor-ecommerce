@@ -39,20 +39,21 @@ public func configure(_ app: Application) async throws {
     app.commands.use(RoleCommand(), as: "roles")
 
     app.routes.defaultMaxBodySize = "100mb"
-    app.jwt.signers.use(.hs256(key: settings.jwt.signerKey))
-    app.redis.configuration = try RedisConfiguration(hostname: "redis", pool: .init(
+    app.jwt.signers.use(.hs256(key: settings.secrets.jwt.signerKey))
+    app.redis.configuration = try RedisConfiguration(
+        hostname: settings.secrets.redis.resolveHostname(),
+        pool: .init(
         connectionRetryTimeout: .seconds(60)))
 
     if app.environment == .testing {
         app.databases.use(.sqlite(.memory), as: .sqlite)
     } else {
         app.databases.use(.postgres(configuration: SQLPostgresConfiguration(
-            hostname: Environment.get("DATABASE_HOST") ?? "localhost",
-            port: Environment.get("DATABASE_PORT")
-                .flatMap(Int.init(_:)) ?? SQLPostgresConfiguration.ianaPortNumber,
-            username: Environment.get("DATABASE_USERNAME") ?? "vapor_username",
-            password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
-            database: Environment.get("DATABASE_NAME") ?? "vapor_database",
+            hostname: settings.secrets.postgres.hostname,
+            port: settings.secrets.postgres.port ?? SQLPostgresConfiguration.ianaPortNumber,
+            username: settings.secrets.postgres.username,
+            password: settings.secrets.postgres.password,
+            database: settings.secrets.postgres.database,
             tls: .prefer(try .init(configuration: .clientDefault)))
         ), as: .psql)
     }

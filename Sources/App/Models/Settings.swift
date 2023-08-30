@@ -1,27 +1,40 @@
 import Fluent
 import Vapor
 
-struct Settings: Content {
-    var siteName: String
-    var siteDescription: String
-    var siteUrl: String
-    var apiUrl: String
-    var allowedOrigins: [String]
-    var jwt: JWT
-    var postHog: PostHog
-    var analyticsProvider: AnalyticsProvider
-    var wompi: Wompi
+extension Settings {
+    struct Gatekeeper: Content {
+        var maxRequestsPerMinute: Int
+        var maxLoginAttemptsPerMinute: Int
+    }
 
-    func asPublic() -> Public {
-        Public(
-            siteName: siteName,
-            siteDescription: siteDescription,
-            siteUrl: siteUrl,
-            apiUrl: apiUrl,
-            allowedOrigins: allowedOrigins,
-            analyticsProvider: analyticsProvider,
-            postHog: postHog.asPublic(),
-            wompi: wompi.asPublic())
+    struct Postgres: Content {
+        var hostname: String
+        var port: Int?
+        var username: String
+        var password: String
+        var database: String
+    }
+
+    struct Redis: Content {
+        var hostname: String
+        var port: Int?
+        var username: String?
+        var password: String?
+
+        func resolveHostname() -> String {
+            if let username = username {
+                return "\(username):\(password ?? "")@\(hostname)"
+            } else {
+                return hostname
+            }
+        }
+    }
+
+    struct Secrets: Content {
+        var jwt: JWT
+        var postgres: Postgres
+        var redis: Redis
+        var wompi: Wompi
     }
 
     struct JWT: Content {
@@ -88,6 +101,30 @@ struct Settings: Content {
                 return prod
             }
         }
+    }
+}
+
+struct Settings: Content {
+    var siteName: String
+    var siteDescription: String
+    var siteUrl: String
+    var apiUrl: String
+    var allowedOrigins: [String]
+    var postHog: PostHog
+    var analyticsProvider: AnalyticsProvider
+    var gatekeeper: Gatekeeper
+    var secrets: Secrets
+
+    func asPublic() -> Public {
+        Public(
+            siteName: siteName,
+            siteDescription: siteDescription,
+            siteUrl: siteUrl,
+            apiUrl: apiUrl,
+            allowedOrigins: allowedOrigins,
+            analyticsProvider: analyticsProvider,
+            postHog: postHog.asPublic(),
+            wompi: secrets.wompi.asPublic())
     }
 
     struct Public: Content {

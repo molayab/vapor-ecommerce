@@ -104,6 +104,42 @@ extension Transaction {
         }
     }
 
+    struct Anulate: Content {
+        /// The id of the transaction to anulate.
+        var id: UUID
+
+        /**
+         * Anulates a transaction.
+         * When anulating a transaction, the stock of the products is restored, and the sales are removed.
+         * This is a destructive operation.
+         */
+        @discardableResult
+        func anulate(in req: Request) async throws -> Transaction {
+            return try await req.db.transaction { database in
+                guard let model = try await Transaction.find(id, on: database) else {
+                    throw Abort(.notFound)
+                }
+
+                // Update stock
+                for item in try await model.$items.get(on: database) {
+                    let product = try await item.$productVariant.get(on: database).get()
+                    product.stock += item.quantity
+                    try await product.save(on: database)
+                }
+
+                // Remove sales
+                try await Sale.query(on: database)
+                    .filter(\.$order.$id == model.requireID())
+                    .delete()
+
+                try await model.$items.get(on: database).delete(on: database)
+                try await model.delete(on: database)
+
+                return model
+            }
+        }
+    }
+
     struct Create: Content {
         var shippingAddressId: UUID?
         var billingAddressId: UUID?
@@ -112,59 +148,62 @@ extension Transaction {
         func create(in req: Request, forOrigin origin: Transaction.Origin) async throws -> Transaction {
             let user = try req.auth.require(User.self)
             let model = Transaction()
-            model.$user.id = try user.requireID()
-            model.$shippingAddress.id = shippingAddressId
-            model.$billingAddress.id = billingAddressId
-            model.status = .placed
-            model.placedIp = req.headers.first(name: .xForwardedFor)
-                ?? req.remoteAddress?.hostname
-                ?? "unknown"
-            model.origin = origin
 
-            if origin == .posCard || origin == .posCash {
-                model.status = .paid
-                model.payedAt = Date()
-                model.shippedAt = Date()
-                model.orderdAt = Date()
-            }
+            return try await req.db.transaction { database in 
+                model.$user.id = try user.requireID()
+                model.$shippingAddress.id = shippingAddressId
+                model.$billingAddress.id = billingAddressId
+                model.status = .placed
+                model.placedIp = req.headers.first(name: .xForwardedFor)
+                    ?? req.remoteAddress?.hostname
+                    ?? "unknown"
+                model.origin = origin
 
-            try await model.save(on: req.db)
-            try await items.asyncMap { item in
-                // Check variant stock
-                guard let variant = try await ProductVariant.find(item.productVariantId, on: req.db) else {
-                    throw Abort(.badRequest, reason: "Product variant not found")
-                }
-                guard variant.stock >= item.quantity else {
-                    throw Abort(.badRequest, reason: "Product variant out of stock")
+                if origin == .posCard || origin == .posCash {
+                    model.status = .paid
+                    model.payedAt = Date()
+                    model.shippedAt = Date()
+                    model.orderdAt = Date()
                 }
 
-                let mod = item.create()
-                mod.$transaction.$id.wrappedValue = try model.requireID()
-                return mod
-            }.create(on: req.db)
+                try await model.save(on: database)
+                try await items.asyncMap { item in
+                    // Check variant stock
+                    guard let variant = try await ProductVariant.find(item.productVariantId, on: database) else {
+                        throw Abort(.badRequest, reason: "Product variant not found")
+                    }
+                    guard variant.stock >= item.quantity else {
+                        throw Abort(.badRequest, reason: "Product variant out of stock")
+                    }
 
-            // Update stock
-            for item in try await model.$items.get(on: req.db).get() {
-                let product = try await item.$productVariant.get(on: req.db).get()
-                product.stock -= item.quantity
-                try await product.save(on: req.db)
-            }
+                    let mod = item.create()
+                    mod.$transaction.$id.wrappedValue = try model.requireID()
+                    return mod
+                }.create(on: database)
 
-            // If the order is paid, add a sales record
-            if model.status == .paid {
-                let sales = try await model.$items.get(on: req.db).get()
-                try await sales.asyncMap { sale in
-                    let record = Sale()
-                    record.$order.id = try model.requireID()
-                    record.currency = sale.currency
-                    record.amount = Double(sale.quantity) * sale.price
-                    record.date = Date()
-                    record.type = .sale
-                    return record
-                }.create(on: req.db)
-            }
+                // Update stock
+                for item in try await model.$items.get(on: database).get() {
+                    let product = try await item.$productVariant.get(on: database).get()
+                    product.stock -= item.quantity
+                    try await product.save(on: database)
+                }
 
-            return model
+                // If the order is paid, add a sales record
+                if model.status == .paid {
+                    let sales = try await model.$items.get(on: database).get()
+                    try await sales.asyncMap { sale in
+                        let record = Sale()
+                        record.$order.id = try model.requireID()
+                        record.currency = sale.currency
+                        record.amount = Double(sale.quantity) * sale.price
+                        record.date = Date()
+                        record.type = .sale
+                        return record
+                    }.create(on: database)
+                }
+
+                return model
+            } 
         }
     }
 }

@@ -21,7 +21,8 @@ import {
     TableHeaderCell, 
     TableBody, 
     TableCell, 
-    NumberInput 
+    NumberInput, 
+    Grid
 } from '@tremor/react'
 
 import { 
@@ -35,6 +36,7 @@ import {
 import { API_URL } from '../App'
 import { isFeatureEnabled } from "../App"
 import { useNavigate } from 'react-router-dom'
+import Keypad from '../components/Keypad'
 
 export default function POS() {
     const navigate = useNavigate()
@@ -101,13 +103,19 @@ export default function POS() {
         let index = list.findIndex((item) => item.id === variant.id)
 
         console.log(variant)
-        console.log(index)
-        console.log(list)
 
         if (index === -1) {
-            list.push({...variant, quantity: 1})
+            if (variant.stock < 1) {
+                alert('No hay suficiente stock, no se puede agregar al carrito')
+            } else {
+                list.push({...variant, quantity: 1})
+            }
         } else {
-            list[index].quantity += 1
+            if (list[index].quantity + 1 <= variant.stock) {
+                list[index].quantity += 1
+            } else {
+                alert('No hay suficiente stock')
+            }
         }
 
         beep()
@@ -129,6 +137,29 @@ export default function POS() {
         let list = [...checkoutList]
         list.splice(index, 1)
         setCheckoutList(list)
+    }
+
+
+    const [input, setInput] = useState('SKU')
+    const onNumberPadClick = (value) => {
+        if (value === 'DEL') {
+            setInput(input.slice(0, -1))
+        } else if (value === 'ENTER') {
+            // search product
+            let variant = getAllVariants().find((variant) => variant.sku.includes(input))
+            if (variant) {
+                setCheckoutList(addItemToCheckoutList(variant))
+            } else {
+                alert('Producto no encontrado')
+            }
+            setInput('SKU')
+        } else {
+            if (input === 'SKU') {
+                setInput(value.toString())
+            } else {
+                setInput(input + value.toString())
+            }
+        }
     }
 
     useEffect(() => {
@@ -178,8 +209,15 @@ export default function POS() {
                                     <span>{ dataFormatter(checkoutList.reduce((total, item) => total + (item.quantity * item.salePrice * item.tax), 0)) }</span>
                                 </ListItem>
                             </List>
-                            <Button onClick={ (e) => setPay(true) } disabled={checkoutList.length === 0 && !pay} color='green' size='xs' icon={CreditCardIcon} className='w-full mt-4'>Cobrar</Button>
-                            <Button color='rose' size='xs' variant='secondary' icon={MinusCircleIcon} className='w-full mt-4'>Limpiar</Button>
+                            <Button
+                                size='xl' 
+                                onClick={ (e) => setPay(true) }
+                                disabled={checkoutList.length === 0 && !pay}
+                                color='green' icon={CreditCardIcon}
+                                className='w-full mt-4'>Cobrar</Button>
+                            <Button
+                                onClick={ (e) => setCheckoutList([]) } 
+                                color='rose' size='xs' variant='secondary' icon={MinusCircleIcon} className='w-full mt-4'>Limpiar</Button>
                         </div>
                     
                         <Flex className='justify-center w-48'>
@@ -204,67 +242,68 @@ export default function POS() {
                     </Flex>
                 </Card>
             </Flex>
-            
-            <Card decoration='bottom' className='mt-4' decorationColor='green'>
-                <SearchSelect icon={SearchIcon} placeholder='Buscar producto' onValueChange={(value) => {
-                        setCheckoutList(addItemToCheckoutList(getAllVariants().find((variant) => variant.id === value)))
-                    }} 
-                    value={variant}>
-                    
-                    {getAllVariants().map((variant) => {
-                        return (
-                            <SearchSelectItem key={variant.id} value={variant.id}>{variant.name}</SearchSelectItem>
-                        )
-                    })}
-                </SearchSelect>
 
-                <Title className='mt-4'>Factura</Title>
-                <Subtitle>Productos a facturar</Subtitle>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableHeaderCell>Variante del producto</TableHeaderCell>
-                            <TableHeaderCell>Cantidad</TableHeaderCell>
-                            <TableHeaderCell>Costo Unitario</TableHeaderCell>
-                            <TableHeaderCell>Costo Total</TableHeaderCell>
-                            <TableHeaderCell>Acciones</TableHeaderCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {checkoutList.map((item) => {
+            <Grid numItems={1} numItemsSm={2} className='mt-4 gap-4'>
+                <Keypad onNumberPadClick={onNumberPadClick} />
+            
+                <Card decoration='bottom' className='mt-4' decorationColor='green'>
+                    <Subtitle><strong>Buscar:</strong> { input }</Subtitle>
+                    <SearchSelect icon={SearchIcon} placeholder='Buscar producto' onValueChange={(value) => {
+                            setCheckoutList(addItemToCheckoutList(getAllVariants().find((variant) => variant.id === value)))
+                        }} 
+                        value={variant}>
+                        
+                        {getAllVariants().map((variant) => {
                             return (
-                                <TableRow key={item.id}>
-                                    <TableCell>{ item.name }</TableCell>
-                                    <TableCell>
-                                        <NumberInput value={item.quantity} onValueChange={(value) => { 
-                                            let list = [...checkoutList]
-                                            let index = list.findIndex((i) => i.id === item.id)
-                                            list[index].quantity = value
-                                            setCheckoutList(list)
-                                        }} />
-                                    </TableCell>
-                                    <TableCell>
-                                        <NumberInput icon={CurrencyDollarIcon} enableStepper={false} value={item.salePrice} onValueChange={(value) => {
-                                            let list = [...checkoutList]
-                                            let index = list.findIndex((i) => i.id === item.id)
-                                            list[index].salePrice = value
-                                            setCheckoutList(list)
-                                        }} />
-                                    </TableCell>
-                                    <TableCell><Title>{ dataFormatter(item.salePrice * item.quantity) }</Title></TableCell>
-                                    <TableCell>
-                                        <Icon icon={TrashIcon} className='cursor-pointer' onClick={() => { deleteItemFromCheckoutList(checkoutList.findIndex((i) => i.id === item.id)) }} />
-                                    </TableCell>
-                                </TableRow>
+                                <SearchSelectItem key={variant.id} value={variant.id}>{variant.name}</SearchSelectItem>
                             )
                         })}
-                    </TableBody>
-                </Table>
-            </Card>
+                    </SearchSelect>
 
-            <Card>
-
-            </Card>
+                    <Title className='mt-4'>Factura</Title>
+                    <Subtitle>Productos a facturar</Subtitle>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableHeaderCell>Variante del producto</TableHeaderCell>
+                                <TableHeaderCell>Cantidad</TableHeaderCell>
+                                <TableHeaderCell>Costo Unitario</TableHeaderCell>
+                                <TableHeaderCell>Costo Total</TableHeaderCell>
+                                <TableHeaderCell>Acciones</TableHeaderCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {checkoutList.map((item) => {
+                                return (
+                                    <TableRow key={item.id}>
+                                        <TableCell>{ item.name }</TableCell>
+                                        <TableCell>
+                                            <NumberInput value={item.quantity} onValueChange={(value) => { 
+                                                let list = [...checkoutList]
+                                                let index = list.findIndex((i) => i.id === item.id)
+                                                list[index].quantity = value
+                                                setCheckoutList(list)
+                                            }} />
+                                        </TableCell>
+                                        <TableCell>
+                                            <NumberInput icon={CurrencyDollarIcon} enableStepper={false} value={item.salePrice} onValueChange={(value) => {
+                                                let list = [...checkoutList]
+                                                let index = list.findIndex((i) => i.id === item.id)
+                                                list[index].salePrice = value
+                                                setCheckoutList(list)
+                                            }} />
+                                        </TableCell>
+                                        <TableCell><Title>{ dataFormatter(item.salePrice * item.quantity) }</Title></TableCell>
+                                        <TableCell>
+                                            <Icon icon={TrashIcon} className='cursor-pointer' onClick={() => { deleteItemFromCheckoutList(checkoutList.findIndex((i) => i.id === item.id)) }} />
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
+                        </TableBody>
+                    </Table>
+                </Card>
+            </Grid>
         </SideMenu>
         
         </>

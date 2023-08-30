@@ -14,6 +14,10 @@ struct CheckoutController: RouteCollection {
             User.guardMiddleware())
         let pos = requiredAuth.grouped(RoleMiddleware(roles: [.admin, .manager, .pos]))
         pos.post("checkout", ":method", use: checkoutPos)
+
+        // Restricted API
+        let restricted = requiredAuth.grouped(RoleMiddleware(roles: [.admin, .manager]))
+        restricted.delete("anulate", use: anulate)
     }
 
     /// Public API
@@ -39,5 +43,15 @@ struct CheckoutController: RouteCollection {
 
         let payload = try req.content.get(Transaction.Create.self)
         return try await payload.create(in: req, forOrigin: method).asPublic(on: req.db)
+    }
+
+    /// Restricted API
+    /// DELETE /transactions/anulate
+    /// This endpoint is used to anulate a transaction. It will restore the stock of the 
+    /// products and remove the sales.
+    private func anulate(req: Request) async throws -> Response {
+        let payload = try req.content.get(Transaction.Anulate.self)
+        try await payload.anulate(in: req)
+        return Response(status: .ok)
     }
 }

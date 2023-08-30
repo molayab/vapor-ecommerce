@@ -17,6 +17,7 @@ import {
     TableHeaderCell, 
     TableRow 
 } from "@tremor/react"
+import { anulateOrder } from "../components/services/orders"
 
 function Orders() {
     const [orders, setOrders] = useState({ items: [] })
@@ -29,6 +30,20 @@ function Orders() {
         const data = await response.json()
         setOrders(data)
     }
+
+    const deleteOrder = async (id) => {
+        if (confirm("¿Esta seguro que desea eliminar esta orden?")) {
+            let response = await anulateOrder(id)
+
+            if (response.status === 200) {
+                alert("Orden eliminada con exito")
+                fetchOrders()
+            } else {
+                alert("Error al eliminar la orden")
+            }
+        }
+    }
+
 
     useEffect(() => {
         fetchOrders()
@@ -66,7 +81,10 @@ function Orders() {
                                 <TableCell>{order.placedIp}</TableCell>
                                 <TableCell><Badge>{order.status}</Badge></TableCell>
                                 <TableCell>
-                                    <Icon icon={TrashIcon} className="text-red-500" />
+                                    <Icon 
+                                        className="cursor-pointer text-red-500"
+                                        onClick={ (e) => { deleteOrder(order.id) }}
+                                        icon={TrashIcon} />
                                     <Icon icon={PencilIcon} className="text-blue-500" />
                                 </TableCell>
                             </TableRow>

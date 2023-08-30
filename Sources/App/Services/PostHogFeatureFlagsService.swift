@@ -38,10 +38,6 @@ struct PostHogFeatureFlagsService {
             return true
         }
 
-        guard !alreadyTried else {
-            throw Abort(.internalServerError)
-        }
-
         return featureFlag.active
     }
 
@@ -84,6 +80,7 @@ struct PostHogFeatureFlagsService {
                     "active": !featureFlags.active
                 ])
 
+        try await request.cache.delete("featureFlags")
         request.logger.info("[PostHogFeatureFlagsService] Toggle: \(response.status)")
         return try await getAllFeatureFlags()
     }

@@ -21,6 +21,7 @@ import UpdateProduct from './pages/products/UpdateProduct'
 import UpdateProductVariant from './pages/products/UpdateProductVariant'
 
 import './assets/App.css'
+import Loader from './components/Loader'
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 export const API_URL = apiUrl + '/v1'
@@ -218,6 +219,7 @@ function App() {
           <Route path='/feature-not-available' element={restrictedFeature} />
           <Route path='/add-cost' element={addCost} />
           <Route path='/finances' element={finances} />
+          <Route path='/loader-preview' element={<Loader />} />
         </Routes>
       </BrowserRouter>
     </>

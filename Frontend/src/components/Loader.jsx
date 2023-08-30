@@ -1,11 +1,27 @@
-import SideMenu from "./SideMenu";
+import { Card, Metric } from "@tremor/react"
+import SideMenu from "./SideMenu"
+import { Subtitle } from "@tremor/react"
 
 function Loader() {
     return (
         <SideMenu>
-            <div className="flex flex-col items-center justify-center h-full">
-                <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-64 w-64"></div>
-            </div>
+            <Card>
+                <div className="flex items-center justify-center gap-4">
+                    <div
+                        class="inline-block h-16 w-16 animate-spin rounded-full border-4 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                        role="status">
+                        <span class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"
+                            >Loading...</span>
+                    </div>
+                    <div>
+                        <Metric>La pagina se esta cargando...</Metric>
+                        <Subtitle className="mt-4">Por favor espere, no cierre o recargue la pagina.<br />Hacer esto puede causar perdida de datos.</Subtitle>
+                    </div>
+                    
+                </div>
+                
+            </Card>
+            
         </SideMenu>
     )
 }

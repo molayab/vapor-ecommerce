@@ -24,8 +24,10 @@ import { useFeatureFlags } from "../hooks/featureFlags"
 import Loader from "../components/Loader"
 import ContainerCard from "../components/ContainerCard"
 import SideMenu from "../components/SideMenu"
+import { useNavigate } from "react-router-dom"
 
 function Settings() {
+    const navigate = useNavigate()
     const categories = useCategories()
     const featureFlags = useFeatureFlags()
     const [settings, setSettings] = useState(JSON.parse(sessionStorage.getItem('settings')))
@@ -103,7 +105,9 @@ function Settings() {
             <Flex>
                 <Metric className="mt-1">Costos Operativos</Metric>
                 <div className="flex gap-2 mt-4">
-                    <Button icon={PlusIcon}>Agregar</Button>
+                    <Button 
+                        onClick={ (e) => { navigate('/add-cost') }}
+                        icon={PlusIcon}>Agregar</Button>
                 </div>
             </Flex>
         </Card>
