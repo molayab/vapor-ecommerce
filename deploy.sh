@@ -39,8 +39,8 @@ done
 if [ "$prod" = "prod" ]; then
     echo "Deploying production stack"
     docker network create vapor --driver bridge --attachable || echo "Network already exists"
-    docker-compose -f docker-compose.yml down || echo "Error stopping vapor stack"
     docker-compose -f docker-compose.yml build --progress=plain || echo "Error building vapor stack"
+    docker-compose -f docker-compose.yml down || echo "Error stopping vapor stack"
     docker-compose -f docker-compose.yml up -d --remove-orphans
 elif [ "$dev" = "dev" ]; then
 # This is development, it will not build neither run the vapor container, it will only run the database and redis containers
