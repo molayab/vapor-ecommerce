@@ -1,0 +1,14 @@
+
+Hope you enjoy your new logo, here are the people that
+made your beautiful logo happen :)
+font name: Aleo-Regular
+font link: https://alessiolaiso.com/aleo-font
+font author: Alessio Laiso
+font author site: https://alessiolaiso.com/
+
+
+icon designer: N.K.Narasimhan
+icon designer link: /animnarsi@yahoo.com
+        
+{"bg":"#825FEB","icon":"#F8BAED","font":"#5D32C3","slogan":"#7146d7"}
+      
