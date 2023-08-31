@@ -7,9 +7,9 @@ function SubHeader({ children, title }) {
   const parts = router.pathname.split("/");
 
   return (
-    <>
+    <div className="hidden sm:block">
       <Breadcrumb pathArray={parts} />
-    </>
+    </div>
   );
 }
 

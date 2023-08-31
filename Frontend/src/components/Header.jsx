@@ -1,4 +1,4 @@
-import reactLogo from '../../public/vite.svg'
+import reactLogo from '../../public/default.svg'
 
 function Header() {
   return (

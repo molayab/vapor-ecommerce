@@ -2,8 +2,8 @@ import { useParams } from "react-router-dom"
 import { updateVariant } from "../../components/services/variants"
 import { useVariant } from "../../hooks/variants"
 import { useEffect, useState } from "react"
-import { Button } from "@tremor/react"
-import { SaveAsIcon } from "@heroicons/react/solid"
+import { Button, Callout } from "@tremor/react"
+import { ExclamationCircleIcon, SaveAsIcon } from "@heroicons/react/solid"
 import { readAsDataURL, toBase64 } from "./CreateProductVariant"
 import { removeImage, uploadMultipleImages } from "../../components/services/images"
 import Loader from "../../components/Loader"
@@ -18,6 +18,8 @@ function UpdateProductVariant() {
     const [isLoading, setIsLoading] = useState(false)
     const [localVariant, setLocalVariant] = useState(variant)
     const [localResources, setLocalResources] = useState(null)
+    const [errors, setErrors] = useState({})
+    const [notifications, setNotifications] = useState({})
 
     let variantImages = []
     let resourcesImages = []
@@ -46,29 +48,24 @@ function UpdateProductVariant() {
                 }
             }
 
-            console.log(toRemove)
-            console.log(toAdd)
-
             // Remove images
             for (let i = 0; i < toRemove.length; i++) {
                 const image = toRemove[i]
                 const response = await removeImage(pid, id, image.url)
 
                 if (response.status === 200) {
-                    console.log("DELETED: " + image)
+                    setNotifications({ title: "Imagen borrada correctamente" })
                 } else {
-                    console.log("NOT DELETED: " + image)
-                    alert("Error al eliminar la imagen " + image)
+                    setErrors({ title: "Error al borrar la imagen" })
                 }
             }
 
             // Add images
             let response = await uploadMultipleImages(pid, id, toAdd.filter((i) => i.dat !== null))
             if (response.status !== 200) {
-                console.log("ERROR: " + response)
-                alert("Error al subir las imágenes")
+                setErrors({ title: "Error al subir las imagenes" })
             } else {
-                console.log("IMAGES UPLOADED")
+                setNotifications({ title: "Imagenes subidas correctamente" })
             }
 
             setIsLoading(false)
@@ -76,7 +73,7 @@ function UpdateProductVariant() {
             setIsLoading(false)
         }
     }
-    
+
     const addImages = async (e) => {
         const images = e.target.files
         let r = []
@@ -116,6 +113,18 @@ function UpdateProductVariant() {
                 </div>
             }>
             </ContainerCard>
+
+            { errors.title &&
+                <Callout color="rose" className="mt-2" title="Error" icon={ExclamationCircleIcon}>
+                    { errors.title }
+                </Callout>
+            }
+
+            { notifications.title &&
+                <Callout color="green" className="mt-2" title="Exito" icon={ExclamationCircleIcon}>
+                    { notifications.title }
+                </Callout>
+            }
 
             <ProductVariantForm 
                 productVariant={{...localVariant, images: localResources}} 

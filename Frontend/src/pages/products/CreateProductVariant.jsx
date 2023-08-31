@@ -17,7 +17,7 @@ function CreateProductVariant() {
         sku: "",
         price: 0,
         salePrice: 0,
-        stock: 0,
+        stock: 1,
         availability: true,
         tax: 0,
         shippingCost: 0

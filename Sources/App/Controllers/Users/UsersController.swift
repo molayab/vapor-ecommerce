@@ -150,10 +150,14 @@ struct UsersController: RouteCollection {
             throw Abort(.notFound)
         }
 
-        let roles = try await user.$roles.get(on: req.db)
-        try await roles.delete(on: req.db)
-        try await user.delete(on: req.db)
-        return req.redirect(to: "/users")
+        return try await req.db.transaction { database in 
+            let roles = try await user.$roles.get(on: database)
+            let addresses = try await user.$addresses.get(on: database)
+            try await addresses.delete(on: database)
+            try await roles.delete(on: database)
+            try await user.delete(on: database)
+            return req.redirect(to: "/users")
+        }
     }
 
     private func setUserActivation(for req: Request, to isActive: Bool) async throws {

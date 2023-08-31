@@ -58,7 +58,7 @@ function SideMenu({ children }) {
 
   return (
     <div className='p-4'>
-      <nav className='p-4 bg-tremor-content-strong fixed z-10 w-full top-0 left-0 shadow  border-b-blue-900 border-b-4'>
+      <nav className='p-4 bg-tremor-content-strong fixed z-50 w-full top-0 left-0 shadow  border-b-blue-900 border-b-4'>
         <div className='flex w-full gap-4'>
           <div className='flex-col justify-center items-center hidden sm:flex'>
             <Metric className='text-white'>{ settings.siteName }</Metric>
