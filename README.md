@@ -1,8 +1,6 @@
-# Vapor Ecommerce: A Simple, Performant and Scalable Swifty-Ecommerce Platform
+![Vapor eCommerce](/Documentation/Assets/cover.png)
 
-![Vapor Ecommerce](/Documentation/Assets/cover.png)
-
-## Table of Contents
+# Table of Contents
 
 - [What is Vapor Ecommerce?](#what-is-vapor-ecommerce)
 - [Getting Started](#getting-started)
@@ -15,21 +13,21 @@
 - [TODOs](#todos)
 - [Routes](#routes)
 
-## What is Vapor Ecommerce?
+# What is Vapor Ecommerce?
 
-*Vapor-Ecommerce* is a content manager, simple and performant, it defines the user base and roles of your company. You have customers, suppliers and employees, these will be stored in your contact database with a simple Dashboard where you can manage the interaction with the actors involved in your company. Define a list of products for sale, with a simple interface for inventory management and a dashboard for managing current orders. It has a POS interface to operate in a physical point of sale.
+🛍️ Vapor eCommerce: Empower your business with our headless eCommerce manager built using Vapor and Swift. Seamlessly create, organize, and sell products online and in-store with ease. Effortlessly manage products, variants, costs, sales, and user access. Leverage the power of our POS (Point of Sale) system for efficient in-store transactions. Unleash the potential of headless architecture for unparalleled flexibility. Elevate your eCommerce experience today!
 
-## Getting Started
+# Getting Started
 
-### Prerequisites
+## Prerequisites
 
 This project is full dockerized, so you need to have docker and docker-compose installed in your machine. You can follow the instructions in the following links: [Docker](https://docs.docker.com/get-docker/) and [Docker-compose](https://docs.docker.com/compose/install/) to install them.
 
-#### For development
+### For development
 
 This project uses Vapor as a backend framework, so you need to have it installed in your machine. You can follow the instructions in the following link: [Vapor](https://docs.vapor.codes/4.0/install/macos/).
 
-### Setup
+## Setup
 
 This repository contains a docker-compose file to run the project. In order to build and run the vapor stack, there is an `deploy.sh` script that will build the images and run the containers. You can run the following command to start the project:
 
@@ -54,7 +52,7 @@ Optional services:
 - **pgadmin**: This is the pgadmin container, it contains the pgadmin interface to manage the postgres database.
 - **redis-commander**: This is the redis-commander container, it contains the redis-commander interface to manage the redis database.
 
-#### deploy.sh modes
+### deploy.sh modes
 
 The `deploy.sh` script has two modes: development and production.
 **-d** or **development**: This mode will run the following services:
@@ -75,7 +73,7 @@ WARINING: Since the main container is running on Linux, keep in mind compatibili
 
 Note: By default vapor container will be defined to use two replicas, so you can scale it up or down as you need.
 
-#### Running without deploy.sh
+### Running without deploy.sh
 
 Since the whole project depends on docker-compose, you can run the project without the `deploy.sh` script. You can run the following command to start the project:
 
@@ -98,7 +96,7 @@ Since the whole project depends on docker-compose, you can run the project witho
 #
 ```
 
-## Commands
+# Commands
 
 Vapor defines a set of commands to manage the project. You can run the following command to see the list of commands:
 
@@ -107,7 +105,7 @@ swift run App help # This will show the list of commands
 swift run App users create # This will create a user
 ```
 
-## TODOs
+# TODOs
 
 - [X] Add payments providers gateway
    - [X] Added Wompi provider (COL)
@@ -146,7 +144,7 @@ swift run App users create # This will create a user
 - [X] Add docker-compose for development
 - Add docker-compose for production
 
-## Routes
+# Routes
 
 ```text
 +--------+-------------------------------------------------------------+
