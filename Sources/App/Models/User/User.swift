@@ -165,12 +165,7 @@ extension User {
         var nationalId: String?
         var name: String
         var kind: Kind
-        var password: String {
-            didSet {
-                self.password = (try? Bcrypt.hash(password))
-                    ?? Array(repeating: UInt8.random(), count: 16).base64
-            }
-        }
+        var password: String
         var email: String
         var roles: [AvailableRoles]
         var isActive: Bool
@@ -181,6 +176,9 @@ extension User {
         @discardableResult
         func create(on database: Database) async throws -> User {
             let user = try User(create: self)
+            user.email = email.lowercased()
+            user.password = try Bcrypt.hash(password)
+
             try await user.save(on: database)
             try await roles.map { Role(role: $0, userId: try user.requireID()) }
                 .create(on: database)
