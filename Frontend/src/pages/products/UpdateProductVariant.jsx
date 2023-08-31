@@ -72,13 +72,11 @@ function UpdateProductVariant() {
             }
 
             setIsLoading(false)
-            //navigate("/products/" + pid)
         } else {
             setIsLoading(false)
         }
     }
-
-    console.log(resourcesImages)
+    
     const addImages = async (e) => {
         const images = e.target.files
         let r = []

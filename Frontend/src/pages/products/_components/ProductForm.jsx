@@ -1,5 +1,6 @@
 import { 
     Button, 
+    Callout, 
     Card, 
     Flex, 
     Grid, 
@@ -20,12 +21,13 @@ import {
 import Loader from "../../../components/Loader"
 import { useCategories } from "../../../hooks/categories"
 import { RES_URL } from "../../../App"
-import { CurrencyDollarIcon, TrashIcon } from "@heroicons/react/solid"
+import { CurrencyDollarIcon, ExclamationCircleIcon, TrashIcon } from "@heroicons/react/solid"
 import { BarChart } from "@tremor/react"
 import { currencyFormatter } from "../../../helpers/dateFormatter"
 import { createCategory } from "../../../components/services/categories"
 import { useNavigate, useParams } from "react-router-dom"
 import { useEffect, useState } from "react"
+import { deleteVariant } from "../../../components/services/variants"
 
 function ProductForm({product, setProduct, onSave}) {
     let { id } = useParams()
@@ -33,6 +35,7 @@ function ProductForm({product, setProduct, onSave}) {
     let categories = useCategories()
     let [localCategories, setLocalCategories] = useState(null)
     let [errors, setErrors] = useState({})
+    let [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
         setLocalCategories(categories)
@@ -43,9 +46,27 @@ function ProductForm({product, setProduct, onSave}) {
         product.variants = []
     }
 
+    if (isLoading) {
+        return <Loader />
+    }
+
     // Show loader if categories are not loaded
     if (categories === null || localCategories === null) {
         return <Loader />
+    }
+
+    const deleteProductVariant = async (variant, index) => {
+        if (confirm("¿Estas seguro de borrar esta variante?, esta acción no se puede deshacer!")) {
+            product.variants.splice(index, 1)
+            setProduct(product)
+
+            setIsLoading(true)
+            let response =  await deleteVariant(id, variant.id)
+            if (response.status !== 200) {
+                setErrors({ callout: "Error al borrar la variante" })
+            }
+            setIsLoading(false)
+        }
     }
 
     const addCategory = async (e) => {
@@ -133,6 +154,12 @@ function ProductForm({product, setProduct, onSave}) {
             </Select>
             <Button onClick={(e) => { addCategory(e) }}>Agregar Categoria</Button>
         </Flex>
+
+        { errors.callout &&
+            (<Callout color="rose" className="mt-2" title="Error" icon={ExclamationCircleIcon}>
+                { errors.callout }
+            </Callout>)
+        }
         
         <Subtitle className="mt-6">Variants</Subtitle>
         <Card>
@@ -143,7 +170,7 @@ function ProductForm({product, setProduct, onSave}) {
                 <Card className="w-48 h-48" decoration="bottom" decorationColor={ variant.isAvailable === true && variant.stock > 0 ? "green" : "rose"}>
                 <div className="relative w-full h-full overflow-hidden">
                     <Icon icon={TrashIcon} 
-                    onClick={(e) => { deleteProductVariant(e, index) }}
+                    onClick={(e) => { deleteProductVariant(variant, index) }}
                     className="absolute z-50 bottom-0 right-1 bg-slate-50 rounded-full hover:bg-slate-200 cursor-pointer" />
                     
                     <div className="absolute z-30 w-full h-full items-center justify-center text-center opacity-80 cursor-pointer">

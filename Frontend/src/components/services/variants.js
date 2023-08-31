@@ -28,3 +28,12 @@ export async function updateVariant(pid, id, variant) {
 
     return response
 }
+
+export async function deleteVariant(pid, id) {
+    const response = await fetch(API_URL + '/products/' + pid + '/variants/' + id, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+    })
+
+    return response
+}

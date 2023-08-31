@@ -190,7 +190,7 @@ function ProductVariantForm({ productVariant, setVariant, resources, setResource
                     {resources.map((image, index) => {
                         return (
                             <div key={index} className="relative w-48">
-                                <div className="absolute right-0 bottom-0 w-full z-10 bg-slate-300 rounded opacity-30 hover:opacity-100">
+                                <div className="absolute right-0 bottom-0 w-full z-1 bg-slate-300 rounded opacity-30 hover:opacity-100">
                                     <Icon icon={TrashIcon} className="w-6 h-6 cursor-pointer" onClick={() => { 
                                         setResources((old) => old.filter((_, i) => i !== index))
                                     }} />
