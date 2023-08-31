@@ -1,6 +1,6 @@
 # Vapor Ecommerce: A Simple, Performant and Scalable Swifty-Ecommerce Platform
 
-[Image](https://placehold.it/700x300)
+![Vapor Ecommerce](/Documentation/Assets/cover.png)
 
 ## Table of Contents
 
