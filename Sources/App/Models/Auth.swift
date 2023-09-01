@@ -11,7 +11,7 @@ struct Auth: Authenticatable, JWTPayload {
 
     static func refresh(in req: Request, token: String) async throws -> Auth {
         let user: User = try await withUnsafeThrowingContinuation({ next in
-            let key = RedisKey(token)
+            let key = RedisKey("sess_" + token)
 
             req.redis.get(key).whenComplete { response in
                 switch response {
@@ -22,14 +22,17 @@ struct Auth: Authenticatable, JWTPayload {
                         return next.resume(throwing: Abort(.unauthorized))
                     }
                     guard let userId = UUID(uuidString: content) else {
-                        return next.resume(throwing: Abort(.internalServerError))
+                        return next.resume(throwing: Abort(.unauthorized))
                     }
 
                     req.redis.delete(key).whenComplete { _ in }
                     let user = User.find(userId, on: req.db)
                     user.whenSuccess { user in
                         guard let user = user else {
-                            return next.resume(throwing: Abort(.internalServerError))
+                            return next.resume(throwing: Abort(.unauthorized))
+                        }
+                        guard user.isActive && !user.isDeleted else {
+                            return next.resume(throwing: Abort(.unauthorized))
                         }
 
                         return next.resume(returning: user)

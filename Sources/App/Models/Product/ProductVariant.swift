@@ -37,6 +37,12 @@ final class ProductVariant: Model {
     @Children(for: \.$productVariant)
     var transactionItems: [TransactionItem]
 
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+
+    @Timestamp(key: "updated_at", on: .update)
+    var updatedAt: Date?
+
     var isAvailableForSale: Bool {
         return isAvailable && stock > 0
     }
@@ -172,6 +178,22 @@ extension ProductVariant {
 
         func revert(on database: Database) async throws {
             try await database.schema("product_variants").delete()
+        }
+    }
+
+    struct AddTimestampsMigration: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema("product_variants")
+                .field("created_at", .datetime, .custom("DEFAULT CURRENT_TIMESTAMP"))
+                .field("updated_at", .datetime)
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema("product_variants")
+                .deleteField("created_at")
+                .deleteField("updated_at")
+                .update()
         }
     }
 }

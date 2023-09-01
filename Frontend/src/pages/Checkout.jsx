@@ -24,24 +24,41 @@ import { useState } from "react"
 import { API_URL } from "../App"
 import SideMenu from "../components/SideMenu"
 import Keypad from "../components/Keypad"
+import { toast } from "react-toastify"
+import { useNavigate } from "react-router-dom"
 
-export function Checkout({ checkoutList }) {
+export function Checkout({ checkoutList, setPay, setCheckoutList }) {
     const [input, setInput] = useState('0')
     const [mode, setMode] = useState('posCash')
+    const navigate = useNavigate()
+    const [isLoading, setIsLoading] = useState(false)
+    const [shouldBill, setShouldBill] = useState(true)
+
+    const [clientName, setClientName] = useState('')
+    const [clientEmail, setClientEmail] = useState('')
 
     const dataFormatter = (number) => {
         return "$ " + Intl.NumberFormat("us").format(number).toString();
     }
 
     const checkout = async () => {
-        console.log('checkout')
+        if (clientEmail === '' && shouldBill) {
+            alert('Debe ingresar un email')
+            return
+        }
 
+        setIsLoading(true)
+        console.log(mode)
         let response = await fetch(API_URL + '/orders/checkout/' + mode, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 shippingAddressId: null,
                 billingAddressId: null,
+                billTo: shouldBill ? {
+                    name: clientName,
+                    email: clientEmail
+                } : null,
                 items: checkoutList.map((product) => ({
                     productVariantId: product.id,
                     quantity: product.quantity,
@@ -55,10 +72,15 @@ export function Checkout({ checkoutList }) {
         console.log(data)
 
         if (data.id) {
-            alert('Orden creada con exito')
+            toast('Orden creada con exito')
+
+            setCheckoutList([])
+            setPay(false)
         } else {
-            alert('Error al crear la orden')
+            toast('Error al crear la orden')
         }
+
+        setIsLoading(false)
     }
 
     const onNumberPadClick = (value) => {
@@ -84,9 +106,9 @@ export function Checkout({ checkoutList }) {
                 <Flex className="mb-2">
                     <TabGroup className="w-64">
                         <Subtitle className="mt-3">Metodo de pago</Subtitle>
-                        <TabList variant="solid" value={mode} onVolumeChange={setMode}>
-                            <Tab value='posCash'>Contado</Tab>
-                            <Tab value='posCard'>Tarjeta</Tab>
+                        <TabList variant="solid">
+                            <Tab onClick={(e) => setMode("posCash")}>Contado</Tab>
+                            <Tab onClick={(e) => setMode("posCard")}>Tarjeta</Tab>
                         </TabList>
                     </TabGroup>
                     <div className="w-full mt-4">
@@ -94,19 +116,41 @@ export function Checkout({ checkoutList }) {
                         <NumberInput value={input} />
                     </div>
                 </Flex>
+
+                <TabGroup className="w-64 mt-4 mb-4">
+                    <TabList variant="solid">
+                        <Tab onClick={(e) => setShouldBill(true)}>Factura por correo</Tab>
+                        <Tab onClick={(e) => setShouldBill(false)}>No enviar factura</Tab>
+                    </TabList>
+                </TabGroup>
                 
-                <Title>Datos de facturacion</Title>
-                <TextInput className="w-full mt-4" placeholder="Nombre del cliente" />
-                <TextInput className="w-full mt-4" placeholder="Email del cliente" />
+                { shouldBill && (
+                    <>
+                    <Title>Datos de facturacion</Title>                   
+
+                    <TextInput 
+                        value={clientEmail} 
+                        onChange={ (e) => setClientEmail(e.target.value) }
+                        className="w-full mt-4" placeholder="Email del cliente" required />
+                    <TextInput 
+                        value={clientName}
+                        onChange={ (e) => setClientName(e.target.value) }
+                        className="w-full mt-4" 
+                        placeholder="Nombre del cliente" />
+                    </>
+                )}
 
                 <Divider />
                 <Subtitle>Cambio</Subtitle>
                 <Title>{ dataFormatter(Math.max(0 ,input - checkoutList.reduce((acc, product) => acc + (product.salePrice * product.quantity), 0))) }</Title>
 
-                <Button color="green" size="xl" className="w-full mt-4" onClick={ checkout }>Confirmar Pago</Button>
-                <Grid numItems={2} className="gap-4">
-                    <Button size="sm" variant="secondary" color="blue" className="w-full mt-4">Editar Orden</Button>
-                    <Button size="sm" variant="secondary" color="rose" className="w-full mt-4">Cancelar Orden</Button>
+                <Button 
+                    loading={isLoading}
+                    color="green" size="xl" className="w-full mt-4" onClick={ checkout }>Confirmar Pago</Button>
+                <Grid numItems={1} className="gap-4">
+                    <Button 
+                        onClick={(e) => { setPay(false) }}
+                        size="sm" variant="secondary" color="rose" className="w-full mt-4">Cancelar Orden</Button>
                 </Grid>
             </Card>
             <Grid numItems={1} numItemsSm={2} className="mt-4 gap-4">

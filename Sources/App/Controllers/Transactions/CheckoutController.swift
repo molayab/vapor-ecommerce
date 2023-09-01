@@ -42,7 +42,41 @@ struct CheckoutController: RouteCollection {
         }
 
         let payload = try req.content.get(Transaction.Create.self)
-        return try await payload.create(in: req, forOrigin: method).asPublic(on: req.db)
+        let transaction = try await payload.create(in: req, forOrigin: method)
+
+        // Transaction is payed, and created by a POS, so we can mark it as payed, add it to\
+        // the sales records and send an email confirmation.
+
+        // Send email confirmation
+        if let billTo = payload.billTo, req.application.environment == .production {
+            // lets use the api call 
+            // todo create a custom provider
+            var headers = HTTPHeaders()
+            headers.add(name: .accept, value: "application/json")
+            headers.add(name: .contentType, value: "application/json")
+            headers.add(name: "api-key", value: settings.secrets.smtp.password)
+
+            let response = try await req.client.post(
+                    URI(string: settings.secrets.smtp.hostname), 
+                    headers: headers, 
+                    content: EmailSender(
+                        sender: EmailSender.User(
+                            name: settings.siteName,
+                            email: settings.secrets.smtp.email
+                        ),
+                        to: [
+                            EmailSender.User(
+                                name: billTo.name.capitalized,
+                                email: billTo.email)
+                        ],
+                        subject: "Confirmación de Compra",
+                        htmlContent: try await transaction.generateEmailConfirmation(database: req.db)))
+
+            req.logger.info("\(response)")
+        }
+
+        await req.notifyMessage("La transacción \(transaction.id!.uuidString) ha sido creada.")
+        return try await transaction.asPublic(on: req.db)
     }
 
     /// Restricted API
@@ -51,7 +85,21 @@ struct CheckoutController: RouteCollection {
     /// products and remove the sales.
     private func anulate(req: Request) async throws -> Response {
         let payload = try req.content.get(Transaction.Anulate.self)
-        try await payload.anulate(in: req)
+        _ = try await payload.anulate(in: req)
+
+        await req.notifyMessage("La transacción \(payload.id.uuidString) ha sido anulada.")
         return Response(status: .ok)
     }
+}
+
+struct EmailSender: Content {
+    struct User: Content {
+        let name: String
+        let email: String
+    }
+
+    let sender: User
+    let to: [User]
+    let subject: String
+    let htmlContent: String
 }

@@ -184,7 +184,7 @@ export default function POS() {
 
     if (pay && checkoutList.length > 0) {
         return (
-            <Checkout checkoutList={checkoutList} />
+            <Checkout checkoutList={checkoutList} setPay={setPay} setCheckoutList={setCheckoutList} />
         )
     }
 

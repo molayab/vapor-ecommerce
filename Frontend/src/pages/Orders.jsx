@@ -15,14 +15,18 @@ import {
     TableCell, 
     TableHead, 
     TableHeaderCell, 
-    TableRow 
+    TableRow,
+    Flex,
+    TextInput
 } from "@tremor/react"
 import { anulateOrder } from "../components/services/orders"
+import { toast } from "react-toastify"
 
 function Orders() {
+    const [page, setPage] = useState(1)
     const [orders, setOrders] = useState({ items: [] })
-    const fetchOrders = async () => {
-        const response = await fetch(`${API_URL}/orders/all`, {
+    const fetchOrders = async (page) => {
+        const response = await fetch(`${API_URL}/orders/all?page=${page}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" }
         })
@@ -31,23 +35,29 @@ function Orders() {
         setOrders(data)
     }
 
+    const nextPage = () => {
+        setPage((old) => old + 1)
+    }
+
+    const prevPage = () => {
+        setPage((old) => old - 1)
+    }
+
     const deleteOrder = async (id) => {
         if (confirm("¿Esta seguro que desea eliminar esta orden?")) {
             let response = await anulateOrder(id)
 
             if (response.status === 200) {
-                alert("Orden eliminada con exito")
-                fetchOrders()
+                fetchOrders(page)
             } else {
-                alert("Error al eliminar la orden")
+                toast("Error al eliminar la orden")
             }
         }
     }
 
-
     useEffect(() => {
-        fetchOrders()
-    }, [])
+        fetchOrders(page)
+    }, [page])
 
     return (
         <SideMenu>
@@ -91,6 +101,18 @@ function Orders() {
                         ))}
                     </TableBody>
                 </Table>
+
+                <Flex justifyContent="end" className="space-x-2 pt-4 mt-8">
+                    <Button size="xs" variant="secondary" onClick={prevPage} disabled={page === 1}>
+                    Anterior
+                    </Button>
+
+                    <TextInput size="xs" className='w-10' value={page} readOnly />
+
+                    <Button size="xs" variant="primary" onClick={nextPage} disabled={page === (orders.total / orders.per).toFixed()}>
+                    Siguiente
+                    </Button>
+                </Flex>
             </ContainerCard>
 
             

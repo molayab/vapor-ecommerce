@@ -71,6 +71,8 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(Cost.CreateMigration())
     app.migrations.add(Finance.CreateMigration())
     app.migrations.add(Sale.CreateMigration())
+    app.migrations.add(ProductVariant.AddTimestampsMigration())
+    app.migrations.add(User.AddDeleteField())
     try await app.autoMigrate()
 
     let corsConfiguration = CORSMiddleware.Configuration(
@@ -115,5 +117,31 @@ public func configure(_ app: Application) async throws {
     }
 
     app.caches.use(.redis)
+
+
+    app.webSocket("notifications") { req, ws in 
+        _webSocketNotificationsHandler = ws
+        ws.onText { ws, text in
+            req.logger.notice("ws received: \(text)")
+        }
+    }
+
     try routes(app)
+}
+
+private var _webSocketNotificationsHandler: WebSocket?
+extension Application {
+    func notifyMessage(_ message: String) async {
+        guard let ws = _webSocketNotificationsHandler else {
+            return
+        }
+
+        try? await ws.send(message)
+    }
+}
+
+extension Request {
+    func notifyMessage(_ message: String) async {
+        await application.notifyMessage(message)
+    }
 }

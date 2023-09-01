@@ -80,15 +80,12 @@ function ListUsers() {
     onIndexChange(currentTab, page - 1)
   }
 
+  const [localUsers, setLocalUsers] = useState([])
+
   useEffect(() => {
     onIndexChange(currentTab, 1)
-  }, [])
-
-  /*if (users.items.length === 0) {
-    return (
-      <Loader />
-    )
-  }*/
+    setLocalUsers(users.items)
+  }, [localUsers])
 
   return (
       <>
@@ -112,13 +109,13 @@ function ListUsers() {
               </TabList>
               <TabPanels>
                 <TabPanel>
-                  <UsersTable users={users.items} />
+                  <UsersTable users={users.items} setUsers={setLocalUsers} />
                 </TabPanel>
                 <TabPanel>
-                  <UsersTable users={users.items} />
+                  <UsersTable users={users.items} setUsers={setLocalUsers} />
                 </TabPanel>
                 <TabPanel>
-                  <UsersTable users={users.items} />
+                  <UsersTable users={users.items} setUsers={setLocalUsers} />
                 </TabPanel>
               </TabPanels>
             </TabGroup>

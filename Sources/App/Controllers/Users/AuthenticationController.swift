@@ -26,7 +26,7 @@ struct AuthenticationController: RouteCollection {
         try await req.ensureFeatureEnabled(.loginEnabled)
 
         let user = try req.auth.require(User.self)
-        guard user.isActive else {
+        guard user.isActive && !user.isDeleted else {
             throw Abort(.unauthorized)
         }
 

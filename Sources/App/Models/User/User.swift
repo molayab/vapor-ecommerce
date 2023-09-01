@@ -61,6 +61,9 @@ final class User: Model {
     @Field(key: "cellphone")
     var cellphone: String?
 
+    @Field(key: "is_deleted")
+    var isDeleted: Bool
+
     @Children(for: \.$user)
     var roles: [Role]
 
@@ -245,6 +248,20 @@ extension User {
 
         func revert(on database: Database) async throws {
             try await database.schema("users").delete()
+        }
+    }
+
+    struct AddDeleteField: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema("users")
+                .field("is_deleted", .bool, .required, .custom("DEFAULT FALSE"))
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema("users")
+                .deleteField("is_deleted")
+                .update()
         }
     }
 }

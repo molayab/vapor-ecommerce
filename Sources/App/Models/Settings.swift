@@ -35,6 +35,7 @@ extension Settings {
         var postgres: Postgres
         var redis: Redis
         var wompi: Wompi
+        var smtp: SMTP
     }
 
     struct JWT: Content {
@@ -102,12 +103,21 @@ extension Settings {
             }
         }
     }
+
+    struct SMTP: Content {
+        var hostname: String
+        var port: Int?
+        var email: String
+        var password: String
+        var login: String?
+    }
 }
 
 struct Settings: Content {
     var siteName: String
     var siteDescription: String
     var siteUrl: String
+    var contactEmail: String
     var apiUrl: String
     var allowedOrigins: [String]
     var postHog: PostHog

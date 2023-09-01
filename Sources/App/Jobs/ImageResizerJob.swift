@@ -29,34 +29,33 @@ struct ImageResizerJob: AsyncJob {
 
         let fileManager = FileManager.default
         guard fileManager.fileExists(atPath: publicFolder) else {
-            context.logger.info(" !!! Creating directory: \(publicFolder)")
+            await context.application.notifyMessage(" Se ha creado la carpeta \(publicFolder)")
             try fileManager.createDirectory(atPath: publicFolder, withIntermediateDirectories: true)
             return try await dequeue(context, payload)
         }
         guard fileManager.createFile(atPath: filePath, contents: payload.image.dat) else {
-            context.logger.error(" !!! Could not create file: \(filePath)")
+            await context.application.notifyMessage(" La imagen \(fileName) no ha podido ser subida")
             throw Abort(.notAcceptable)
         }
+
+        await context.application.notifyMessage(" La imagen \(fileName) ha sido subida")
 
         try await withThrowingTaskGroup(of: Void.self) { group in
             let image = try Image(data: payload.image.dat)
 
             group.addTask {
-                context.logger.info(" !!! Resizing image: \(filePath)")
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 256, app: context.application)
-                context.logger.info(" !!! Resized image: \(filePath)")
+                await context.application.notifyMessage(" La imagen \(fileName) ha sido subida")
             }
 
             group.addTask {
-                context.logger.info(" !!! Resizing image: \(filePath)")
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 512, app: context.application)
-                context.logger.info(" !!! Resized image: \(filePath)")
+                await context.application.notifyMessage(" La imagen \(fileName) ha sido subida")
             }
 
             group.addTask {
-                context.logger.info(" !!! Resizing image: \(filePath)")
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 1024, app: context.application)
-                context.logger.info(" !!! Resized image: \(filePath)")
+                await context.application.notifyMessage(" La imagen \(fileName) ha sido subida")
             }
 
             try await group.waitForAll()

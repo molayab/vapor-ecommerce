@@ -3,8 +3,9 @@ import { ExclamationCircleIcon, PencilIcon } from '@heroicons/react/solid'
 import { Table, TableBody, TableCell, TableHead, TableRow, TableHeaderCell, Callout, Icon } from '@tremor/react'
 import { removeUser } from './services/users'
 import { useState } from 'react'
+import Loader from './Loader'
 
-function UsersTable({ users }) {
+function UsersTable({ users, setUsers }) {
     const [errors, setErrors] = useState({})
     const [notifications, setNotifications] = useState({})
 
@@ -12,10 +13,14 @@ function UsersTable({ users }) {
         let response = await removeUser(id)
 
         if (response.status === 200) {
-            setNotifications({ title: "Usuario eliminado correctamente" })
+            setUsers((old) => old.filter((u) => u.id !== id))
         } else {
             setErrors({ title: "Error al eliminar el usuario" })
         }
+    }
+
+    if (users === null) {
+        return <Loader />
     }
 
     return (

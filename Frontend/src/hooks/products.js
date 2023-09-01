@@ -1,34 +1,24 @@
 import { useState, useEffect } from "react";
 import { API_URL } from "../App";
+import { fetchProducts } from "../components/services/products";
 
 /**
  * This hook is used to fetch all products from the backend
  * @returns {Array} Array of products
  */
-export function useProducts() {
+export function useProducts(page) {
     const [products, setProducts] = useState(null);
 
     useEffect(() => {
-    const fetchProducts = async () => {
-        const response = await fetch(`${API_URL}/products`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
+        fetchProducts(page).then((response) => {
+            if (response.status === 200) {
+                response.json().then((data) => {
+                    setProducts(data)
+                })
+            } else {
+                alert("Error fetching products")
             }
         })
-        
-        return response
-    }
-
-    fetchProducts().then((response) => {
-        if (response.status === 200) {
-            response.json().then((data) => {
-                setProducts(data)
-            })
-        } else {
-            alert("Error fetching products")
-        }
-    })
     }, [])
 
     return products

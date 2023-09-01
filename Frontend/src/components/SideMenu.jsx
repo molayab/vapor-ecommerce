@@ -64,8 +64,8 @@ function SideMenu({ children }) {
             <Metric className='text-white'>{ settings.siteName }</Metric>
             <Subtitle className='text-white'>Managment</Subtitle>
           </div>
-          <div className='flex-1 items-end'>
-            <ul className='flex gap-2 [&>li]:flex [&>li]:gap-1 [&>li]:pb-2 [&>li]:cursor-pointer [&>li]:text-tremor-content-inverted'>
+          <div className='flex-1 mt-4'>
+            <ul className='flex items-center gap-2 [&>li]:flex [&>li]:gap-1 [&>li]:pb-2 [&>li]:cursor-pointer [&>li]:text-tremor-content-inverted'>
               <li onClick={ () => navigate("/") }>
                 <img src={activityIcon} alt='activity' />
                 <span className='hidden md:block hover:underline'><small>Estadisticas</small></span>
@@ -91,7 +91,6 @@ function SideMenu({ children }) {
                 <span className='hidden md:block hover:underline'><small>Ajustes</small></span>
               </li>
             </ul>
-            <TextInput icon={SearchIcon} className='w-full hover:bg-dark-tremor-background-emphasis bg-dark-tremor-background-emphasis' placeholder='Search...' />
           </div>
           <div className='flex flex-col items-center'>
             <span className='text-white'>Hola,</span>

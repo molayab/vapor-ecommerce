@@ -140,17 +140,60 @@ extension Transaction {
         }
     }
 
+    struct BillTo: Content, Validatable, Decodable {
+        var name: String
+        var email: String
+
+        static func validations(_ validations: inout Validations) {
+            validations.add("name", as: String.self, is: !.empty)
+            validations.add("email", as: String.self, is: .email)
+        }
+    }
+
     struct Create: Content {
         var shippingAddressId: UUID?
         var billingAddressId: UUID?
         var items: [TransactionItem.Create]
+        var billTo: BillTo?
 
         func create(in req: Request, forOrigin origin: Transaction.Origin) async throws -> Transaction {
-            let user = try req.auth.require(User.self)
+            var user = try req.auth.require(User.self)
             let model = Transaction()
 
+            if let billTo = billTo, !billTo.email.isEmpty {
+                let emailPattern = #"^\S+@\S+\.\S+$"#
+                let result = billTo.email.range(
+                    of: emailPattern,
+                    options: .regularExpression
+                )
+
+                let validEmail = (result != nil)
+
+                // Search the email in the database
+                if let userContext = try await User.query(on: req.db).filter(\.$email == billTo.email).first() {
+                    user = userContext
+                } else if validEmail {
+                    // The user does not exist, so we create it
+                    let payload = User.Create(
+                        name: billTo.name,
+                        kind: .client,
+                        password: UUID().uuidString,
+                        email: billTo.email,
+                        roles: [.noAccess],
+                        isActive: false,
+                        addresses: []
+                    )
+
+                    user = try await payload.create(on: req.db)
+                } else {
+                    await req.notifyMessage("Correo electrónico inválido")
+                    throw Abort(.badRequest, reason: "Invalid email")
+                }
+            }
+
+            let userRef = user
             return try await req.db.transaction { database in 
-                model.$user.id = try user.requireID()
+                model.$user.id = try userRef.requireID()
                 model.$shippingAddress.id = shippingAddressId
                 model.$billingAddress.id = billingAddressId
                 model.status = .placed
@@ -166,13 +209,18 @@ extension Transaction {
                     model.orderdAt = Date()
                 }
 
+                // Create transaction
                 try await model.save(on: database)
+
+                // Create transaction items
                 try await items.asyncMap { item in
                     // Check variant stock
                     guard let variant = try await ProductVariant.find(item.productVariantId, on: database) else {
+                        await req.notifyMessage("Variante no encontrada")
                         throw Abort(.badRequest, reason: "Product variant not found")
                     }
                     guard variant.stock >= item.quantity else {
+                        await req.notifyMessage("Variante sin stock (No hay \(item.quantity) disponibles).")
                         throw Abort(.badRequest, reason: "Product variant out of stock")
                     }
 
@@ -181,7 +229,7 @@ extension Transaction {
                     return mod
                 }.create(on: database)
 
-                // Update stock
+                // Update stock: we are selling products, therefore we need decrease the stock
                 for item in try await model.$items.get(on: database).get() {
                     let product = try await item.$productVariant.get(on: database).get()
                     product.stock -= item.quantity
@@ -195,7 +243,7 @@ extension Transaction {
                         let record = Sale()
                         record.$order.id = try model.requireID()
                         record.currency = sale.currency
-                        record.amount = Double(sale.quantity) * sale.price
+                        record.amount = Double(sale.quantity) * sale.total
                         record.date = Date()
                         record.type = .sale
                         return record
@@ -213,7 +261,6 @@ extension Transaction.Create: Validatable {
         validations.add("shippingAddressId", as: UUID?.self)
         validations.add("billingAddressId", as: UUID?.self)
         validations.add("items", as: [TransactionItem.Create].self)
-
     }
 }
 
@@ -240,5 +287,52 @@ extension Transaction {
         func revert(on database: Database) async throws {
             try await database.schema(Transaction.schema).delete()
         }
+    }
+}
+
+extension Transaction {
+    func generateEmailConfirmation(database: Database) async throws -> String {
+        let items = try await $items.get(on: database).asyncMap { item in 
+            try await $user.load(on: database)
+            let variant = try await item.$productVariant.get(on: database)
+            let product = try await variant.$product.get(on: database)
+            let total = String(format: "%.0f", item.total)
+
+            return "<li><i><b>" + product.title + " " + variant.name + "</b> - $" + total + "</i></li>"
+        }.joined(separator: "\n")
+
+        let user = try await $user.get(on: database)
+        let txTotal = String(format: "%.0f", try await $items.get(on: database).reduce(0) { $0 + $1.total })
+
+        return 
+"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Compra</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f0f0f0; padding: 20px;">
+
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 5px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
+        <h2 style="color: #333;">Confirmación de Compra</h2>
+        <p>Estimado(a) \(user.name.isEmpty ? user.email : user.name.capitalized),</p>
+        <p>Gracias por su compra en nuestra tienda. A continuación, encontrará los detalles de su compra:</p>
+        <ul>
+            \(items)
+        </ul>
+        <p>Total: $\(txTotal)</p>
+        <p>Le enviamos este correo electrónico de confirmación para informarle que su compra ha sido procesada con éxito.</p>
+        <p>Si tiene alguna pregunta o necesita asistencia adicional, no dude en ponerse en contacto con nuestro servicio al cliente en \(settings.contactEmail).</p>
+        <p>Gracias por elegirnos. ¡Esperamos que disfrute de sus productos!</p>
+
+        <p>Atentamente,<br>\(settings.siteName)</p>
+    </div>
+
+</body>
+</html>
+"""
     }
 }

@@ -48,12 +48,28 @@ struct ProductsController: RouteCollection {
     /// GET /products
     /// Returns a paginated list of all products
     private func listAll(req: Request) async throws -> Page<Product.Public> {
-        let products = try await Product.query(on: req.db)
-            .with(\.$category)
-            .with(\.$variants)
-            .paginate(PageRequest(
-                page: req.parameters.get("page", as: Int.self) ?? 1,
-                per: 100))
+        var products: Page<Product> = Page(items: [], metadata: .init(page: 1, per: 1, total: 1))
+        if let query = req.query[String.self, at: "query"] {
+            products = try await Product.query(on: req.db)
+                .join(ProductVariant.self, on: \ProductVariant.$product.$id == \Product.$id)
+                .join(Category.self, on: \Category.$id == \Product.$category.$id)
+                .group(.or) { or in
+                    or.filter(\.$title ~~ query)
+                    or.filter(\.$description ~~ query)
+                    or.filter(Category.self, \.$title == query)
+                    or.filter(ProductVariant.self, \.$name ~~ query)
+                }
+                .with(\.$category)
+                .with(\.$variants)
+                .sort(\.$createdAt, .descending)
+                .paginate(for: req)
+        } else {
+            products = try await Product.query(on: req.db)
+                .with(\.$category)
+                .with(\.$variants)
+                .sort(\.$createdAt, .descending)
+                .paginate(for: req)
+        }
 
         var items = [Product.Public]()
         for product in products.items {

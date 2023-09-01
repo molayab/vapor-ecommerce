@@ -28,3 +28,12 @@ export async function deleteProduct(id) {
 
     return response
 }
+
+export async function fetchProducts(page, query) {
+    const response = await fetch(`${API_URL}/products?page=${page}${query ? `&query=${query}` : '' }`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json", }
+    })
+    
+    return response
+}

@@ -28,11 +28,12 @@ function UpdateProductVariant() {
         setIsLoading(true)
         let response = await updateVariant(pid, id, {...localVariant, 
             images: localResources.filter((i) => i.dat), 
-            availability: localVariant.availability || false, 
+            availability: localVariant.availability || localVariant.isAvailable || false, 
             isAvailable: localVariant.availability})
             
         let data = await response.json()
         if (data.id) {
+            setNotifications({ title: "Variante actualizada correctamente" })
             let toRemove = []
             let toAdd = []
 
@@ -64,7 +65,7 @@ function UpdateProductVariant() {
             let response = await uploadMultipleImages(pid, id, toAdd.filter((i) => i.dat !== null))
             if (response.status !== 200) {
                 setErrors({ title: "Error al subir las imagenes" })
-            } else {
+            } else if (toAdd.length > 0) {
                 setNotifications({ title: "Imagenes subidas correctamente" })
             }
 
