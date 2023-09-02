@@ -3,7 +3,7 @@ import Redis
 import JWT
 
 struct Auth: Authenticatable, JWTPayload {
-    private static var expirationTime: TimeInterval = { 60 * 30 }()
+    private static var expirationTime: TimeInterval = { 60 * 240 }()
 
     var refreshToken = (UUID().uuidString + [UInt8].random(count: 16).base64).base64String()
     var expiration: ExpirationClaim
@@ -12,7 +12,6 @@ struct Auth: Authenticatable, JWTPayload {
     static func refresh(in req: Request, token: String) async throws -> Auth {
         let user: User = try await withUnsafeThrowingContinuation({ next in
             let key = RedisKey("sess_" + token)
-
             req.redis.get(key).whenComplete { response in
                 switch response {
                 case .failure(let error):

@@ -142,19 +142,23 @@ struct ProductVariantsController: RouteCollection {
         let path = try req.application.directory.publicDirectory
             + "images/catalog/\(product.requireID().uuidString)/\(variant.requireID().uuidString)"
 
-        for entry in try await req.application.fileio.listDirectory(
-            path: path,
-            eventLoop: req.eventLoop.next()).get() {
+        do {
+            for entry in try await req.application.fileio.listDirectory(
+                path: path,
+                eventLoop: req.eventLoop.next()).get() {
 
-            do {
-                try await req.application.fileio.remove(
-                    path: path + "/" + entry.name,
-                    eventLoop: req.eventLoop.next()).get()
-            } catch {
-                req.logger.error("Error deleting variant image: \(error.localizedDescription)")
+                do {
+                    try await req.application.fileio.remove(
+                        path: path + "/" + entry.name,
+                        eventLoop: req.eventLoop.next()).get()
+                } catch {
+                    req.logger.error("Error deleting variant image: \(error.localizedDescription)")
+                }
             }
+        } catch {
+            req.logger.error("Error deleting variant image: \(error.localizedDescription)")
         }
-
+        
         try await variant.delete(on: req.db)
         return [
             "status": "success",

@@ -54,12 +54,16 @@ function UpdateProduct() {
         if (localProduct) {
             setErrors({})
             setIsLoading(true)
-            let response = await updateProduct(id, { ...localProduct, isPublished: isPublished, category: localProduct.category.id })
+            let response = await updateProduct(id, { 
+                title: localProduct.title,
+                description: localProduct.description,
+                isPublished: isPublished, 
+                category: localProduct.category.id })
             let data = await response.json()
             if (data.id) {
-                setIsLoading(false)
                 setNotifications({ title: "Producto actualizado correctamente" })
             }
+            setIsLoading(false)
         } else setErrors({ title: "La información del producto es requerida" })
     }
 

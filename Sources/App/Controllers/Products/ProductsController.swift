@@ -20,6 +20,7 @@ struct ProductsController: RouteCollection {
         restricted.delete(":productId", use: delete)
         restricted.patch(":productId", use: update)
         restricted.get("pos", use: listAllPos)
+        restricted.patch(":productId", "category", use: updateCategory)
     }
 
     /// Public API
@@ -164,6 +165,25 @@ struct ProductsController: RouteCollection {
         ]
     }
 
+    /// Restricted API
+    /// PATCH /products/:productId/category
+    /// Updates a product's category by ID
+    private func updateCategory(req: Request) async throws -> Product.Public {
+        guard let uuid = req.parameters.get("productId", as: UUID.self) else {
+            throw Abort(.badRequest)
+        }
+        guard let product = try await Product.find(uuid, on: req.db) else {
+            throw Abort(.notFound)
+        }
+
+        let payload = try req.content.decode(Product.UpdateCategory.self)
+        try Product.UpdateCategory.validate(content: req)
+
+        product.$category.id = payload.category
+
+        try await product.update(on: req.db)
+        return try await product.asPublic(on: req)
+    }
 }
 
 struct CreateViewModel: Codable {

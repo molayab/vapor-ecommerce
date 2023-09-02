@@ -138,7 +138,6 @@ final class Product: Model {
             }
         })
     }
-
 }
 
 extension Product {
@@ -194,6 +193,14 @@ extension Product {
         var stock: Int
         var numberOfStars: Int
         var isPublished: Bool
+    }
+
+    struct UpdateCategory: Content, Validatable {
+        var id: UUID
+
+        static func validations(_ validations: inout Validations) {
+            validations.add("id", as: UUID.self, is: .valid)
+        }
     }
 }
 
