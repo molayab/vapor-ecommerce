@@ -50,16 +50,17 @@ function CreateProductVariant() {
         if (data.id) {
             // Add images
             let toAdd = resources.filter((i) => i.dat !== null)
-            let response = await uploadMultipleImages(pid, id, toAdd)
-            if (response.status !== 200) {
-                setErrors({ title: "Error al subir las imagenes" })
-            } else if (toAdd.length > 0) {
-                setNotifications({ title: "Imagenes subidas correctamente" })
+            if (toAdd.length > 0) {
+                let response = await uploadMultipleImages(pid, id, toAdd)
+                if (response.status !== 200) {
+                    setErrors({ title: "Error al subir las imagenes" })
+                } else if (toAdd.length > 0) {
+                    setNotifications({ title: "Imagenes subidas correctamente" })
+                }
             }
 
             setIsLoading(false)
             setNotifications({ title: "Variante creada correctamente" })
-            navigate("/products/" + id)
         } else {
             setErrors({ title: "Error al crear la variante" })
             setIsLoading(false)
