@@ -18,6 +18,7 @@ function ListProducts() {
     const navigate = useNavigate()
     const [localProducts, setLocalProducts] = useState(null)
     const [meta, setMeta] = useState({})
+    const [isLoading, setIsLoading] = useState(false)
 
     const nextPage = () => {
         setPage((page) => page + 1)
@@ -29,6 +30,7 @@ function ListProducts() {
 
     useEffect(() => {
         const fetch = async () => {
+            setIsLoading(true)
             let response = await fetchProducts(page, query)
             let data = await response.json()
             setMeta({
@@ -48,12 +50,17 @@ function ListProducts() {
                 variants: i.variants || [],
                 isAvailable: i.variants.reduce((acc, v) => acc || v.isAvailable, false)
             })))
+            setIsLoading(false)
         }
 
         fetch()
     }, [page, query])
 
     if (localProducts === null) {
+        return (<Loader />)
+    }
+
+    if (isLoading) {
         return (<Loader />)
     }
 

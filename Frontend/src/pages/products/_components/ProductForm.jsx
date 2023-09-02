@@ -171,7 +171,7 @@ function ProductForm({product, setProduct, onSave}) {
                 <div className="relative w-full h-full overflow-hidden">
                     <Icon icon={TrashIcon} 
                     onClick={(e) => { deleteProductVariant(variant, index) }}
-                    className="absolute z-50 bottom-0 right-1 bg-slate-50 rounded-full hover:bg-slate-200 cursor-pointer" />
+                    className="absolute z-20 bottom-0 right-1 bg-slate-50 rounded-full hover:bg-slate-200 cursor-pointer" />
                     
                     <div className="absolute z-30 w-full h-full items-center justify-center text-center opacity-80 cursor-pointer">
                     <Subtitle onClick={(e) => { navigate("/products/" + id + "/variants/" + variant.id + "/edit") }} className="bg-slate-400">{ variant.name }</Subtitle>
@@ -226,7 +226,10 @@ function ProductForm({product, setProduct, onSave}) {
             {product.variants !== undefined ? product.variants.map((variant) => {
                 return (
                 <TableRow>
-                    <TableCell>{variant.name}</TableCell>
+                    <TableCell>
+                        <strong>{variant.name}</strong><br />
+                        <small>{variant.sku}</small>
+                    </TableCell>
                     <TableCell>{currencyFormatter(variant.price)}</TableCell>
                     <TableCell>{variant.stock}</TableCell>
                     <TableCell>{currencyFormatter(variant.price * variant.stock)}</TableCell>

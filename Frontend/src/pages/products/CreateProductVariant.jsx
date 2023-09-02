@@ -1,17 +1,20 @@
 import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { Button } from "@tremor/react"
-import { SaveAsIcon } from "@heroicons/react/solid"
+import { Button, Callout } from "@tremor/react"
+import { ExclamationCircleIcon, SaveAsIcon } from "@heroicons/react/solid"
 import { createVariant } from "../../components/services/variants"
 import ContainerCard from "../../components/ContainerCard"
 import ProductVariantForm from "./_components/ProductVariantForm"
 import SideMenu from "../../components/SideMenu"
+import { uploadMultipleImages } from "../../components/services/images"
 
 function CreateProductVariant() {
     let { id } = useParams()
     const navigate = useNavigate()
     const [resources, setResources] = useState([])
     const [isLoading, setIsLoading] = useState(false)
+    const [errors, setErrors] = useState({})
+    const [notifications, setNotifications] = useState({})
     const [variant, setVariant] = useState({
         name: "",
         sku: "",
@@ -45,9 +48,20 @@ function CreateProductVariant() {
         let response = await createVariant(id, { ...variant, images: resources })
         let data = await response.json()
         if (data.id) {
+            // Add images
+            let toAdd = resources.filter((i) => i.dat !== null)
+            let response = await uploadMultipleImages(pid, id, toAdd)
+            if (response.status !== 200) {
+                setErrors({ title: "Error al subir las imagenes" })
+            } else if (toAdd.length > 0) {
+                setNotifications({ title: "Imagenes subidas correctamente" })
+            }
+
             setIsLoading(false)
+            setNotifications({ title: "Variante creada correctamente" })
             navigate("/products/" + id)
         } else {
+            setErrors({ title: "Error al crear la variante" })
             setIsLoading(false)
         }
     }
@@ -60,6 +74,18 @@ function CreateProductVariant() {
                 </div>
             }>
             </ContainerCard>
+
+            { errors.title &&
+                <Callout color="rose" className="mt-2" title="Error" icon={ExclamationCircleIcon}>
+                    { errors.title }
+                </Callout>
+            }
+
+            { notifications.title &&
+                <Callout color="green" className="mt-2" title="Exito" icon={ExclamationCircleIcon}>
+                    { notifications.title }
+                </Callout>
+            }
 
             <ProductVariantForm 
                 productVariant={variant} 

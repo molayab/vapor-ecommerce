@@ -3,7 +3,7 @@ import Redis
 import JWT
 
 struct Auth: Authenticatable, JWTPayload {
-    private static var expirationTime: TimeInterval = { 60 * 15 }()
+    private static var expirationTime: TimeInterval = { 60 * 30 }()
 
     var refreshToken = (UUID().uuidString + [UInt8].random(count: 16).base64).base64String()
     var expiration: ExpirationClaim
@@ -19,10 +19,10 @@ struct Auth: Authenticatable, JWTPayload {
                     return next.resume(throwing: error)
                 case .success(let content):
                     guard let content = content.string else {
-                        return next.resume(throwing: Abort(.unauthorized))
+                        return next.resume(throwing: Abort(.internalServerError))
                     }
                     guard let userId = UUID(uuidString: content) else {
-                        return next.resume(throwing: Abort(.unauthorized))
+                        return next.resume(throwing: Abort(.internalServerError))
                     }
 
                     req.redis.delete(key).whenComplete { _ in }

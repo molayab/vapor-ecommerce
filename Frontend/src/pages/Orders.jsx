@@ -25,14 +25,17 @@ import { toast } from "react-toastify"
 function Orders() {
     const [page, setPage] = useState(1)
     const [orders, setOrders] = useState({ items: [] })
+    const [isLoading, setIsLoading] = useState(false)
     const fetchOrders = async (page) => {
-        const response = await fetch(`${API_URL}/orders/all?page=${page}`, {
+        setIsLoading(true)
+        const response = await fetch(`${API_URL}/orders/all?page=${page}&per=100`, {
             method: "GET",
             headers: { "Content-Type": "application/json" }
         })
 
         const data = await response.json()
         setOrders(data)
+        setIsLoading(false)
     }
 
     const nextPage = () => {
@@ -59,6 +62,7 @@ function Orders() {
         fetchOrders(page)
     }, [page])
 
+    if (isLoading) return (<div>Cargando...</div>)
     return (
         <SideMenu>
             <ContainerCard title="Ordenes" subtitle="Administrador de" action={
@@ -68,7 +72,6 @@ function Orders() {
                         <SelectItem>Pendientes</SelectItem>
                         <SelectItem>Canceladas</SelectItem>
                     </Select>
-                    <Button onClick={() => navigate("/users/new/client")}>Nuevo Cliente</Button>
                 </div>
             }>
 
