@@ -171,7 +171,7 @@ function ProductForm({product, setProduct, onSave}) {
                 <div className="relative w-full h-full overflow-hidden">
                     <Icon icon={TrashIcon} 
                     onClick={(e) => { deleteProductVariant(variant, index) }}
-                    className="absolute z-20 bottom-0 right-1 bg-slate-50 rounded-full hover:bg-slate-200 cursor-pointer" />
+                    className="absolute z-40 bottom-0 right-1 bg-slate-50 rounded-full hover:bg-slate-200 cursor-pointer" />
                     
                     <div className="absolute z-30 w-full h-full items-center justify-center text-center opacity-80 cursor-pointer">
                     <Subtitle onClick={(e) => { navigate("/products/" + id + "/variants/" + variant.id + "/edit") }} className="bg-slate-400">{ variant.name }</Subtitle>
