@@ -52,13 +52,8 @@ struct ProductsController: RouteCollection {
         var products: Page<Product> = Page(items: [], metadata: .init(page: 1, per: 1, total: 1))
         if let query = req.query[String.self, at: "query"] {
             products = try await Product.query(on: req.db)
-                .join(ProductVariant.self, on: \ProductVariant.$product.$id == \Product.$id)
-                .join(Category.self, on: \Category.$id == \Product.$category.$id)
                 .group(.or) { or in
                     or.filter(\.$title ~~ query)
-                    or.filter(\.$description ~~ query)
-                    or.filter(Category.self, \.$title == query)
-                    or.filter(ProductVariant.self, \.$name ~~ query)
                 }
                 .with(\.$category)
                 .with(\.$variants)
@@ -106,6 +101,7 @@ struct ProductsController: RouteCollection {
 
         try Product.Create.validate(content: req)
         let product = try await payload.create(for: req, user: user)
+        await req.notifyMessage("Producto creado correctamente.")
 
         return try await product.asPublic(on: req)
     }
@@ -122,9 +118,9 @@ struct ProductsController: RouteCollection {
         }
 
         let payload = try req.content.decode(Product.Create.self)
-
         try Product.Create.validate(content: req)
         try await payload.update(for: req, product: product)
+        await req.notifyMessage("Producto actualizado correctamente.")
 
         return try await product.asPublic(on: req)
     }
@@ -140,29 +136,31 @@ struct ProductsController: RouteCollection {
             throw Abort(.notFound)
         }
 
-        for variant in try await product.$variants.get(on: req.db) {
-            do {
-                let path = try req.application.directory.publicDirectory
-                    + "images/catalog/\(product.requireID().uuidString)"
+        return try await req.db.transaction { database in 
+            for variant in try await product.$variants.get(on: req.db) {
+                do {
+                    let path = try req.application.directory.publicDirectory
+                        + "images/catalog/\(product.requireID().uuidString)"
+                    try await req.application.fileio.remove(path: path, eventLoop: req.eventLoop.next()).get()
+                } catch {
+                    await req.notifyMessage("No se pudo eliminar la imagen de la variante. \(error.localizedDescription)")
+                    throw Abort(.internalServerError)
+                }
 
-                // NOT SURE IF WORKS WELL FOR DIRECTORIES
-                try await req.application.fileio.remove(path: path, eventLoop: req.eventLoop.next()).get()
-            } catch {
-                throw Abort(.internalServerError)
+                try await variant.delete(on: req.db)
             }
 
-            try await variant.delete(on: req.db)
-        }
+            for review in try await product.$reviews.get(on: req.db) {
+                try await review.delete(on: req.db)
+            }
 
-        for review in try await product.$reviews.get(on: req.db) {
-            try await review.delete(on: req.db)
+            try await product.delete(on: req.db)
+            await req.notifyMessage("Producto eliminado correctamente.")
+            return [
+                "status": "success",
+                "message": "Product deleted successfully"
+            ]
         }
-
-        try await product.delete(on: req.db)
-        return [
-            "status": "success",
-            "message": "Product deleted successfully"
-        ]
     }
 
     /// Restricted API
@@ -179,7 +177,7 @@ struct ProductsController: RouteCollection {
         let payload = try req.content.decode(Product.UpdateCategory.self)
         try Product.UpdateCategory.validate(content: req)
 
-        product.$category.id = payload.category
+        product.$category.id = payload.id
 
         try await product.update(on: req.db)
         return try await product.asPublic(on: req)

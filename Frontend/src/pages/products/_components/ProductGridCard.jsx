@@ -9,7 +9,7 @@ import {
     Title 
 } from "@tremor/react"
 
-import { PencilIcon, TrashIcon } from "@heroicons/react/outline"
+import { PencilIcon, SearchCircleIcon, TrashIcon } from "@heroicons/react/outline"
 import { useNavigate } from "react-router-dom"
 import { RES_URL } from "../../../App"
 import { deleteProduct } from "../../../components/services/products"
@@ -27,7 +27,15 @@ function ProductGridCard({ products, setProducts }) {
     }
 
     return (
+        <>
+        { products.length === 0 && (
+            <Card className="mt-4">
+                <SearchCircleIcon className="w-12 h-12 text-gray-400" />
+                <Subtitle className="mt-4">No se encontraron productos</Subtitle>
+            </Card>
+        )}
         <Grid numItems={1} numItemsSm={1} numItemsMd={1} numItemsLg={3} className="gap-4 mt-4">
+            
             { products.map((product, index) => (
                     <Card 
                         key={index} 
@@ -97,6 +105,7 @@ function ProductGridCard({ products, setProducts }) {
                 )
             )}
         </Grid>
+        </>
     )
 }
 

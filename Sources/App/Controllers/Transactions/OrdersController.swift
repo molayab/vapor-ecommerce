@@ -52,6 +52,11 @@ struct OrdersController: RouteCollection {
     /// This endpoint is used to retrieve all transactions.
     private func allOrders(req: Request) async throws -> Page<Transaction> {
         return try await Transaction.query(on: req.db)
+            .with(\.$items) { item in
+                item.with(\.$productVariant) { variant in
+                    variant.with(\.$product)
+                }
+            }
             .paginate(for: req)
     }
 

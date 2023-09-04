@@ -3,7 +3,7 @@ import Redis
 import JWT
 
 struct Auth: Authenticatable, JWTPayload {
-    private static var expirationTime: TimeInterval = { 60 * 240 }()
+    private static var expirationTime: TimeInterval = { 60 * 120 }()
 
     var refreshToken = (UUID().uuidString + [UInt8].random(count: 16).base64).base64String()
     var expiration: ExpirationClaim

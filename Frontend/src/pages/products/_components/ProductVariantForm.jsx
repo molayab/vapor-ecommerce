@@ -37,8 +37,6 @@ function ProductVariantForm({ productVariant, setVariant, resources, setResource
         return <Loader />
     }
 
-    console.log(productVariant)
-
     return (
         <>
             <Card className="mt-4 pb-14">

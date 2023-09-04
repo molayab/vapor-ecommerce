@@ -17,10 +17,15 @@ import {
     TableHeaderCell, 
     TableRow,
     Flex,
-    TextInput
+    TextInput,
+    Metric,
+    List,
+    ListItem,
+    Title
 } from "@tremor/react"
 import { anulateOrder } from "../components/services/orders"
 import { toast } from "react-toastify"
+import { currencyFormatter, dateFormatter, dateTimeFormatter } from "../helpers/dateFormatter"
 
 function Orders() {
     const [page, setPage] = useState(1)
@@ -58,9 +63,23 @@ function Orders() {
         }
     }
 
+    const futureDate = new Date('2022-11-02')
+    const currentDate = new Date('2022-11-01')
+    const diff = futureDate - currentDate
+
+    const formatter = new Intl.RelativeTimeFormat('en', { 
+        numeric: 'auto' 
+    })
+
     useEffect(() => {
         fetchOrders(page)
     }, [page])
+
+    function formatISODateToHumanReadable(isoDate) {
+        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' }
+        const date = new Date(isoDate)
+        return date.toLocaleString('es-US', options)
+    }
 
     if (isLoading) return (<div>Cargando...</div>)
     return (
@@ -78,6 +97,7 @@ function Orders() {
                 <Table>
                     <TableHead>
                         <TableHeaderCell>Orden</TableHeaderCell>
+                        <TableHeaderCell>Total</TableHeaderCell>
                         <TableHeaderCell>Origen</TableHeaderCell>
                         <TableHeaderCell>Fecha de creacion</TableHeaderCell>
                         <TableHeaderCell>Fecha de pago</TableHeaderCell>
@@ -87,10 +107,25 @@ function Orders() {
                     <TableBody>
                         {orders.items.map((order) => (
                             <TableRow>
-                                <TableCell><small>{order.id}</small></TableCell>
-                                <TableCell>{order.origin}</TableCell>
-                                <TableCell>{order.createdAt}</TableCell>
-                                <TableCell>{order.payedAt}</TableCell>
+                                <TableCell>
+                                    <Title>{formatISODateToHumanReadable(order.payedAt)}</Title><br />
+                                    <List>
+                                        {order.items.map((item) => (
+                                            <ListItem>
+                                                <span>{item.productVariant.product.title} / {item.productVariant.name} x {item.quantity}</span>
+                                                <span className="float-right">{currencyFormatter(item.total)}</span>
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                </TableCell>
+                                <TableCell>
+                                    <Metric
+                                        color={order.status === "paid" ? "green" : "red"}
+                                    >{ currencyFormatter(order.items.reduce((acc, i) => acc + i.total, 0)) }</Metric>
+                                </TableCell>
+                                <TableCell><Badge>{order.origin}</Badge></TableCell>
+                                <TableCell>{ dateTimeFormatter(order.createdAt) }</TableCell>
+                                <TableCell>{ dateTimeFormatter(order.payedAt) }</TableCell>
                                 <TableCell>{order.placedIp}</TableCell>
                                 <TableCell><Badge>{order.status}</Badge></TableCell>
                                 <TableCell>

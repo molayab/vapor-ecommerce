@@ -1,7 +1,6 @@
 
 import SideMenu from "../../components/SideMenu"
 import ContainerCard from "../../components/ContainerCard"
-import ProductGridCard from "./_components/ProductGridCard"
 import Loader from "../../components/Loader"
 import { Flex, Tab, TabGroup, TabList, TabPanel, TabPanels, TextInput } from "@tremor/react"
 import { Button } from "@tremor/react"
@@ -12,8 +11,9 @@ import { useEffect, useState } from "react"
 import { fetchProducts } from "../../components/services/products"
 import { SearchIcon } from "@heroicons/react/solid"
 import { SearchCircleIcon } from "@heroicons/react/outline"
+import VariantList from "./_components/VariantList"
 
-function ListProducts() {
+function ListVariants() {
     const [page, setPage] = useState(1)
     const [query, setQuery] = useState(null)
     const navigate = useNavigate()
@@ -86,17 +86,18 @@ function ListProducts() {
 
                     <TabGroup className="my-4">
                         <TabList>
-                            <Tab icon={SearchCircleIcon}>Productos</Tab>
                             <Tab
-                                disabled
                                 onClick={() => navigate("/products/variants")}
-                             icon={SearchCircleIcon}>Variantes</Tab>
+                                icon={SearchCircleIcon}>Variantes</Tab>
+                            <Tab
+                                onClick={() => navigate("/products")} 
+                                icon={SearchCircleIcon}>Productos</Tab>     
                         </TabList>
                     </TabGroup>
             </ContainerCard>
 
-            <ProductGridCard setProducts={setLocalProducts} products={localProducts} />
-            
+            <VariantList products={localProducts} navigate={navigate} />
+
             <Flex justifyContent="end" className="space-x-2 pt-4 mt-8">
                 <Button size="xs" variant="secondary" onClick={prevPage} disabled={page === 1}>
                 Anterior
@@ -112,4 +113,4 @@ function ListProducts() {
     )
 }
 
-export default ListProducts
+export default ListVariants

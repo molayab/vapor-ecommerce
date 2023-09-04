@@ -6,6 +6,7 @@ struct ProductVariantsController: RouteCollection {
         let products = routes.grouped("products", ":productId", "variants")
 
         // Public API
+        routes.get("products", "variants", use: listAllVariants)
         products.get(use: listVariants)
         products.get(":variantId", use: getVariant)
 
@@ -44,6 +45,25 @@ struct ProductVariantsController: RouteCollection {
         }
 
         return ["sku": sku]
+    }
+
+    /// Public API
+    /// GET /products/variants
+    /// This endpoint is used to retrieve all variants.
+    private func listAllVariants(req: Request) async throws -> Page<ProductVariant.Public> {
+        let variants = try await ProductVariant.query(on: req.db)
+            .join(Product.self, on: \ProductVariant.$product.$id == \Product.$id)
+            .join(Category.self, on: \Category.$id == \Product.$category.$id)
+            .paginate(for: req)
+
+        return Page(
+            items: try await variants.items.asyncMap { variant in
+                return try await variant.asPublic(request: req)
+            }, 
+            metadata: .init(
+                page: variants.metadata.page, 
+                per: variants.metadata.per, 
+                total: variants.metadata.total))
     }
 
     /// Public API
@@ -97,6 +117,7 @@ struct ProductVariantsController: RouteCollection {
         variant.shippingCost = payload.shippingCost
 
         try await variant.save(on: req.db)
+        await req.notifyMessage("Variante ha sido actualizada correctamente.")
         return try await variant.asPublic(request: req)
     }
 
@@ -111,10 +132,18 @@ struct ProductVariantsController: RouteCollection {
             throw Abort(.notFound)
         }
 
+        // Check sku is unique
+        let sku = try req.content.get(String.self, at: "sku")
+        guard try await ProductVariant.query(on: req.db).filter(\.$sku == sku).first() == nil else {
+            await req.notifyMessage("El SKU ya ha sido asignado a otra variante.")
+            throw Abort(.badRequest, reason: "El SKU ya ha sido asignado a otra variante.")
+        }
+
         let payload = try req.content.decode(ProductVariant.Create.self)
         try ProductVariant.Create.validate(content: req)
 
         let variant = try await payload.create(for: req, product: product)
+        await req.notifyMessage("Variante creada correctamente.")
         return try await variant.asPublic(request: req)
     }
 
@@ -146,7 +175,7 @@ struct ProductVariantsController: RouteCollection {
             for entry in try await req.application.fileio.listDirectory(
                 path: path,
                 eventLoop: req.eventLoop.next()).get() {
-
+                    
                 do {
                     try await req.application.fileio.remove(
                         path: path + "/" + entry.name,
@@ -160,6 +189,7 @@ struct ProductVariantsController: RouteCollection {
         }
         
         try await variant.delete(on: req.db)
+        await req.notifyMessage("Variante ha sido eliminada correctamente.")
         return [
             "status": "success",
             "message": "Variant deleted successfully."

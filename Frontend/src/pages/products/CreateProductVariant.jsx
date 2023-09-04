@@ -10,11 +10,9 @@ import { uploadMultipleImages } from "../../components/services/images"
 
 function CreateProductVariant() {
     let { id } = useParams()
-    const navigate = useNavigate()
     const [resources, setResources] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [errors, setErrors] = useState({})
-    const [notifications, setNotifications] = useState({})
     const [variant, setVariant] = useState({
         name: "",
         sku: "",
@@ -31,14 +29,12 @@ function CreateProductVariant() {
         let r = []
         for (let i = 0; i < images.length; i++) {
             const file = await readAsDataURL(images[i])
-            console.log(file)
             r.push({
                 dat: await toBase64(images[i]),
                 ext: file.ext,
                 name: file.name,
                 size: file.size
             })
-            console.log(r)
         }
         setResources((old) => [...old, ...r])
     }
@@ -55,12 +51,12 @@ function CreateProductVariant() {
                 if (response.status !== 200) {
                     setErrors({ title: "Error al subir las imagenes" })
                 } else if (toAdd.length > 0) {
-                    setNotifications({ title: "Imagenes subidas correctamente" })
+                    // setNotifications({ title: "Imagenes subidas correctamente" })
                 }
             }
 
             setIsLoading(false)
-            setNotifications({ title: "Variante creada correctamente" })
+            // setNotifications({ title: "Variante creada correctamente" })
         } else {
             setErrors({ title: "Error al crear la variante" })
             setIsLoading(false)
@@ -79,12 +75,6 @@ function CreateProductVariant() {
             { errors.title &&
                 <Callout color="rose" className="mt-2" title="Error" icon={ExclamationCircleIcon}>
                     { errors.title }
-                </Callout>
-            }
-
-            { notifications.title &&
-                <Callout color="green" className="mt-2" title="Exito" icon={ExclamationCircleIcon}>
-                    { notifications.title }
                 </Callout>
             }
 
@@ -114,9 +104,9 @@ export function toBase64(file) {
     })
 }
 export function readAsDataURL(file) {
-    return new Promise((resolve, reject)=>{
+    return new Promise((resolve, reject) => {
         let fileReader = new FileReader()
-        fileReader.onload = function(){
+        fileReader.onload = function() {
             return resolve({dat: fileReader.result, name: file.name, size: file.size, ext: file.type})
         }
         fileReader.readAsDataURL(file)

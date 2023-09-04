@@ -22,6 +22,7 @@ import UpdateProductVariant from './pages/products/UpdateProductVariant'
 
 import './assets/App.css'
 import Loader from './components/Loader'
+import ListVariants from './pages/variants/ListVariants'
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 export const API_URL = apiUrl + '/v1'
@@ -220,6 +221,7 @@ function App() {
           <Route path='/add-cost' element={addCost} />
           <Route path='/finances' element={finances} />
           <Route path='/loader-preview' element={<Loader />} />
+          <Route path='/products/variants' element={<ListVariants />} />
         </Routes>
       </BrowserRouter>
     </>
