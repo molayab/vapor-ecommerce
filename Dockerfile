@@ -45,6 +45,9 @@ RUN find -L "$(swift build --package-path /build -c release --show-bin-path)/" -
 RUN [ -d /build/Public ] && { mv /build/Public ./Public && chmod -R 766 ./Public; } || true
 RUN [ -d /build/Resources ] && { mv /build/Resources ./Resources && chmod -R 766 ./Resources; } || true
 
+# Copy the executable and any staged resources to the build area in the host
+
+
 # ================================
 # Run image
 # ================================
