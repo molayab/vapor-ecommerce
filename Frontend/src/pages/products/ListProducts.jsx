@@ -1,115 +1,117 @@
+import SideMenu from '../../components/SideMenu'
+import ContainerCard from '../../components/ContainerCard'
+import ProductGridCard from './_components/ProductGridCard'
+import Loader from '../../components/Loader'
+import { Flex, Tab, TabGroup, TabList, TextInput, Button } from '@tremor/react'
+import { useNavigate } from 'react-router-dom'
+import { currencyFormatter } from '../../helpers/dateFormatter'
+import { useEffect, useState } from 'react'
+import { fetchProducts } from '../../services/products'
+import { SearchIcon } from '@heroicons/react/solid'
+import { SearchCircleIcon } from '@heroicons/react/outline'
 
-import SideMenu from "../../components/SideMenu"
-import ContainerCard from "../../components/ContainerCard"
-import ProductGridCard from "./_components/ProductGridCard"
-import Loader from "../../components/Loader"
-import { Flex, Tab, TabGroup, TabList, TabPanel, TabPanels, TextInput } from "@tremor/react"
-import { Button } from "@tremor/react"
-import { useProducts } from "../../hooks/products"
-import { useNavigate } from "react-router-dom"
-import { currencyFormatter } from "../../helpers/dateFormatter"
-import { useEffect, useState } from "react"
-import { fetchProducts } from "../../components/services/products"
-import { SearchIcon } from "@heroicons/react/solid"
-import { SearchCircleIcon } from "@heroicons/react/outline"
+function ListProducts () {
+  const [page, setPage] = useState(1)
+  const [query, setQuery] = useState(null)
+  const navigate = useNavigate()
+  const [localProducts, setLocalProducts] = useState(null)
+  const [meta, setMeta] = useState({})
+  const [isLoading, setIsLoading] = useState(false)
 
-function ListProducts() {
-    const [page, setPage] = useState(1)
-    const [query, setQuery] = useState(null)
-    const navigate = useNavigate()
-    const [localProducts, setLocalProducts] = useState(null)
-    const [meta, setMeta] = useState({})
-    const [isLoading, setIsLoading] = useState(false)
+  const nextPage = () => {
+    setPage((page) => page + 1)
+  }
 
-    const nextPage = () => {
-        setPage((page) => page + 1)
+  const prevPage = () => {
+    setPage((page) => page - 1)
+  }
+
+  useEffect(() => {
+    const fetch = async () => {
+      setIsLoading(true)
+      const response = await fetchProducts(page, query)
+      const data = response.data
+      setMeta({
+        total: data.total,
+        per: data.per,
+        page: data.page
+      })
+
+      setLocalProducts(data.items.map((i) => ({
+        id: i.id,
+        title: i.title,
+        stars: i.numberOfStars,
+        subtitle: `Variantes (${i.variants.length})`,
+        stock: i.stock,
+        minimumSalePrice: currencyFormatter(i.minimumSalePrice),
+        averageSalePrice: currencyFormatter(i.averageSalePrice),
+        variants: i.variants || [],
+        isAvailable: i.variants.reduce((acc, v) => acc || v.isAvailable, false)
+      })))
+      setIsLoading(false)
     }
 
-    const prevPage = () => {
-        setPage((page) => page - 1)
-    }
+    fetch()
+  }, [page, query])
 
-    useEffect(() => {
-        const fetch = async () => {
-            setIsLoading(true)
-            let response = await fetchProducts(page, query)
-            let data = await response.json()
-            setMeta({
-                total: data.total,
-                per: data.per,
-                page: data.page,
-            })
+  if (localProducts === null) {
+    return (<Loader />)
+  }
 
-            setLocalProducts(data.items.map((i) => ({
-                id: i.id,
-                title: i.title,
-                stars: i.numberOfStars,
-                subtitle: `Variantes (${i.variants.length})`,
-                stock: i.stock,
-                minimumSalePrice: currencyFormatter(i.minimumSalePrice),
-                averageSalePrice: currencyFormatter(i.averageSalePrice),
-                variants: i.variants || [],
-                isAvailable: i.variants.reduce((acc, v) => acc || v.isAvailable, false)
-            })))
-            setIsLoading(false)
-        }
+  if (isLoading) {
+    return (<Loader />)
+  }
 
-        fetch()
-    }, [page, query])
+  return (
+    <SideMenu>
+      <ContainerCard
+        title='Productos' subtitle='Administrador de' action={
+          <Button onClick={() => navigate('/products/new')}>Nuevo Producto</Button>
+            }
+      >
 
-    if (localProducts === null) {
-        return (<Loader />)
-    }
+        <TextInput
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter') {
+              return
+            }
+            if (e.target.value === '') {
+              setQuery(null)
+              return
+            }
+            setQuery(e.target.value)
+          }}
+          icon={SearchIcon} className='w-full hover:bg-dark-tremor-background-emphasis bg-dark-tremor-background-emphasis' placeholder='Search...'
+        />
 
-    if (isLoading) {
-        return (<Loader />)
-    }
+        <TabGroup className='my-4'>
+          <TabList>
+            <Tab icon={SearchCircleIcon}>Productos</Tab>
+            <Tab
+              disabled
+              onClick={() => navigate('/products/variants')}
+              icon={SearchCircleIcon}
+            >Variantes
+            </Tab>
+          </TabList>
+        </TabGroup>
+      </ContainerCard>
 
-    return (
-        <SideMenu>
-            <ContainerCard title="Productos" subtitle="Administrador de" action={
-                <Button onClick={() => navigate("/products/new")}>Nuevo Producto</Button>
-            }>
+      <ProductGridCard setProducts={setLocalProducts} products={localProducts} />
 
-                <TextInput
-                    onKeyDown={(e) => {
-                        if (e.key !== "Enter") {
-                            return
-                        }
-                        if (e.target.value === "") {
-                            setQuery(null)
-                            return
-                        }
-                        setQuery(e.target.value)
-                    }}
-                    icon={SearchIcon} className='w-full hover:bg-dark-tremor-background-emphasis bg-dark-tremor-background-emphasis' placeholder='Search...' />
+      <Flex justifyContent='end' className='space-x-2 pt-4 mt-8'>
+        <Button size='xs' variant='secondary' onClick={prevPage} disabled={page === 1}>
+          Anterior
+        </Button>
 
-                    <TabGroup className="my-4">
-                        <TabList>
-                            <Tab icon={SearchCircleIcon}>Productos</Tab>
-                            <Tab
-                                disabled
-                                onClick={() => navigate("/products/variants")}
-                             icon={SearchCircleIcon}>Variantes</Tab>
-                        </TabList>
-                    </TabGroup>
-            </ContainerCard>
+        <TextInput size='xs' className='w-10' value={page} readOnly />
 
-            <ProductGridCard setProducts={setLocalProducts} products={localProducts} />
-            
-            <Flex justifyContent="end" className="space-x-2 pt-4 mt-8">
-                <Button size="xs" variant="secondary" onClick={prevPage} disabled={page === 1}>
-                Anterior
-                </Button>
-
-                <TextInput size="xs" className='w-10' value={page} readOnly />
-
-                <Button size="xs" variant="primary" onClick={nextPage} disabled={page === (meta.total / meta.per).toFixed()}>
-                Siguiente
-                </Button>
-            </Flex>
-        </SideMenu>
-    )
+        <Button size='xs' variant='primary' onClick={nextPage} disabled={page === (meta.total / meta.per).toFixed()}>
+          Siguiente
+        </Button>
+      </Flex>
+    </SideMenu>
+  )
 }
 
 export default ListProducts

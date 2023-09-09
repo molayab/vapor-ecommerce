@@ -1,28 +1,28 @@
 /**
  * This helper function formats a number into a currency format
- * @param {*} number 
- * @returns 
+ * @param {*} number
+ * @returns
  */
 export const currencyFormatter = (number) => {
-    return "$ " + Intl.NumberFormat("us").format(number).toString()
+  return '$ ' + Intl.NumberFormat('us').format(number).toString()
 }
 
 /**
  * This helper function formats a date into a date format
- * @param {*} date 
- * @returns 
+ * @param {*} date
+ * @returns
  */
 export const dateFormatter = (date) => {
-    return new Date(date).toLocaleDateString()
+  return new Date(date).toLocaleDateString()
 }
 
 /**
  * This helper function formats a date into a time format
- * @param {*} date 
- * @returns 
+ * @param {*} date
+ * @returns
  */
 export const timeFormatter = (date) => {
-    return new Date(date).toLocaleTimeString()
+  return new Date(date).toLocaleTimeString()
 }
 
 /**
@@ -31,5 +31,5 @@ export const timeFormatter = (date) => {
  * @returns
  */
 export const dateTimeFormatter = (date) => {
-    return new Date(date).toLocaleString()
+  return new Date(date).toLocaleString()
 }

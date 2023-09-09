@@ -70,9 +70,7 @@ struct ProductImagesController: RouteCollection {
         guard let variant = try await ProductVariant.find(variantId, on: req.db) else {
             throw Abort(.notFound)
         }
-        guard let content = req.body.string else {
-            throw Abort(.badRequest)
-        }
+        let content = try req.content.decode(ImageDeleteContent.self).content
         guard try content.contains(variant.requireID().uuidString) else {
             throw Abort(.badRequest)
         }
@@ -103,4 +101,8 @@ struct ProductImagesController: RouteCollection {
 
         return ["status": "success"]
     }
+}
+
+struct ImageDeleteContent: Content {
+    let content: String
 }

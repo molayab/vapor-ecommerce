@@ -1,50 +1,45 @@
 import { useState, useEffect } from 'react'
-import { createCategory, fetchCategories } from '../components/services/categories'
+import { createCategory, fetchCategories } from '../services/categories'
 
 /**
  * This hook is used to create a category
  * @param {String} name
  * @returns {UUID} The id of the created category
  */
-export function useCreateCategory(name) {
-    const [id, setId] = useState(null)
-    const create = async () => await createCategory(name)
+export function useCreateCategory (name) {
+  const [id, setId] = useState(null)
+  const create = async () => await createCategory(name)
 
-    useEffect(() => {
-        create().then((response) => {
-            if (response.status === 200) {
-                response.json().then((data) => {
-                    setId(data.id)
-                })
-            } else {
-                alert("Error creating category")
-                setId(null)
-            }
-        })
-    }, [name])
-
-    return succeed
+  useEffect(() => {
+    create().then((response) => {
+      if (response.status === 200) {
+        setId(response.data.id)
+      } else {
+        console.log('Error creating category ' + id)
+        setId(null)
+      }
+    })
+  }, [name])
 }
 
 /**
  * This hook is used to fetch all categories
  * @returns {Array} An array of categories
  */
-export function useCategories() {
-    const [categories, setCategories] = useState(null)
-    const fetch = async () => await fetchCategories()
+export function useCategories () {
+  const [categories, setCategories] = useState(null)
+  const fetch = async () => await fetchCategories()
 
-    useEffect(() => {
-        fetch().then((response) => {
-            if (response.status === 200) {
-                response.json().then((data) => {
-                    setCategories(data)
-                })
-            } else {
-                alert("Error fetching categories")
-            }
-        })
-    }, [])
+  useEffect(() => {
+    fetch().then((response) => {
+      console.log(response)
+      if (response.status === 200) {
+        setCategories(response.data)
+      } else {
+        console.log('Error fetching categories')
+      }
+    })
+  }, [])
 
-    return categories
+  return categories
 }

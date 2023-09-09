@@ -45,6 +45,11 @@ public func configure(_ app: Application) async throws {
         pool: .init(
         connectionRetryTimeout: .seconds(60)))
 
+    app.caches.use(.redis)
+    app.gatekeeper.config = .init(
+        maxRequests: settings.gatekeeper.maxRequestsPerMinute,
+        per: .minute)
+
     if app.environment == .testing {
         app.databases.use(.sqlite(.memory), as: .sqlite)
     } else {
@@ -95,7 +100,10 @@ public func configure(_ app: Application) async throws {
     )
     let cors = CORSMiddleware(configuration: corsConfiguration)
     app.middleware.use(cors, at: .beginning)
-    app.middleware.use(GatekeeperMiddleware(config: .init(maxRequests: 100, per: .minute)))
+    app.middleware.use(GatekeeperMiddleware(
+        config: .init(
+            maxRequests: settings.gatekeeper.maxRequestsPerMinute,
+            per: .minute)))
     app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
     if let configuration = app.redis.configuration {
@@ -115,9 +123,6 @@ public func configure(_ app: Application) async throws {
     } else {
         app.logger.error("Redis configuration not found")
     }
-
-    app.caches.use(.redis)
-
 
     app.webSocket("notifications") { req, ws in 
         _webSocketNotificationsHandler = ws

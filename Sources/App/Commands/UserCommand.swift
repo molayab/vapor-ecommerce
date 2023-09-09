@@ -245,7 +245,7 @@ subcommands:
                 let rootUser = User.Create(
                     name: signature.name ?? "No Name",
                     kind: kind,
-                    password: try Bcrypt.hash(password),
+                    password: password,
                     email: email,
                     roles: roles,
                     isActive: signature.isActive,
