@@ -20,6 +20,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { deleteVariant } from '../../../services/variants'
 import VariantList from '../../variants/_components/VariantList'
+import { toast } from 'react-toastify'
 
 const { alert, confirm, prompt } = window
 
@@ -56,13 +57,13 @@ function ProductForm ({ product, setProduct, onSave }) {
 
   const deleteProductVariant = async (variant, index) => {
     if (confirm('¿Estas seguro de borrar esta variante?, esta acción no se puede deshacer!')) {
-      // product.variants.splice(index, 1)
-      // setProduct(product)
-
       setIsLoading(true)
       const response = await deleteVariant(id, variant.id)
       if (response.status === 200) {
         setProduct({ ...product, variants: product.variants.filter((v) => v.id !== variant.id) })
+        toast('Variante eliminada correctamente')
+      } else {
+        alert('Error al eliminar la variante')
       }
       setIsLoading(false)
     }
@@ -124,7 +125,6 @@ function ProductForm ({ product, setProduct, onSave }) {
         <Subtitle className='mb-4'>Titulo del producto</Subtitle>
         <TextInput
           error={errors.title}
-          errorMessage={errors.title}
           name='productName'
           value={product.title}
           aria-required='true'
@@ -136,7 +136,6 @@ function ProductForm ({ product, setProduct, onSave }) {
         <TextInput
           name='productDescription'
           error={errors.description}
-          errorMessage={errors.description}
           value={product.description}
           aria-required='true'
           onChange={(e) => setProduct({ ...product, description: e.target.value })}
@@ -157,8 +156,13 @@ function ProductForm ({ product, setProduct, onSave }) {
         </Grid>
 
         <Subtitle className='mt-4 mb-2'>Categoria</Subtitle>
-        <Flex className='gap-2' error={errors.category} errorMessage={errors.category}>
-          <Select onChange={(e) => setProduct({ ...product, category: e })} value={product.category.id} className='w-full'>
+        <Flex className='gap-2' error={errors.category}>
+          <Select
+            onChange={(e) => {
+              console.log(e)
+              setProduct({ ...product, category: e })
+            }} value={product.category.id} className='w-full'
+          >
             {localCategories.map((category) => {
               console.log(category)
               return (

@@ -6,7 +6,7 @@ export async function fetchCountries () {
     return response
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -16,6 +16,6 @@ export async function fetchAvailableCountryIds () {
     return response
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }

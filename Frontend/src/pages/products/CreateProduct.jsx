@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Button, Callout } from '@tremor/react'
 import { ExclamationCircleIcon, EyeIcon, EyeOffIcon, SaveIcon } from '@heroicons/react/solid'
 import { createProduct } from '../../services/products'
+import { toast } from 'react-toastify'
 
 function CreateProduct () {
   const navigate = useNavigate()
@@ -23,6 +24,21 @@ function CreateProduct () {
 
   if (product === null) {
     return <Loader />
+  }
+
+  const createProductX = async () => {
+    if (localProduct) {
+      setIsLoading(true)
+      const response = await createProduct({ ...localProduct, isPublished })
+      const data = response.data
+      if (data.id) {
+        setIsLoading(false)
+        toast('Producto creado correctamente')
+        navigate('/products/' + data.id)
+      }
+    } else {
+      toast('Error al crear el producto')
+    }
   }
 
   const createVariant = async () => {
@@ -44,6 +60,7 @@ function CreateProduct () {
   return (
     <SideMenu>
       <ContainerCard
+        isSticky
         title='Producto' subtitle='Agregar un nuevo' action={
           <div className=''>
             <Button
@@ -57,10 +74,10 @@ function CreateProduct () {
             </Button>
             <Button
               isLoading={isLoading}
-              onClick={(e) => { }}
+              onClick={(e) => { createProductX() }}
               icon={SaveIcon}
               variant='secondary'
-            >Guardar
+            >Crear
             </Button>
           </div>
 }

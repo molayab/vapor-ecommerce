@@ -33,9 +33,12 @@ function ProductVariantForm ({ productVariant, setVariant, resources, setResourc
 
   useEffect(() => {
     setSku(skuCode)
+    if (productVariant.sku === null || productVariant.sku === '') {
+      if (skuCode !== null) setVariant((o) => ({ ...o, sku: skuCode.sku }))
+    }
   }, [skuCode])
 
-  if (skuCode === null) {
+  if (skuCode === null || sku === null) {
     return <Loader />
   }
 
@@ -61,7 +64,7 @@ function ProductVariantForm ({ productVariant, setVariant, resources, setResourc
               type='text'
               name='variantSku'
               placeholder='SKU: Numero unico de identificacion de la variante'
-              value={productVariant.sku ? productVariant.sku : (sku || 'SKU')}
+              value={productVariant.sku ? productVariant.sku : (sku.sku || 'SKU')}
               onChange={(e) => setVariant((o) => ({ ...o, sku: e.target.value }))}
               className='border border-gray-400 px-2 py-1 rounded w-full'
             />

@@ -31,6 +31,12 @@ final class TransactionItem: Model {
     @Parent(key: "transaction_id")
     var transaction: Transaction
 
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+
+    @Timestamp(key: "updated_at", on: .update)
+    var updatedAt: Date?
+
     func asPublic() throws -> Public {
         return try .init(
             id: requireID(),
@@ -38,7 +44,9 @@ final class TransactionItem: Model {
             price: price,
             discount: discount,
             tax: tax,
-            total: total
+            total: total,
+            createdAt: createdAt,
+            updatedAt: updatedAt
         )
     }
 }
@@ -51,6 +59,8 @@ extension TransactionItem {
         var discount: Double
         var tax: Double
         var total: Double
+        var createdAt: Date?
+        var updatedAt: Date?
     }
 
     struct Create: Content {
@@ -68,7 +78,7 @@ extension TransactionItem {
             model.price = price
             model.discount = discount
             model.tax = tax
-            model.total = price + tax - discount
+            model.total = price + (price * tax) - discount
             return model
         }
     }
@@ -92,6 +102,22 @@ extension TransactionItem {
 
         func revert(on database: Database) async throws {
             try await database.schema(schema).delete()
+        }
+    }
+
+    struct AddTimestampsMigration: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema(schema)
+                .field("created_at", .datetime, .custom("DEFAULT now()"))
+                .field("updated_at", .datetime, .custom("DEFAULT now()"))
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema(schema)
+                .deleteField("created_at")
+                .deleteField("updated_at")
+                .update()
         }
     }
 }

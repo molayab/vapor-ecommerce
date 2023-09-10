@@ -70,6 +70,7 @@ struct PostHogFeatureFlagsService {
         }
 
         let uri = URI("\(hostname)/api/projects/\(appId)/feature_flags/\(featureFlags.id)")
+        request.logger.info("[PostHogFeatureFlagsService] PATCH TO Toggle: \(uri)")
         let response = try await request
             .client
             .patch(uri,

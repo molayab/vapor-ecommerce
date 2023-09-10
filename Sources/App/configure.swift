@@ -78,6 +78,7 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(Sale.CreateMigration())
     app.migrations.add(ProductVariant.AddTimestampsMigration())
     app.migrations.add(User.AddDeleteField())
+    app.migrations.add(TransactionItem.AddTimestampsMigration())
     try await app.autoMigrate()
 
     let corsConfiguration = CORSMiddleware.Configuration(

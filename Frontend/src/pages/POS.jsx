@@ -34,9 +34,11 @@ import {
   TrashIcon
 } from '@heroicons/react/solid'
 
-import { API_URL, isFeatureEnabled } from '../App'
+import { isFeatureEnabled } from '../App'
 import { useNavigate } from 'react-router-dom'
 import Keypad from '../components/Keypad'
+import { fetchAllProductsForPOS } from '../services/products'
+import { toast } from 'react-toastify'
 
 const { localStorage, Audio, alert } = window
 
@@ -81,15 +83,13 @@ export default function POS () {
   }
 
   const fetchAllProducts = async () => {
-    const response = await fetch(API_URL + '/products/pos', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
+    const response = await fetchAllProductsForPOS()
+    if (response.status !== 200) {
+      toast('Error al obtener los productos')
+      return []
+    }
 
-    const data = await response.json()
-
+    const data = response.data
     if (data.length) {
       return data
     } else if (data.error) {

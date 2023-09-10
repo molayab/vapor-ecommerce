@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
-import { Route, Navigate } from "react-router-dom";
+import { Navigate } from 'react-router-dom'
 
-function RestrictedRoute({ children }) {
-  if (sessionStorage.getItem("token")) {
+function RestrictedRoute ({ children }) {
+  const { sessionStorage } = window
+
+  if (sessionStorage.getItem('token')) {
     return children
   } else {
-    return <Navigate to="/login" />
+    return <Navigate to='/login' />
   }
 }
 
-export default RestrictedRoute;
+export default RestrictedRoute

@@ -15,7 +15,6 @@ import {
 
 import { PlusIcon } from '@heroicons/react/solid'
 import { useEffect, useState } from 'react'
-import { API_URL } from '../App'
 import { useCategories } from '../hooks/categories'
 import { PencilIcon, TrashIcon } from '@heroicons/react/outline'
 import { createCategory, deleteCategory, updateCategory } from '../services/categories'
@@ -25,6 +24,7 @@ import Loader from '../components/Loader'
 import ContainerCard from '../components/ContainerCard'
 import SideMenu from '../components/SideMenu'
 import { useNavigate } from 'react-router-dom'
+import { toggleFeatureFlag } from '../services/featureFlags'
 
 const {
   sessionStorage,
@@ -41,14 +41,10 @@ function Settings () {
   const [localCategories, setLocalCategories] = useState(null)
   const [localFeatureFlags, setLocalFeatureFlags] = useState(null)
 
-  const toggleFeatureFlag = async (flag) => {
+  const toggleFeatureFlagX = async (flag) => {
     localStorage.removeItem('featureFlags')
-    const response = await fetch(API_URL + '/settings/flags/' + flag.key, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' }
-    })
-
-    const data = await response.json()
+    const response = await toggleFeatureFlag(flag.key)
+    const data = response.data
     if (data) setLocalFeatureFlags(data)
   }
 
@@ -123,7 +119,7 @@ function Settings () {
                 <span className=''>{flag.key}</span>
                 <span className=''>
                   <Button
-                    onClick={(e) => toggleFeatureFlag(flag)}
+                    onClick={(e) => toggleFeatureFlagX(flag)}
                     variant={flag.active ? 'primary' : 'secondary'}
                   >{flag.active ? 'ON' : 'OFF'}
                   </Button>

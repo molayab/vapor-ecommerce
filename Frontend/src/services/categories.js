@@ -15,7 +15,7 @@ export async function createCategory (name) {
     }
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? error.response ? { ...error.response } : { status: 500 } : { status: 500 }
   }
 }
 
@@ -24,7 +24,7 @@ export async function fetchCategories () {
     return await request.get('/categories')
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? error.response ? { ...error.response } : { status: 500 } : { status: 500 }
   }
 }
 
@@ -38,7 +38,7 @@ export async function updateCategory (id, name) {
     }
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? error.response ? { ...error.response } : { status: 500 } : { status: 500 }
   }
 }
 

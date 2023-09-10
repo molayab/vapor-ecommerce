@@ -38,24 +38,19 @@ struct ImageResizerJob: AsyncJob {
             throw Abort(.notAcceptable)
         }
 
-        await context.application.notifyMessage(" La imagen \(fileName) ha sido subida")
-
         try await withThrowingTaskGroup(of: Void.self) { group in
             let image = try Image(data: payload.image.dat)
 
             group.addTask {
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 256, app: context.application)
-                await context.application.notifyMessage(" La imagen \(fileName) ha sido subida")
             }
 
             group.addTask {
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 512, app: context.application)
-                await context.application.notifyMessage(" La imagen \(fileName) ha sido subida")
             }
 
             group.addTask {
                 try ProductImage.storeImageVariant(image, publicFolder, fileName, size: 1024, app: context.application)
-                await context.application.notifyMessage(" La imagen \(fileName) ha sido subida")
             }
 
             try await group.waitForAll()

@@ -1,16 +1,15 @@
-import { Card } from "@tremor/react";
-import Breadcrumb from "./Breadcrumb";
-import { useLocation } from "react-router-dom";
+import Breadcrumb from './Breadcrumb'
+import { useLocation } from 'react-router-dom'
 
-function SubHeader({ children, title }) {
-  const router = useLocation();
-  const parts = router.pathname.split("/");
+function SubHeader () {
+  const router = useLocation()
+  const parts = router.pathname.split('/')
 
   return (
-    <div className="hidden sm:block">
+    <div className='hidden sm:block'>
       <Breadcrumb pathArray={parts} />
     </div>
-  );
+  )
 }
 
-export default SubHeader;
+export default SubHeader

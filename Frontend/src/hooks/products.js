@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { API_URL } from '../App'
-import { fetchProducts } from '../services/products'
+import { deleteProduct, fetchProduct, fetchProducts } from '../services/products'
 
 /**
  * This hook is used to fetch all products from the backend
@@ -31,24 +30,17 @@ export function useProduct (id) {
   const [product, setProduct] = useState(null)
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      const response = await fetch(`${API_URL}/products/${id}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      })
-
-      return response
+    const fetchProductX = async () => {
+      return await fetchProduct(id)
     }
 
-    fetchProduct().then((response) => {
+    fetchProductX().then((response) => {
       if (response.status === 200) {
-        response.json().then((data) => {
-          if (data.variants.length === 0) {
-            data.variants = []
-          }
+        if (response.data.variants.length === 0) {
+          response.data.variants = []
+        }
 
-          setProduct(data)
-        })
+        setProduct(response.data)
       } else {
         console.log('Error fetching product')
       }
@@ -62,16 +54,11 @@ export function useDeleteProduct (id) {
   const [deleted, setDeleted] = useState(null)
 
   useEffect(() => {
-    const deleteProduct = async () => {
-      const response = await fetch(API_URL + '/products/' + id, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      })
-
-      return response
+    const deleteProductX = async () => {
+      return await deleteProduct(id)
     }
 
-    deleteProduct().then((response) => {
+    deleteProductX().then((response) => {
       if (response.status === 200) {
         setDeleted(true)
       } else {

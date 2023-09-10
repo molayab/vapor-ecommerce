@@ -1,6 +1,5 @@
 import ContainerCard from '../components/ContainerCard'
 import SideMenu from '../components/SideMenu'
-import { API_URL } from '../App'
 import { useState, useEffect } from 'react'
 import { PencilIcon, TrashIcon } from '@heroicons/react/solid'
 import {
@@ -22,7 +21,7 @@ import {
   ListItem,
   Title
 } from '@tremor/react'
-import { anulateOrder } from '../services/orders'
+import { anulateOrder, fetchOrders } from '../services/orders'
 import { toast } from 'react-toastify'
 import { currencyFormatter, dateTimeFormatter } from '../helpers/dateFormatter'
 import Loader from '../components/Loader'
@@ -33,14 +32,16 @@ function Orders () {
   const [page, setPage] = useState(1)
   const [orders, setOrders] = useState({ items: [] })
   const [isLoading, setIsLoading] = useState(false)
-  const fetchOrders = async (page) => {
+  const fetchOrdersX = async (page) => {
     setIsLoading(true)
-    const response = await fetch(`${API_URL}/orders/all?page=${page}&per=100`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    })
+    const response = await fetchOrders(page)
 
-    const data = await response.json()
+    if (response.status !== 200) {
+      toast('Error al obtener las ordenes')
+      return
+    }
+
+    const data = response.data
     setOrders(data)
     setIsLoading(false)
   }
@@ -54,19 +55,20 @@ function Orders () {
   }
 
   const deleteOrder = async (id) => {
-    if (confirm('¿Esta seguro que desea eliminar esta orden?')) {
+    if (confirm('¿Esta seguro que desea anular esta orden?')) {
       const response = await anulateOrder(id)
 
       if (response.status === 200) {
-        fetchOrders(page)
+        toast('Orden anulada con exito')
+        fetchOrdersX(page)
       } else {
-        toast('Error al eliminar la orden')
+        toast('Error al anular la orden')
       }
     }
   }
 
   useEffect(() => {
-    fetchOrders(page)
+    fetchOrdersX(page)
   }, [page])
 
   function formatISODateToHumanReadable (isoDate) {

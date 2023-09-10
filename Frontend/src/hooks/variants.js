@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { API_URL } from '../App'
+import { createVariant, deleteVariant, fetchVariant, updateVariant } from '../services/variants'
+import { request } from '../services/request'
 
 /**
  * This hook is used to delete a variant from a product
@@ -10,20 +11,13 @@ import { API_URL } from '../App'
 export function useDeleteVariant (productId, variantId) {
   const [succeed, setSucceed] = useState(null)
   const deleteProductVariant = async () => {
-    const response = await fetch(API_URL + '/products/' + productId + '/variants/' + variantId, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' }
-    })
-
-    return response
+    return await deleteVariant(productId, variantId)
   }
 
   useEffect(() => {
     deleteProductVariant().then((response) => {
       if (response.status === 200) {
-        response.json().then((data) => {
-          setSucceed(true)
-        })
+        setSucceed(true)
       } else {
         console.log('Error deleting variant')
         setSucceed(false)
@@ -43,13 +37,7 @@ export function useDeleteVariant (productId, variantId) {
 export function useCreateVariant (productId, variant) {
   const [succeed, setSucceed] = useState(null)
   const createProductVariant = async () => {
-    const response = await fetch(API_URL + '/products/' + productId + '/variants', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(variant)
-    })
-
-    return response
+    return await createVariant(productId, variant)
   }
 
   useEffect(() => {
@@ -75,13 +63,7 @@ export function useCreateVariant (productId, variant) {
 export function useUpdateVariant (productId, variantId, variant) {
   const [succeed, setSucceed] = useState(null)
   const updateProductVariant = async () => {
-    const response = await fetch(API_URL + '/products/' + productId + '/variants/' + variantId, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(variant)
-    })
-
-    return response
+    return await updateVariant(productId, variantId, variant)
   }
 
   useEffect(() => {
@@ -107,20 +89,13 @@ export function useUpdateVariant (productId, variantId, variant) {
 export function useVariant (productId, variantId) {
   const [variant, setVariant] = useState(null)
   const fetchProductVariant = async (productId, variantId) => {
-    const response = await fetch(API_URL + '/products/' + productId + '/variants/' + variantId, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    })
-
-    return response
+    return await fetchVariant(productId, variantId)
   }
 
   useEffect(() => {
     fetchProductVariant(productId, variantId).then((response) => {
       if (response.status === 200) {
-        response.json().then((data) => {
-          setVariant(data)
-        })
+        setVariant(response.data)
       } else {
         console.log('Error fetching variant')
       }
@@ -137,20 +112,13 @@ export function useVariant (productId, variantId) {
 export function useRequestVariantSKU () {
   const [sku, setSKU] = useState(null)
   const requestVariantSKU = async () => {
-    const response = await fetch(`${API_URL}/products/new/variants/sku`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    })
-
-    return response
+    return await request.get('/products/new/variants/sku')
   }
 
   useEffect(() => {
     requestVariantSKU().then((response) => {
       if (response.status === 200) {
-        response.json().then((data) => {
-          setSKU(data)
-        })
+        setSKU(response.data)
       } else {
         console.log('Error fetching SKU')
       }

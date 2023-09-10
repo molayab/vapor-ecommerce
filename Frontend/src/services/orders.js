@@ -5,7 +5,16 @@ export async function getOrders () {
     return await request.get('/orders')
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
+  }
+}
+
+export async function fetchOrders (page) {
+  try {
+    return await request.get(`/orders/all?page=${page}&per=100`)
+  } catch (error) {
+    console.log(error)
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -16,6 +25,6 @@ export async function anulateOrder (id) {
     })
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }

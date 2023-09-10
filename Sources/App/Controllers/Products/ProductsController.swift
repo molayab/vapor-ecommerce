@@ -137,24 +137,28 @@ struct ProductsController: RouteCollection {
         }
 
         return try await req.db.transaction { database in 
-            for variant in try await product.$variants.get(on: req.db) {
+            for variant in try await product.$variants.get(on: database) {
                 do {
                     let path = try req.application.directory.publicDirectory
                         + "images/catalog/\(product.requireID().uuidString)"
                     try await req.application.fileio.remove(path: path, eventLoop: req.eventLoop.next()).get()
                 } catch {
-                    await req.notifyMessage("No se pudo eliminar la imagen de la variante. \(error.localizedDescription)")
-                    throw Abort(.internalServerError)
+                    req.logger.info("No se pudo eliminar la imagen de la variante. \(error.localizedDescription)")
                 }
 
-                try await variant.delete(on: req.db)
+                if !(try await variant.$transactionItems.get(on: database)).isEmpty {
+                    await req.notifyMessage("No se puede eliminar la variante porque tiene transacciones asociadas.")
+                    throw Abort(.badRequest)
+                }
+
+                try await variant.delete(on: database)
             }
 
-            for review in try await product.$reviews.get(on: req.db) {
-                try await review.delete(on: req.db)
+            for review in try await product.$reviews.get(on: database) {
+                try await review.delete(on: database)
             }
 
-            try await product.delete(on: req.db)
+            try await product.delete(on: database)
             await req.notifyMessage("Producto eliminado correctamente.")
             return [
                 "status": "success",

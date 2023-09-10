@@ -5,7 +5,7 @@ export async function removeUser (id) {
     return await request.delete('/users/' + id)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -14,7 +14,7 @@ export async function fetchUsers (page, query) {
     return await request.get(`/users?per=100&page=${page}${query ? `&query=${query}` : ''}`)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -23,7 +23,7 @@ export async function fetchClients (page) {
     return await request.get('/users/all/clients?page=' + page)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -32,7 +32,7 @@ export async function fetchEmployees (page) {
     return await request.get('/users/all/employees?page=' + page)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -41,7 +41,7 @@ export async function fetchProviders (page) {
     return await request.get('/users/all/providers?page=' + page)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -50,7 +50,7 @@ export async function createClientUser (user) {
     return await request.post('/users/create', user)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -59,7 +59,7 @@ export async function createEmployeeUser (user) {
     return await request.post('/users/create/employee', user)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -68,6 +68,6 @@ export async function createProviderUser (user) {
     return await request.post('/users/create/provider', user)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }

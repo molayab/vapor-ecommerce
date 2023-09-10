@@ -6,6 +6,16 @@ export const fetchAllFeatureFlags = async () => {
     return response
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
+  }
+}
+
+export const toggleFeatureFlag = async (flag) => {
+  try {
+    const response = await request.patch('/settings/flags/' + flag)
+    return response
+  } catch (error) {
+    console.log(error)
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }

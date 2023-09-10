@@ -5,7 +5,7 @@ export async function createProduct (product) {
     return await request.post('/products', product)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -14,7 +14,7 @@ export async function updateProduct (id, product) {
     return await request.patch('/products/' + id, product)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -23,7 +23,7 @@ export async function deleteProduct (id) {
     return await request.delete('/products/' + id)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -32,6 +32,24 @@ export async function fetchProducts (page, query) {
     return await request.get(`/products?per=100&page=${page}${query ? `&query=${query}` : ''}`)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
+  }
+}
+
+export async function fetchProduct (id) {
+  try {
+    return await request.get('/products/' + id)
+  } catch (error) {
+    console.log(error)
+    return error.response ? { ...error.response } : { status: 500 }
+  }
+}
+
+export async function fetchAllProductsForPOS () {
+  try {
+    return await request.get('/products/pos')
+  } catch (error) {
+    console.log(error)
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }

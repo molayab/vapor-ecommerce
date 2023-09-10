@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Callout } from '@tremor/react'
 import { ExclamationCircleIcon, SaveAsIcon } from '@heroicons/react/solid'
 import { createVariant } from '../../services/variants'
@@ -7,6 +7,8 @@ import ContainerCard from '../../components/ContainerCard'
 import ProductVariantForm from './_components/ProductVariantForm'
 import SideMenu from '../../components/SideMenu'
 import { uploadMultipleImages } from '../../services/images'
+import { toast } from 'react-toastify'
+import { TemplateIcon } from '@heroicons/react/outline'
 
 const { FileReader } = window
 
@@ -26,6 +28,7 @@ function CreateProductVariant () {
     shippingCost: 0
   })
 
+  const navigate = useNavigate()
   const addImages = async (e) => {
     const images = e.target.files
     const r = []
@@ -44,6 +47,16 @@ function CreateProductVariant () {
   const create = async (e) => {
     setIsLoading(true)
     const response = await createVariant(id, { ...variant, images: resources })
+    if (response.status !== 200) {
+      console.log(response)
+      toast('Error al crear la variante: ' + response.data.reason)
+      setIsLoading(false)
+      return
+    } else {
+      toast('Variante creada correctamente')
+      navigate('/products/' + id)
+    }
+
     const data = response.data
     if (data.id) {
       // Add images
@@ -51,7 +64,7 @@ function CreateProductVariant () {
       if (toAdd.length > 0) {
         const response = await uploadMultipleImages(id, data.id, toAdd)
         if (response.status !== 200) {
-          setErrors({ title: 'Error al subir las imagenes' })
+          toast('Error al subir las imagenes')
         }
       }
 
@@ -65,8 +78,11 @@ function CreateProductVariant () {
   return (
     <SideMenu>
       <ContainerCard
+        isSticky
         title={id} subtitle='Agregar una variante a' action={
           <div className=''>
+            <Button icon={SaveAsIcon} variant='secondary' onClick={create} className='mx-1' loading={isLoading}>Guardar Plantilla</Button>
+            <Button icon={TemplateIcon} variant='secondary' onClick={create} className='mx-1' loading={isLoading}>Usar Plantilla</Button>
             <Button icon={SaveAsIcon} onClick={create} className='mx-1' loading={isLoading}>Agregar</Button>
           </div>
             }
@@ -76,6 +92,8 @@ function CreateProductVariant () {
         <Callout color='rose' className='mt-2' title='Error' icon={ExclamationCircleIcon}>
           {errors.title}
         </Callout>}
+
+      <div className='py-4' />
 
       <ProductVariantForm
         productVariant={variant}

@@ -17,12 +17,12 @@ import RateStarList from '../../../components/RateStarList'
 
 function ProductGridCard ({ products, setProducts }) {
   const navigate = useNavigate()
-  const deleteProductAction = (id) => {
+  const deleteProductAction = async (id) => {
     if (window.confirm('¿Estas seguro de eliminar este producto?')) {
       console.log('Deleting product with id: ' + id)
-      deleteProduct(id).then(() => {
+      if ((await deleteProduct(id)).status === 200) {
         setProducts(products.filter((p) => p.id !== id))
-      })
+      }
     }
   }
 

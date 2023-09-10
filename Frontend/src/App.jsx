@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Route, BrowserRouter, Routes } from 'react-router-dom'
 
 import RestrictedRoute from './components/RestrictedRoute'
@@ -23,16 +22,16 @@ import UpdateProductVariant from './pages/products/UpdateProductVariant'
 import './assets/App.css'
 import Loader from './components/Loader'
 import ListVariants from './pages/variants/ListVariants'
+import { request } from './services/request'
 
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-export const API_URL = apiUrl + '/v1'
-export const RES_URL = apiUrl
+const { localStorage } = window
 
-export async function isFeatureEnabled(key) {
+export const RES_URL = 'http://localhost:8080'
+export async function isFeatureEnabled (key) {
   const featureFlags = await getAllFeatureFlags()
   return featureFlags.results.find((flag) => flag.key === key).active
 }
-export async function getAllFeatureFlags() {
+export async function getAllFeatureFlags () {
   // Get local feature flags check for expired flags
   if (localStorage.getItem('featureFlags')) {
     const localFlags = JSON.parse(localStorage.getItem('featureFlags'))
@@ -45,16 +44,12 @@ export async function getAllFeatureFlags() {
   }
 
   // Get remote feature flags
-  const response = await fetch(API_URL + '/settings/flags', {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' }
-  })
-
-  const data = await response.json()
-  if (data.error) {
+  const response = await request.get('/settings/flags')
+  if (response.status !== 200) {
     return
   }
 
+  const data = response.data
   // Save remote feature flags
   const flags = {
     expiresAt: Date.now() + 1000 * 60 * 60,
@@ -64,42 +59,7 @@ export async function getAllFeatureFlags() {
   return flags.flags
 }
 
-const { fetch: originalFetch } = window;
-window.fetch = async (...args) => {
-  let [resource, options] = args;
-  const token = sessionStorage.getItem('token');
-
-  // options.referrer = 'strict-origin-when-cross-origin';
-  if (token) { options.headers['Authorization'] = `Bearer ${token}` }
-  options.mode = 'cors'
-
-  const response = await originalFetch(resource, options);
-  if (response.status === 401) {
-    sessionStorage.removeItem('token');
-
-    // Call to refresh token and retry request
-    const refreshResponse = await originalFetch(API_URL + '/auth/refresh', {
-      credentials: 'include',
-      mode: 'cors',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    })
-
-    const data = await refreshResponse.json();
-    if (data.accessToken) {
-      sessionStorage.setItem('token', data.accessToken);
-      options.headers['Authorization'] = `Bearer ${data.accessToken}`;
-
-      return originalFetch(resource, options);
-    }
-  }
-
-  return response;
-}
-
-function App() {
-  const [count, setCount] = useState(0)
-
+function App () {
   const dashboard = (
     <RestrictedRoute>
       <Dashboard />
@@ -150,6 +110,7 @@ function App() {
 
   const pos = (
     <RestrictedRoute>
+      {/* eslint-disable-next-line react/jsx-pascal-case */}
       <POS />
     </RestrictedRoute>
   )
@@ -229,4 +190,3 @@ function App() {
 }
 
 export default App
-//  <Route path='/products/:pid/variants/:id/edit' element={createProductVariant} />

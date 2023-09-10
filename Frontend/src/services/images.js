@@ -6,7 +6,7 @@ export async function removeImage (pid, id, image) {
       { data: { content: image } })
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }
 
@@ -15,6 +15,6 @@ export async function uploadMultipleImages (pid, id, images) {
     return await request.post('/products/' + pid + '/variants/' + id + '/images/multiple', images)
   } catch (error) {
     console.log(error)
-    return { status: error.response.status }
+    return error.response ? { ...error.response } : { status: 500 }
   }
 }

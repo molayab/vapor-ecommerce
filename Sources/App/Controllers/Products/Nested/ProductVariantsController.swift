@@ -38,10 +38,32 @@ struct ProductVariantsController: RouteCollection {
     /// GET /products/sku/generate
     /// This is a helper function to generate a unique SKU for a variant.
     private func generateSku(req: Request) async throws -> [String: String] {
-        let sku = "SKU" + String(UUID().uuidString.prefix(8))
+        return try await generateSku(req: req, tries: 0)
+    }
 
+    private func generateSku(req: Request, tries: Int) async throws -> [String: String] {
+        // Get the last created variant
+        guard let variant = try await ProductVariant.query(on: req.db)
+            .sort(\.$createdAt, .descending)
+            .first() else {
+                return ["sku": "SKU" + String(UUID().uuidString.prefix(8))]
+        }
+
+        // Generate a new SKU by adding 1 to the last variant's SKU
+        // SKU has a prefix of "SKU" and a suffix of 8 characters
+        let intSku = Int((variant.sku ?? "").suffix(8)) ?? 0
+        let newSku = intSku + 1
+
+        // Add zeros to the front of the new SKU if it is less than 8 characters
+        let prefix = String(repeating: "0", count: 8 - String(newSku).count)
+        let sku = "SKU" + prefix + String(newSku)
+        
+        // Check if the new SKU is unique, if not, try again
         guard try await ProductVariant.query(on: req.db).filter(\.$sku == sku).first() == nil else {
-            return try await generateSku(req: req)
+            guard tries < 10 else {
+                throw Abort(.internalServerError, reason: "Unable to generate a unique SKU.")
+            }
+            return try await generateSku(req: req, tries: tries + 1)
         }
 
         return ["sku": sku]
@@ -117,7 +139,6 @@ struct ProductVariantsController: RouteCollection {
         variant.shippingCost = payload.shippingCost
 
         try await variant.save(on: req.db)
-        await req.notifyMessage("Variante ha sido actualizada correctamente.")
         return try await variant.asPublic(request: req)
     }
 

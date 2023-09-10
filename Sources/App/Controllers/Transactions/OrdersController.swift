@@ -34,6 +34,7 @@ struct OrdersController: RouteCollection {
         unauthorized.get("pending", use: pendingOrders)
         unauthorized.get("payed", use: payedOrders)
         unauthorized.get("placed", use: placedOrders)
+        unauthorized.get("variants", ":variantId", use: listTransactionsForVariant)
     }
 
     /// Private API
@@ -87,4 +88,21 @@ struct OrdersController: RouteCollection {
             .filter(\.$status == .placed)
             .paginate(for: req)
     }
+
+    /// Retricted API
+    /// GET /transactions/variants/:variantId
+    /// This endpoint is used to retrieve all transactions for a variant.
+    private func listTransactionsForVariant(req: Request) async throws -> [TransactionItem.Public] {
+        guard let variantId = req.parameters.get("variantId", as: UUID.self) else {
+            throw Abort(.badRequest)
+        }
+        guard let variant = try await ProductVariant.find(variantId, on: req.db) else {
+            throw Abort(.notFound)
+        }
+
+        let items = try await variant.$transactionItems
+            .get(on: req.db)
+        return try items.map { try $0.asPublic() }
+    }
+
 }
