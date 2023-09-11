@@ -30,7 +30,6 @@ struct ProductCommand: Command {
 
     private func randomizeTxs(using context: CommandContext, signature: Signature) throws {
         let products = try Product.query(on: context.application.db).all().wait()
-        let categories = try Category.query(on: context.application.db).all().wait()
         let users = try User.query(on: context.application.db).all().wait()
 
         var txs = [Transaction]()
@@ -61,10 +60,7 @@ struct ProductCommand: Command {
             item.$transaction.id = try tx.requireID()
             item.$productVariant.id = try variant.requireID()
             item.quantity = Int.random(in: 1...10)
-            item.price = variant.price
-            item.tax = 0
-            item.discount = 0
-            item.total = item.price * Double(item.quantity)
+            item.price = variant.price * Double(item.quantity)
 
             items.append(item)
         }

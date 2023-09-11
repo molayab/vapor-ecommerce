@@ -2,10 +2,8 @@ import {
   Button,
   Card,
   Divider,
-  Flex,
   Grid,
   Metric,
-  NumberInput,
   Subtitle,
   Tab,
   TabGroup,
@@ -20,15 +18,16 @@ import {
   Title
 } from '@tremor/react'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import SideMenu from '../components/SideMenu'
 import Keypad from '../components/Keypad'
 import { toast } from 'react-toastify'
 import { request } from '../services/request'
+import { currencyFormatter } from '../helpers/dateFormatter'
 
 const { alert } = window
 
-export function Checkout ({ checkoutList, setPay, setCheckoutList }) {
+export function Checkout ({ checkoutList, setPay, setCheckoutList, promoCode }) {
   const [input, setInput] = useState('0')
   const [mode, setMode] = useState('posCash')
   const [isLoading, setIsLoading] = useState(false)
@@ -36,10 +35,29 @@ export function Checkout ({ checkoutList, setPay, setCheckoutList }) {
 
   const [clientName, setClientName] = useState('')
   const [clientEmail, setClientEmail] = useState('')
+  const [discount, setDiscount] = useState(null)
 
   const dataFormatter = (number) => {
     return '$ ' + Intl.NumberFormat('us').format(number).toString()
   }
+
+  const fetchDiscount = async () => {
+    try {
+      const response = await request.get('/discounts/' + promoCode)
+      const data = response.data
+      if (data.discount) {
+        setDiscount(data)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    if (promoCode) {
+      fetchDiscount()
+    }
+  }, [])
 
   const checkout = async () => {
     if (clientEmail === '' && shouldBill) {
@@ -59,11 +77,11 @@ export function Checkout ({ checkoutList, setPay, setCheckoutList }) {
               email: clientEmail
             }
           : null,
+        promoCode,
         items: checkoutList.map((product) => ({
           productVariantId: product.id,
           quantity: product.quantity,
           price: product.salePrice,
-          discount: 0,
           tax: product.tax
         }))
       })
@@ -108,51 +126,52 @@ export function Checkout ({ checkoutList, setPay, setCheckoutList }) {
     <SideMenu>
       <Card>
         <Text>Total a facturar</Text>
-        <Metric>{dataFormatter(checkoutList.reduce((acc, product) => acc + ((product.salePrice * product.quantity) + (product.salePrice * product.tax)), 0))}</Metric>
-
-        <Flex className='mb-2'>
-          <TabGroup className='w-64'>
-            <Subtitle className='mt-3'>Metodo de pago</Subtitle>
-            <TabList variant='solid'>
-              <Tab onClick={(e) => setMode('posCash')}>Contado</Tab>
-              <Tab onClick={(e) => setMode('posCard')}>Tarjeta</Tab>
-            </TabList>
-          </TabGroup>
-          <div className='w-full mt-4'>
-            <Subtitle>Dinero recibido</Subtitle>
-            <NumberInput value={input} />
-          </div>
-        </Flex>
-
-        <TabGroup className='w-64 mt-4 mb-4'>
-          <TabList variant='solid'>
-            <Tab onClick={(e) => setShouldBill(true)}>Factura por correo</Tab>
-            <Tab onClick={(e) => setShouldBill(false)}>No enviar factura</Tab>
-          </TabList>
-        </TabGroup>
-
-        {shouldBill && (
-          <>
-            <Title>Datos de facturacion</Title>
-
-            <TextInput
-              value={clientEmail}
-              onChange={(e) => setClientEmail(e.target.value)}
-              className='w-full mt-4' placeholder='Email del cliente' required
-            />
-            <TextInput
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              className='w-full mt-4'
-              placeholder='Nombre del cliente'
-            />
-          </>
+        <Metric>{dataFormatter(checkoutList.reduce((acc, product) => acc + ((product.salePrice * product.quantity) + (product.salePrice * product.quantity * product.tax) - (discount ? Math.abs(discount.discount) : 0)), 0))}</Metric>
+        {discount && (
+          <Text color='rose'>{discount.code}: descuento por <strong>{discount.type === 'percentage' ? discount.discount + '%' : currencyFormatter(discount.discount)}</strong></Text>
         )}
+        <Subtitle>Cambio</Subtitle>
+        <Title color='gray'>{dataFormatter(input - checkoutList.reduce((acc, product) => acc + (product.salePrice * product.quantity), 0))}</Title>
 
         <Divider />
-        <Subtitle>Cambio</Subtitle>
-        <Title>{dataFormatter(Math.max(0, input - checkoutList.reduce((acc, product) => acc + (product.salePrice * product.quantity), 0)))}</Title>
+        <Grid numItems={1} numItemsSm={2} className='gap-4'>
+          <Keypad onNumberPadClick={onNumberPadClick} placeholder='Dinero recibido' />
+          <div>
+            <TabGroup className='w-64 flex-none'>
+              <Subtitle className='mt-3'>Metodo de pago</Subtitle>
+              <TabList variant='solid'>
+                <Tab onClick={(e) => setMode('posCash')}>Contado</Tab>
+                <Tab onClick={(e) => setMode('posCard')}>Tarjeta</Tab>
+              </TabList>
+            </TabGroup>
+            <TabGroup className='w-64 mt-4 mb-4 flex-1'>
+              <Subtitle className='mt-3'>Facturacion</Subtitle>
+              <TabList variant='solid'>
+                <Tab onClick={(e) => setShouldBill(true)}>Factura por correo</Tab>
+                <Tab onClick={(e) => setShouldBill(false)}>No enviar factura</Tab>
+              </TabList>
+            </TabGroup>
 
+            {shouldBill && (
+              <>
+                <Title>Datos de facturacion</Title>
+
+                <TextInput
+                  value={clientEmail}
+                  onChange={(e) => setClientEmail(e.target.value)}
+                  className='w-full mt-4' placeholder='Email del cliente' required
+                />
+                <TextInput
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  className='w-full mt-4'
+                  placeholder='Nombre del cliente'
+                />
+              </>
+            )}
+          </div>
+
+        </Grid>
         <Button
           loading={isLoading}
           color='green' size='xl' className='w-full mt-4' onClick={checkout}
@@ -166,8 +185,7 @@ export function Checkout ({ checkoutList, setPay, setCheckoutList }) {
           </Button>
         </Grid>
       </Card>
-      <Grid numItems={1} numItemsSm={2} className='mt-4 gap-4'>
-        <Keypad onNumberPadClick={onNumberPadClick} />
+      <Grid numItems={1} className='mt-4 gap-4'>
 
         <Card>
           <Title>Productos</Title>
@@ -189,9 +207,9 @@ export function Checkout ({ checkoutList, setPay, setCheckoutList }) {
                   <TableHeaderCell>{product.name}</TableHeaderCell>
                   <TableHeaderCell>{product.quantity}</TableHeaderCell>
                   <TableHeaderCell>{dataFormatter(product.salePrice)}</TableHeaderCell>
-                  <TableHeaderCell>{dataFormatter(product.salePrice * product.tax)}</TableHeaderCell>
+                  <TableHeaderCell>{dataFormatter(product.salePrice * product.quantity * product.tax)}</TableHeaderCell>
                   <TableHeaderCell>{dataFormatter(product.salePrice * product.quantity)}</TableHeaderCell>
-                  <TableHeaderCell>{dataFormatter((product.salePrice * product.quantity) + (product.salePrice * product.tax))}</TableHeaderCell>
+                  <TableHeaderCell>{dataFormatter((product.salePrice * product.quantity) + (product.salePrice * product.quantity * product.tax))}</TableHeaderCell>
                 </TableRow>
               ))}
             </TableBody>

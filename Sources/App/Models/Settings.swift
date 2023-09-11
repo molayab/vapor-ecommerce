@@ -114,6 +114,18 @@ extension Settings {
 }
 
 struct Settings: Content {
+    /// These are the refund modes available
+    enum RefundMode: String, Content {
+        /// Refund the total amount in cash or bank transfer
+        /// After the refund process the cashier MUST send the money to the customer
+        case cashback
+        
+        /// Refund the total amount in store credit
+        /// The customer will be able to use the store credit in future purchases
+        case changeDiscount
+    }
+
+    var refundMode: RefundMode
     var siteName: String
     var siteDescription: String
     var siteUrl: String

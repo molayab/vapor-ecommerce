@@ -23,6 +23,7 @@ import './assets/App.css'
 import Loader from './components/Loader'
 import ListVariants from './pages/variants/ListVariants'
 import { request } from './services/request'
+import ReturnProductVariants from './pages/ReturnProductVariants'
 
 const { localStorage } = window
 
@@ -176,6 +177,7 @@ function App () {
           <Route path='/products/:id/variants' element={updateProduct} />
           <Route path='/products/:pid/variants/:id/edit' element={updateProductVariant} />
           <Route path='/pos' element={pos} />
+          <Route path='/pos/promo/:promoCode' element={pos} />
           <Route path='/settings' element={settings} />
           <Route path='/orders' element={orders} />
           <Route path='/feature-not-available' element={restrictedFeature} />
@@ -183,6 +185,7 @@ function App () {
           <Route path='/finances' element={finances} />
           <Route path='/loader-preview' element={<Loader />} />
           <Route path='/products/variants' element={<ListVariants />} />
+          <Route path='/pos/return' element={<ReturnProductVariants />} />
         </Routes>
       </BrowserRouter>
     </>

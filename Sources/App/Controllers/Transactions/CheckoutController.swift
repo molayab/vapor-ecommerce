@@ -18,6 +18,7 @@ struct CheckoutController: RouteCollection {
         // Restricted API
         let restricted = requiredAuth.grouped(RoleMiddleware(roles: [.admin, .manager]))
         restricted.delete("anulate", use: anulate)
+        restricted.patch("return", use: returnTransaction)
     }
 
     /// Public API
@@ -25,7 +26,7 @@ struct CheckoutController: RouteCollection {
     /// This endpoint is used to create a new transaction.
     private func checkout(req: Request) async throws -> Transaction.Public {
         let payload = try req.content.get(Transaction.Create.self)
-        return try await payload.create(in: req, forOrigin: .web).asPublic(on: req.db)
+        return try await payload.create(in: req, forOrigin: .web).asPublic(request: req)
     }
 
     /// Retricted API
@@ -74,9 +75,8 @@ struct CheckoutController: RouteCollection {
 
             req.logger.info("\(response)")
         }
-
-        await req.notifyMessage("La transacción \(transaction.id!.uuidString) ha sido creada.")
-        return try await transaction.asPublic(on: req.db)
+        
+        return try await transaction.asPublic(request: req)
     }
 
     /// Restricted API
@@ -89,6 +89,35 @@ struct CheckoutController: RouteCollection {
 
         await req.notifyMessage("La transacción \(payload.id.uuidString) ha sido anulada.")
         return Response(status: .ok)
+    }
+
+    /// Restricted API
+    /// PATCH /transactions/return
+    /// This endpoint is used to return a transaction. It will restore the stock of the
+    /// products and remove the sales. It also will create an entry in the returns table.
+    private func returnTransaction(req: Request) async throws -> [String: String] {
+        let payload = try req.content.get(Transaction.Return.self)
+        let (_, total) = try await payload.return(in: req)
+        
+        // Create a promo code for the refund
+        if settings.refundMode == .changeDiscount {
+            let discount = try await Discount.create(
+                discount: total,
+                type: .fixedNoCharge, // We don't want to charge the customer for this discount
+                expiresAt: Date().addingTimeInterval(60 * 60 * 24 * 30), // 30 days
+                on: req.db)
+            
+            return [
+                "status": "ok",
+                "message": "La transacción \(payload.transactionId.uuidString) ha sido actualizada, los sku(s) \(payload.skus.joined(separator: ", ")) han sido devueltos.",
+                "promoCode": discount.code
+            ]
+        }
+
+        return [
+            "status": "ok",
+            "message": "La transacción \(payload.transactionId.uuidString) ha sido actualizada, los sku(s) \(payload.skus.joined(separator: ", ")) han sido devueltos."
+        ]
     }
 }
 

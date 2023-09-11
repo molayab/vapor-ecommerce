@@ -27,7 +27,7 @@ struct PaymentsController: RouteCollection {
         try await transaction.save(on: req.db)
 
         return try await provider.pay(
-            transaction: try await transaction.asPublic(on: req.db),
+            transaction: try await transaction.asPublic(request: req),
             req: req)
     }
 

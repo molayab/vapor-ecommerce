@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Card, Button, Grid, TextInput } from '@tremor/react'
 
-export default function Keypad ({ onNumberPadClick }) {
+export default function Keypad ({ onNumberPadClick, placeholder }) {
   const _onNumberPadClick = (value) => {
     setCode(prev => {
       if (value === 'DEL') {
@@ -20,7 +20,7 @@ export default function Keypad ({ onNumberPadClick }) {
 
   return (
     <Card>
-      <TextInput value={code} placeholder='SKU' readOnly className='mb-4' />
+      <TextInput value={code} placeholder={placeholder !== null ? placeholder : 'SKU'} readOnly className='mb-4' />
       <Grid numItems={3} className='gap-2'>
         <Button variant='secondary' onClick={() => _onNumberPadClick(1)} className='h-14'>
           1

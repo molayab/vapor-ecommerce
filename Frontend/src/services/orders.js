@@ -28,3 +28,24 @@ export async function anulateOrder (id) {
     return error.response ? { ...error.response } : { status: 500 }
   }
 }
+
+export async function returnProductVariants (transactionId, skus) {
+  try {
+    return await request.patch('/orders/return', {
+      transactionId,
+      skus
+    })
+  } catch (error) {
+    console.log(error)
+    return error.response ? { ...error.response } : { status: 500 }
+  }
+}
+
+export async function fetchOrderItems (id) {
+  try {
+    return await request.get('/orders/' + id + '/items')
+  } catch (error) {
+    console.log(error)
+    return error.response ? { ...error.response } : { status: 500 }
+  }
+}

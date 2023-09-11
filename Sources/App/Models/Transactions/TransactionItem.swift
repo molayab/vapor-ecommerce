@@ -16,17 +16,6 @@ final class TransactionItem: Model {
     @Field(key: "price")
     var price: Double
 
-    @Field(key: "discount")
-    var discount: Double
-
-    @Field(key: "tax")
-    var tax: Double
-
-    @Field(key: "total")
-    var total: Double
-
-    @Enum(key: "currency")
-    var currency: Currency
 
     @Parent(key: "transaction_id")
     var transaction: Transaction
@@ -37,14 +26,12 @@ final class TransactionItem: Model {
     @Timestamp(key: "updated_at", on: .update)
     var updatedAt: Date?
 
-    func asPublic() throws -> Public {
-        return try .init(
+    func asPublic(request: Request) async throws -> Public {
+        try await $productVariant.load(on: request.db)
+        return try Public(
             id: requireID(),
             quantity: quantity,
             price: price,
-            discount: discount,
-            tax: tax,
-            total: total,
             createdAt: createdAt,
             updatedAt: updatedAt
         )
@@ -56,9 +43,6 @@ extension TransactionItem {
         var id: UUID
         var quantity: Int
         var price: Double
-        var discount: Double
-        var tax: Double
-        var total: Double
         var createdAt: Date?
         var updatedAt: Date?
     }
@@ -67,18 +51,13 @@ extension TransactionItem {
         var quantity: Int
         var productVariantId: UUID
         var price: Double
-        var discount: Double
         var tax: Double
 
         func create() -> TransactionItem {
             let model = TransactionItem()
-            model.currency = .COP
             model.quantity = quantity
             model.$productVariant.id = productVariantId
             model.price = price
-            model.discount = discount
-            model.tax = tax
-            model.total = price + (price * tax) - discount
             return model
         }
     }
@@ -96,7 +75,7 @@ extension TransactionItem {
                 .field("tax", .double, .required)
                 .field("total", .double, .required)
                 .field("currency", .string, .required)
-                .field("transaction_id", .uuid, .required, .references("transactions", "id"))
+                .field("transaction_id", .uuid, .references("transactions", "id"))
                 .create()
         }
 
@@ -117,6 +96,38 @@ extension TransactionItem {
             try await database.schema(schema)
                 .deleteField("created_at")
                 .deleteField("updated_at")
+                .update()
+        }
+    }
+    
+    struct RemoveDiscountFromTransactionItemMigration: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema(schema)
+                .deleteField("discount")
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema(schema)
+                .field("discount", .double, .required)
+                .update()
+        }
+    }
+    
+    struct RemoveTaxTotalAndCurrencyMigration: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema(schema)
+                .deleteField("tax")
+                .deleteField("total")
+                .deleteField("currency")
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema(schema)
+                .field("tax", .double, .required)
+                .field("total", .double, .required)
+                .field("currency", .string, .required)
                 .update()
         }
     }

@@ -49,7 +49,9 @@ final class ProductVariant: Model {
 
     func asPublic(request: Request) async throws -> Public {
         let id = try self.requireID().uuidString
-        let sales = try await self.$transactionItems.get(on: request.db).map { try $0.asPublic() }
+        let sales = try await $transactionItems.get(on: request.db).asyncMap {
+            try await $0.asPublic(request: request)
+        }
 
         do {
             let path = DirectoryConfiguration.detect().publicDirectory

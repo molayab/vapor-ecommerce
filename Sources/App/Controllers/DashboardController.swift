@@ -20,7 +20,7 @@ struct DashboardController: RouteCollection {
 """
 SELECT
     to_char(date(transactions.payed_at),'MM') AS _month,
-    SUM(I.total) AS sales,
+    SUM(transactions.total) AS sales,
     SUM(V.price) AS cost,
     SUM(I.quantity)::INTEGER AS count
 FROM transactions
@@ -34,7 +34,7 @@ ORDER BY _month
 """).get()
             let salesBySourceQuery = try await psql.simpleQuery(
 """
-SELECT transactions.origin, SUM(I.total)
+SELECT transactions.origin, SUM(transactions.total)
 FROM transactions
 INNER JOIN transaction_items AS I ON transactions.id = I.transaction_id
 INNER JOIN product_variants AS V ON I.product_variant_id = V.id
@@ -45,7 +45,7 @@ GROUP BY transactions.origin
 """).get()
             let salesThisMonthQuery = try await psql.simpleQuery(
 """
-SELECT to_char(date(transactions.created_at),'Mon') AS _month, SUM(I.total) as sales_month
+SELECT to_char(date(transactions.created_at),'Mon') AS _month, SUM(transactions.total) as sales_month
 FROM transactions
 INNER JOIN transaction_items AS I ON transactions.id = I.transaction_id
 INNER JOIN product_variants AS V ON I.product_variant_id = V.id
@@ -56,7 +56,7 @@ GROUP BY _month
 """).get()
             let salesByProductQuery = try await psql.simpleQuery(
 """
-SELECT PP.title as title, SUM(I.total) as sales_month
+SELECT PP.title as title, SUM(transactions.total) as sales_month
 FROM transactions
 INNER JOIN transaction_items AS I ON transactions.id = I.transaction_id
 INNER JOIN product_variants AS V ON I.product_variant_id = V.id
@@ -116,6 +116,12 @@ GROUP BY title
                     sales: nil,
                     origin: nil)
             }
+            
+            let txs = try await Transaction.query(on: req.db)
+                .filter(\.$status == .paid)
+                .sort(\.$payedAt, .descending)
+                .limit(14)
+                .all()
 
             return OrderStats(
                 salesByProduct: salesByProduct,
@@ -123,12 +129,9 @@ GROUP BY title
                 salesThisMonth: salesThisMonth.1,
                 salesMonthTitle: salesThisMonth.0,
                 salesBySource: salesBySource,
-                lastSales: try await Transaction.query(on: req.db)
-                    .filter(\.$status == .paid)
-                    .sort(\.$payedAt, .descending)
-                    .limit(14)
-                    .all()
-                    .asyncMap { try await $0.asPublic(on: req.db) }
+                lastSales: try await txs.asyncMap {
+                    try await $0.asPublic(request: req)
+                }
             )
         }
 

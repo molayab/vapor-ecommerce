@@ -63,16 +63,34 @@ final class Transaction: Model {
 
     @Enum(key: "origin")
     var origin: Origin
+    
+    @Children(for: \.$order)
+    var sales: [Sale]
+    
+    @OptionalParent(key: "discount_id")
+    var discount: Discount?
+    
+    @Field(key: "subtotal")
+    var subtotal: Double
+    
+    @Field(key: "tax")
+    var tax: Double
+    
+    @Field(key: "total")
+    var total: Double
+    
+    @Enum(key: "currency")
+    var currency: Currency
 
-    func asPublic(on db: Database) async throws -> Public {
-        let sales = try await self.$items.get(on: db).get()
+    func asPublic(request: Request) async throws -> Public {
+        let sales = try await self.$items.get(on: request.db).get()
 
         return try .init(
             id: requireID().uuidString,
             status: status,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            items: sales.map { try $0.asPublic() },
+            items: try await sales.asyncMap { try await $0.asPublic(request: request) },
             shippingAddress: shippingAddress?.asPublic(),
             billingAddress: billingAddress?.asPublic(),
             payedAt: payedAt,
@@ -98,10 +116,7 @@ extension Transaction {
         var orderdAt: Date?
         var canceledAt: Date?
         var placedIp: String?
-
-        var total: Double {
-            items?.reduce(0) { $0 + $1.total } ?? 0
-        }
+        var discount: Discount.Public?
     }
 
     struct Anulate: Content {
@@ -150,11 +165,92 @@ extension Transaction {
         }
     }
 
+    struct Return: Content, Validatable {
+        var transactionId: UUID
+        var skus: [String]
+
+        static func validations(_ validations: inout Validations) {
+            validations.add("transactionId", as: UUID.self)
+            validations.add("skus", as: [String].self)
+        }
+
+        func `return`(in req: Request) async throws -> (tx: Transaction, total: Double)  {
+            return try await req.db.transaction { database in
+                guard let model = try await Transaction.find(transactionId, on: database) else {
+                    throw Abort(.notFound)
+                }
+
+                // Get the SKUs to return
+                var total: Double = 0
+                for sku in skus {
+                    guard let item = try await model.$items
+                        .query(on: database)
+                        .join(ProductVariant.self, on: \TransactionItem.$productVariant.$id == \ProductVariant.$id)
+                        .filter(ProductVariant.self, \ProductVariant.$sku == sku)
+                        .first() else {
+                            throw Abort(.notFound)
+                    }
+
+                    // Update stock
+                    let product = try await item.$productVariant.get(on: database).get()
+                    product.stock += item.quantity
+                    try await product.save(on: database)
+
+                    // Add refund to sales
+                    let record = Sale()
+                    record.$order.id = try model.requireID()
+                    let subtotal = item.price + (item.price * model.tax)
+                    record.currency = model.currency
+                    record.amount = subtotal * -1
+                    record.date = Date()
+                    record.type = .refund
+                    
+                    total += record.amount
+                    try await record.save(on: database)
+                    
+                    if item.quantity > 1 {
+                        // Update the quantity of the item
+                        let individualPrice = item.price / Double(item.quantity)
+                        item.quantity -= 1
+                        item.price = individualPrice * Double(item.quantity)
+                        
+                        try await item.save(on: database)
+                    } else {
+                        // Remove the item
+                        try await item.delete(on: database)
+                    }
+
+                    // If all items are returned, cancel the transaction
+                    let items = try await model.$items.get(on: database)
+                    if items.count == 0 {
+                        model.status = .canceled
+                        model.canceledAt = Date()
+                        try await model.save(on: database)
+
+                        // Also remove the sales
+                        try await Sale.query(on: database)
+                            .filter(\.$order.$id == model.requireID())
+                            .delete()
+                    }
+                    
+                    // Update the transaction total, subtotal and tax
+                    try await req
+                        .queue
+                        .dispatch(TransactionCheckerJob.self,
+                                  model.requireID() as TransactionCheckerJob.Payload)
+                }
+                
+                return (model, total)
+            }
+        }
+    }
+
     struct Create: Content {
         var shippingAddressId: UUID?
         var billingAddressId: UUID?
         var items: [TransactionItem.Create]
         var billTo: BillTo?
+        var promoCode: String?
 
         func create(in req: Request, forOrigin origin: Transaction.Origin) async throws -> Transaction {
             var user = try req.auth.require(User.self)
@@ -192,7 +288,7 @@ extension Transaction {
             }
 
             let userRef = user
-            return try await req.db.transaction { database in 
+            return try await req.db.transaction { database in
                 model.$user.id = try userRef.requireID()
                 model.$shippingAddress.id = shippingAddressId
                 model.$billingAddress.id = billingAddressId
@@ -201,6 +297,8 @@ extension Transaction {
                     ?? req.remoteAddress?.hostname
                     ?? "unknown"
                 model.origin = origin
+                model.currency = .COP
+                model.tax = 0
 
                 if origin == .posCard || origin == .posCash {
                     model.status = .paid
@@ -223,11 +321,30 @@ extension Transaction {
                         await req.notifyMessage("Variante sin stock (No hay \(item.quantity) disponibles).")
                         throw Abort(.badRequest, reason: "Product variant out of stock")
                     }
+                    
+                    model.tax += variant.tax
 
                     let mod = item.create()
                     mod.$transaction.$id.wrappedValue = try model.requireID()
                     return mod
                 }.create(on: database)
+                
+                model.tax = model.tax / Double(items.count)
+                
+                // Apply promo code if applicable
+                if let promoCode, let discount = try? await Discount.query(on: database)
+                        .filter(\.$code == promoCode)
+                        .first() {
+                    
+                    // Check if the promo code is valid
+                    if discount.isActive && discount.expiresAt > Date() {
+                        model.$discount.id = try discount.requireID()
+                        discount.isActive.toggle()
+                        discount.usedAt = Date()
+                        discount.code = UUID().uuidString.sha256()
+                        try await discount.save(on: database)
+                    }
+                }
 
                 // Update stock: we are selling products, therefore we need decrease the stock
                 for item in try await model.$items.get(on: database).get() {
@@ -242,16 +359,23 @@ extension Transaction {
                     try await sales.asyncMap { sale in
                         let record = Sale()
                         record.$order.id = try model.requireID()
-                        record.currency = sale.currency
-                        record.amount = Double(sale.quantity) * sale.total
+                        record.currency = model.currency
+                        record.amount = sale.price + (sale.price * model.tax)
                         record.date = Date()
                         record.type = .sale
                         return record
                     }.create(on: database)
                 }
+                
+                // Update the transaction total, subtotal and tax
+                try await model.save(on: database)
+                try await req
+                    .queue
+                    .dispatch(TransactionCheckerJob.self,
+                              model.requireID() as TransactionCheckerJob.Payload)
 
                 return model
-            } 
+            }
         }
     }
 }
@@ -288,23 +412,68 @@ extension Transaction {
             try await database.schema(Transaction.schema).delete()
         }
     }
+    
+    struct AddDiscountFieldMigration: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema(Transaction.schema)
+                .field("discount_id", .uuid, .references("discounts", "id"))
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema(Transaction.schema)
+                .deleteField("discount_id")
+                .update()
+        }
+    }
+    
+    struct AddTransactionFinancialFieldsMigration: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema(Transaction.schema)
+                .field("currency", .string, .required, .custom("DEFAULT 'unknown'"))
+                .field("subtotal", .double, .required, .custom("DEFAULT 0"))
+                .field("tax", .double, .required, .custom("DEFAULT 0"))
+                .field("total", .double, .required, .custom("DEFAULT 0"))
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema(Transaction.schema)
+                .deleteField("currency")
+                .deleteField("subtotal")
+                .deleteField("tax")
+                .deleteField("total")
+                .update()
+        }
+    }
+    
 }
 
 extension Transaction {
     func generateEmailConfirmation(database: Database) async throws -> String {
-        let items = try await $items.get(on: database).asyncMap { item in 
+        let model = try await $items.get(on: database)
+        let items = try await model.asyncMap { item in
             try await $user.load(on: database)
             let variant = try await item.$productVariant.get(on: database)
             let product = try await variant.$product.get(on: database)
-            let total = String(format: "%.0f", item.total)
+            let total = String(format: "%.0f", item.price * Double(item.quantity))
 
-            return "<li><i><b>" + product.title + " " + variant.name + "</b> - $" + total + "</i></li>"
+            return "<li><i><b>" 
+                + product.title + " "
+                + variant.name + "(\(item.quantity))</b> - $"
+                + total + "</i></li>"
         }.joined(separator: "\n")
 
         let user = try await $user.get(on: database)
-        let txTotal = String(format: "%.0f", try await $items.get(on: database).reduce(0) { $0 + $1.total })
+        let txTotal = String(
+            format: "%.0f",
+            try await $items.get(
+                on: database)
+            .reduce(0) {
+                $0 + $1.price * Double($1.quantity)
+                    + ($1.price * Double($1.quantity) * self.tax) })
 
-        return 
+        return
 """
 <!DOCTYPE html>
 <html lang="en">
@@ -327,6 +496,10 @@ extension Transaction {
         <p>Le enviamos este correo electrónico de confirmación para informarle que su compra ha sido procesada con éxito.</p>
         <p>Si tiene alguna pregunta o necesita asistencia adicional, no dude en ponerse en contacto con nuestro servicio al cliente en \(settings.contactEmail).</p>
         <p>Gracias por elegirnos. ¡Esperamos que disfrute de sus productos!</p>
+
+        <h3 style="color: #333;">Si desea hacer efectivo algún cambio:</h3>
+        <p>Para hacer efectivo un cambio o devolución, por favor conserve este correo electrónico y el articulo en su empaque original y buen estado. A continuación, su guía para hacer efectivo el cambio o devolución. Esta guía es válida por 30 días a partir de la fecha de compra.</p>
+        <h2 style="color: #333;">\(try requireID().uuidString)</h2>
 
         <p>Atentamente,<br>\(settings.siteName)</p>
     </div>

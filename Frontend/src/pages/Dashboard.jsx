@@ -182,7 +182,7 @@ function Dashboard () {
                   return (
                     <TableRow key={'sales_' + index}>
                       <TableCell>{sale.payedAt}</TableCell>
-                      <TableCell>{dataFormatter(sale.items.reduce((acc, item) => acc + (item.total * item.quantity), 0))}</TableCell>
+                      <TableCell>{dataFormatter(sale.items.reduce((acc, item) => acc + (item.price * item.quantity), 0))}</TableCell>
                     </TableRow>
                   )
                 })}
