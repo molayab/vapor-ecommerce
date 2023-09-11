@@ -27,6 +27,15 @@ final class Sale: Model {
 
     @Parent(key: "transaction_id")
     var order: Transaction
+    
+    @Timestamp(key: "created_at", on: .create)
+    var createdAt: Date?
+
+    @Timestamp(key: "updated_at", on: .update)
+    var updatedAt: Date?
+    
+    @Timestamp(key: "deleted_at", on: .delete)
+    var deletedAt: Date?
 
     struct Public: Content {
         var id: UUID?
@@ -58,4 +67,23 @@ extension Sale {
             try await database.schema(Sale.schema).delete()
         }
     }
+    
+    struct AddTimestamps: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema(Sale.schema)
+                .field("created_at", .datetime, .required, .custom("DEFAULT CURRENT_TIMESTAMP"))
+                .field("updated_at", .datetime)
+                .field("deleted_at", .datetime)
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema(Sale.schema)
+                .deleteField("created_at")
+                .deleteField("updated_at")
+                .deleteField("deleted_at")
+                .update()
+        }
+    }
+    
 }

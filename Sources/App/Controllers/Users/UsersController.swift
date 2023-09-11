@@ -32,7 +32,6 @@ struct UsersController: RouteCollection {
 
     private func getAllEmployees(req: Request) async throws -> Page<User.Public> {
         let users = try await User.query(on: req.db)
-            .filter(\.$isDeleted == false)
             .filter(\.$kind == .employee)
             .paginate(for: req)
 
@@ -43,7 +42,6 @@ struct UsersController: RouteCollection {
 
     private func getAllProviders(req: Request) async throws -> Page<User.Public> {
         let users = try await User.query(on: req.db)
-            .filter(\.$isDeleted == false)
             .filter(\.$kind == .provider)
             .paginate(for: req)
 
@@ -54,7 +52,6 @@ struct UsersController: RouteCollection {
 
     private func getAllClients(req: Request) async throws -> Page<User.Public> {
         let users = try await User.query(on: req.db)
-            .filter(\.$isDeleted == false)
             .filter(\.$kind == .client)
             .paginate(for: req)
 
@@ -154,9 +151,7 @@ struct UsersController: RouteCollection {
         }
 
         return try await req.db.transaction { database in
-            user.isDeleted = true
-
-            try await user.save(on: database)
+            try await user.delete(on: database)
             await req.notifyMessage("El usuario \(user.name) ha sido eliminado.")
             return Response(status: .ok)
         }

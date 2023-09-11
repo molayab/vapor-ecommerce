@@ -42,6 +42,9 @@ final class ProductVariant: Model {
 
     @Timestamp(key: "updated_at", on: .update)
     var updatedAt: Date?
+    
+    @Timestamp(key: "deleted_at", on: .delete)
+    var deletedAt: Date?
 
     var isAvailableForSale: Bool {
         return isAvailable && stock > 0
@@ -198,4 +201,19 @@ extension ProductVariant {
                 .update()
         }
     }
+    
+    struct AddDeletedAtMigration: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema("product_variants")
+                .field("deleted_at", .datetime)
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema("product_variants")
+                .deleteField("deleted_at")
+                .update()
+        }
+    }
+
 }

@@ -3,6 +3,8 @@ import Fluent
 import Queues
 
 struct TransactionCheckerJob: AsyncScheduledJob, AsyncJob {
+    var shouldCheckall = false
+    
     func dequeue(_ context: QueueContext, _ payload: UUID) async throws {
         try await exec(context: context, payload: payload)
     }
@@ -12,6 +14,20 @@ struct TransactionCheckerJob: AsyncScheduledJob, AsyncJob {
     }
     
     private func exec(context: QueueContext, payload: UUID? = nil) async throws {
+        if shouldCheckall {
+            context.logger
+                .info("[TransactionCheckerJob][INFO] Checking all transactions")
+            
+            try await Transaction
+                .query(on: context.application.db)
+                .filter(\.$status == .paid)
+                .chunk(max: 256) { result in
+                    task(result: result, context: context)
+                }
+            
+            return
+        }
+        
         // Fetch all transactions
         if let payload {
             try await Transaction

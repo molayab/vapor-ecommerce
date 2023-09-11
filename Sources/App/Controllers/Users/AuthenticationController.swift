@@ -28,7 +28,7 @@ struct AuthenticationController: RouteCollection {
             email: req.content.get(String.self, at: "username"))
 
         let user = try req.auth.require(User.self)
-        guard user.isActive && !user.isDeleted else {
+        guard user.isActive else {
             throw Abort(.unauthorized)
         }
 

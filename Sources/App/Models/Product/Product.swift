@@ -39,6 +39,9 @@ final class Product: Model {
 
     @Children(for: \.$product)
     var variants: [ProductVariant]
+    
+    @Timestamp(key: "deleted_at", on: .delete)
+    var deletedAt: Date?
 
     func asPublic(on request: Request) async throws -> Public {
         let database = request.db
@@ -226,4 +229,17 @@ extension Product {
         }
     }
 
+    struct AddDeleteFieldMigration: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema("products")
+                .field("deleted_at", .datetime)
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema("products")
+                .deleteField("deleted_at")
+                .update()
+        }
+    }
 }

@@ -22,6 +22,7 @@ struct CostsController: RouteCollection {
         restricted.delete(":costId", use: deleteCost)
         restricted.patch(":costId", use: updateCost)
         restricted.get(":costId", use: getCost)
+        restricted.get("date", ":year", ":month", use: getAllCostsForMonth)
     }
 
     private func createCost(req: Request) async throws -> Cost.Public {
@@ -56,7 +57,6 @@ struct CostsController: RouteCollection {
         cost.amount = payload.amount
         cost.type = payload.type
         cost.startDate = payload.startDate
-        cost.periodicity = payload.periodicity
         cost.currency = payload.currency
 
         try await cost.save(on: req.db)
@@ -96,4 +96,15 @@ struct CostsController: RouteCollection {
         return try await Cost.query(on: req.db)
             .paginate(for: req)
     }
+    
+    private func getAllCostsForMonth(req: Request) async throws -> [Cost.Public] {
+        let month = try req.parameters.require("month", as: Int.self)
+        let year = try req.parameters.require("year", as: Int.self)
+        let costs = try await Cost.query(on: req.db)
+            .filter(\.$startDate >= DateComponents(calendar: .current, year: year, month: month).date ?? Date())
+            .filter(\.$startDate < DateComponents(calendar: .current, year: year, month: month + 1).date ?? Date())
+            .all()
+        return try costs.map { try $0.asPublic() }
+    }
+
 }

@@ -61,9 +61,6 @@ final class User: Model {
     @Field(key: "cellphone")
     var cellphone: String?
 
-    @Field(key: "is_deleted")
-    var isDeleted: Bool
-
     @Children(for: \.$user)
     var roles: [Role]
 
@@ -72,6 +69,9 @@ final class User: Model {
 
     @Timestamp(key: "updated_at", on: .update)
     var updatedAt: Date?
+    
+    @Timestamp(key: "deleted_at", on: .delete)
+    var deletedAt: Date?
 
     @Field(key: "is_active")
     var isActive: Bool
@@ -261,6 +261,28 @@ extension User {
         func revert(on database: Database) async throws {
             try await database.schema("users")
                 .deleteField("is_deleted")
+                .update()
+        }
+    }
+    
+    struct AddSoftDeleteMigration: AsyncMigration {
+        func prepare(on database: Database) async throws {
+            try await database.schema("users")
+                .field("deleted_at", .datetime)
+                .update()
+            
+            try await database.schema("users")
+                .deleteField("is_deleted")
+                .update()
+        }
+
+        func revert(on database: Database) async throws {
+            try await database.schema("users")
+                .deleteField("deleted_at")
+                .update()
+            
+            try await database.schema("users")
+                .field("is_deleted", .bool, .required, .custom("DEFAULT FALSE"))
                 .update()
         }
     }

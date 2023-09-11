@@ -53,10 +53,10 @@ function SideMenu ({ children }) {
                 <img src={packageIcon} alt='package' />
                 <span className='hidden md:block hover:underline'><small>Catalogo</small></span>
               </li>
-              <li onClick={() => navigate('/promos')}>
+              {/* <li onClick={() => navigate('/promos')}>
                 <img src={packageIcon} alt='package' />
                 <span className='hidden md:block hover:underline'><small>Promociones</small></span>
-              </li>
+  </li> */}
               <li onClick={() => navigate('/orders')}>
                 <img src={truckIcon} alt='truck' />
                 <span className='hidden md:block hover:underlin'><small>Ordenes</small></span>

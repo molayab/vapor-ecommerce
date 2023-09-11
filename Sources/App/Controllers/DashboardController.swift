@@ -122,13 +122,18 @@ GROUP BY title
                 .sort(\.$payedAt, .descending)
                 .limit(14)
                 .all()
+            
+            let expensesThisMonth = try await Cost.query(on: req.db)
+                .filter(\.$createdAt > Date().startOfMonth())
+                .sum(\.$amount)
 
             return OrderStats(
                 salesByProduct: salesByProduct,
                 salesByMonth: salesByMonth,
                 salesThisMonth: salesThisMonth.1,
                 salesMonthTitle: salesThisMonth.0,
-                salesBySource: salesBySource,
+                salesBySource: salesBySource, 
+                expensesThisMonth: Int(expensesThisMonth ?? 0),
                 lastSales: try await txs.asyncMap {
                     try await $0.asPublic(request: req)
                 }

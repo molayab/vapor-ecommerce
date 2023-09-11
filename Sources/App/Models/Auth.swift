@@ -30,7 +30,7 @@ struct Auth: Authenticatable, JWTPayload {
                         guard let user = user else {
                             return next.resume(throwing: Abort(.unauthorized))
                         }
-                        guard user.isActive && !user.isDeleted else {
+                        guard user.isActive else {
                             return next.resume(throwing: Abort(.unauthorized))
                         }
 

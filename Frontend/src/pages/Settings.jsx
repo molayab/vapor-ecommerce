@@ -74,7 +74,7 @@ function Settings () {
     setLocalFeatureFlags(featureFlags)
   }, [featureFlags])
 
-  if (localCategories == null || localFeatureFlags == null) {
+  if (localCategories == null || localFeatureFlags == null || localFeatureFlags.results == null) {
     return <Loader />
   }
 

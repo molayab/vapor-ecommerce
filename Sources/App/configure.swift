@@ -74,7 +74,6 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(Transaction.CreateMigration())
     app.migrations.add(TransactionItem.CreateMigration())
     app.migrations.add(Cost.CreateMigration())
-    app.migrations.add(Finance.CreateMigration())
     app.migrations.add(Sale.CreateMigration())
     app.migrations.add(ProductVariant.AddTimestampsMigration())
     app.migrations.add(User.AddDeleteField())
@@ -84,6 +83,12 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(Transaction.AddDiscountFieldMigration())
     app.migrations.add(Transaction.AddTransactionFinancialFieldsMigration())
     app.migrations.add(TransactionItem.RemoveTaxTotalAndCurrencyMigration())
+    app.migrations.add(Cost.RemovePeriodicityFieldMigration())
+    app.migrations.add(Cost.AddDeletedAtFieldMigration())
+    app.migrations.add(Sale.AddTimestamps())
+    app.migrations.add(Product.AddDeleteFieldMigration())
+    app.migrations.add(ProductVariant.AddDeletedAtMigration())
+    app.migrations.add(User.AddSoftDeleteMigration())
     try await app.autoMigrate()
 
     let corsConfiguration = CORSMiddleware.Configuration(
@@ -120,11 +125,10 @@ public func configure(_ app: Application) async throws {
         app.queues.use(.redis(configuration))
         
         // Cron jobs
-        app.queues.schedule(CostShedulerJob())
-            .daily()
-            .at(.midnight)
         app.queues.schedule(TransactionCheckerJob())
             .at(Date().addingTimeInterval(5))
+        app.queues.schedule(TransactionCheckerJob(shouldCheckall: true))
+            .minutely()
         
         // Workers
         app.queues.add(ImageResizerJob())

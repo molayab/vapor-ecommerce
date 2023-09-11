@@ -14,7 +14,7 @@ function ContainerCard ({ children, title, subtitle, action, isSticky }) {
           icon={ArrowLeftIcon}
         />
 
-        <div className='flex-1'>
+        <div className='flex-1 mt-4'>
           <Text>{subtitle}</Text>
           <Metric>{title}</Metric>
         </div>

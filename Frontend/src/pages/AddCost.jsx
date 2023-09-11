@@ -53,7 +53,7 @@ function AddCost () {
       <ContainerCard title='Agregar Costo' subtitle='Egresos de la tienda'>
         <Text className='mt-2'>Los costos son egresos de la tienda, como por ejemplo el pago de la renta, el pago de servicios, etc.</Text>
 
-        <Grid numItems={1} numItemsSm={2} className='gap-1 mt-4'>
+        <Grid numItems={1} numItemsSm={1} className='gap-1 mt-4'>
           <div>
             <Select icon={CodeIcon} value={cost.type} onChange={(e) => setCost((old) => ({ ...old, type: e }))} placeholder='Seleccionar tipo de costo'>
               <SelectItem value='fixed'>Fijo</SelectItem>
@@ -61,22 +61,6 @@ function AddCost () {
             </Select>
             <Text className='mt-2'>
               <b>Tipo de costo:</b> fijo o variable, los costos fijos son aquellos que no cambian con el tiempo, como por ejemplo el pago de la renta, el pago de servicios, etc.
-            </Text>
-          </div>
-          <div>
-            <Select value={cost.periodicity} onChange={(e) => setCost((old) => ({ ...old, periodicity: e }))} placeholder='Seleccionar periodicidad'>
-              <SelectItem value='oneTime'>Pago unico</SelectItem>
-              <SelectItem value='daily'>Diario</SelectItem>
-              <SelectItem value='weekly'>Semanal</SelectItem>
-              <SelectItem value='biweekly'>Quincenal</SelectItem>
-              <SelectItem value='monthly'>Mensual</SelectItem>
-              <SelectItem value='bimonthly'>Bimestral</SelectItem>
-              <SelectItem value='quarterly'>Trimestral</SelectItem>
-              <SelectItem value='semiannually'>Semestral</SelectItem>
-              <SelectItem value='yearly'>Anual</SelectItem>
-            </Select>
-            <Text className='mt-2'>
-              <b>Periodicidad:</b> es la frecuencia con la que se paga el costo, por ejemplo, si el costo es mensual, se paga cada mes. Todos los costos son aplicados al momento de creados, a partir de ese momento comienzan a ser aplicados los cobros periodicos.
             </Text>
           </div>
         </Grid>

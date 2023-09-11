@@ -16,6 +16,7 @@ struct OrderStats: Content {
     var salesThisMonth: Int
     var salesMonthTitle: String
     var salesBySource: [Sale]
+    var expensesThisMonth: Int
     var lastSales: [Transaction.Public]
 }
 
