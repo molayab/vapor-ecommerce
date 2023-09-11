@@ -34,7 +34,7 @@ ORDER BY _month
 """).get()
             let salesBySourceQuery = try await psql.simpleQuery(
 """
-SELECT transactions.origin, SUM(transactions.total)
+SELECT transactions.origin, SUM(I.price * I.quantity)
 FROM transactions
 INNER JOIN transaction_items AS I ON transactions.id = I.transaction_id
 INNER JOIN product_variants AS V ON I.product_variant_id = V.id
