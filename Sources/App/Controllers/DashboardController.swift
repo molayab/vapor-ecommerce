@@ -20,7 +20,7 @@ struct DashboardController: RouteCollection {
 """
 SELECT
     to_char(date(transactions.payed_at),'MM') AS _month,
-    SUM(transactions.total) AS sales,
+    SUM(I.price * I.quantity) AS sales,
     SUM(V.price) AS cost,
     SUM(I.quantity)::INTEGER AS count
 FROM transactions
@@ -45,7 +45,7 @@ GROUP BY transactions.origin
 """).get()
             let salesThisMonthQuery = try await psql.simpleQuery(
 """
-SELECT to_char(date(transactions.created_at),'Mon') AS _month, SUM(transactions.total) as sales_month
+SELECT to_char(date(transactions.created_at),'Mon') AS _month, SUM(I.price * I.quantity) as sales_month
 FROM transactions
 INNER JOIN transaction_items AS I ON transactions.id = I.transaction_id
 INNER JOIN product_variants AS V ON I.product_variant_id = V.id
@@ -56,7 +56,7 @@ GROUP BY _month
 """).get()
             let salesByProductQuery = try await psql.simpleQuery(
 """
-SELECT PP.title as title, SUM(transactions.total) as sales_month
+SELECT PP.title as title, SUM(I.price * I.quantity) as sales_month
 FROM transactions
 INNER JOIN transaction_items AS I ON transactions.id = I.transaction_id
 INNER JOIN product_variants AS V ON I.product_variant_id = V.id

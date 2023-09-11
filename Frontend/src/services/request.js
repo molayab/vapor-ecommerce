@@ -4,7 +4,7 @@ const sessionStorage = window.sessionStorage
 export const request = Axios.create({
   withCredentials: true,
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/v1',
-  timeout: 1000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json'

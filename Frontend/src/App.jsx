@@ -27,7 +27,7 @@ import ReturnProductVariants from './pages/ReturnProductVariants'
 
 const { localStorage } = window
 
-export const RES_URL = 'http://localhost:8080'
+export const RES_URL = import.meta.env.VITE_RES_URL || 'http://localhost:8080'
 export async function isFeatureEnabled (key) {
   const featureFlags = await getAllFeatureFlags()
   return featureFlags.results.find((flag) => flag.key === key).active
