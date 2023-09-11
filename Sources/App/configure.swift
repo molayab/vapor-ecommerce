@@ -128,7 +128,9 @@ public func configure(_ app: Application) async throws {
         app.queues.schedule(TransactionCheckerJob())
             .at(Date().addingTimeInterval(5))
         app.queues.schedule(TransactionCheckerJob(shouldCheckall: true))
-            .minutely()
+            .monthly()
+            .on(1)
+            .at(.midnight)
         
         // Workers
         app.queues.add(ImageResizerJob())
