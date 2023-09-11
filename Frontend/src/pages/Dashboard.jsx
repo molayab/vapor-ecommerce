@@ -111,7 +111,10 @@ function Dashboard () {
                 <Metric color='red'>$ 0.00</Metric>
               </div>
 
-              <Button color='rose' icon={PlusIcon} />
+              <Button
+                onClick={() => navigate('/add-cost')}
+                color='rose' icon={PlusIcon}
+              />
             </Flex>
             <Divider className='mt-4' />
             {salesBySource.map((source, index) => {
