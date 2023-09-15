@@ -115,14 +115,13 @@ swift run App users create # This will create a user
 - [X] Add POS controller
 - [X] Add dashboard controller
 - [X] Create frontend for managment
-- Create store frontend
 - Add commands for categories
 - Add commands for orders
 - Add commands for transactions
 - Add commands for image managment
 - [X] Add finance controller
-- Create worker for notifications
-- Create basic documentation
+- [X] Create worker for notifications
+- [X] Create basic documentation
 - Create advance documentation
 - Add unit test
 - Add integration tests
@@ -130,10 +129,10 @@ swift run App users create # This will create a user
 - [X] Add configuration json
 - Refactor controllers
    - Refactor models
-   - Refactor routes
-   - Refactor controllers
-   - Refactor middlewares
-   - Refactor services
+   - [X] Refactor routes
+   - [X] Refactor controllers
+   - [X] Refactor middlewares
+   - [X] Refactor services
 - Refactor frontend
    - Refactor components
    - Refactor pages
@@ -148,9 +147,13 @@ swift run App users create # This will create a user
 
 ```text
 +--------+-------------------------------------------------------------+
+| GET    | /notifications                                              |
++--------+-------------------------------------------------------------+
 | GET    | /                                                           |
 +--------+-------------------------------------------------------------+
 | POST   | /v1/auth/refresh                                            |
++--------+-------------------------------------------------------------+
+| POST   | /v1/auth/logout                                             |
 +--------+-------------------------------------------------------------+
 | POST   | /v1/auth/create                                             |
 +--------+-------------------------------------------------------------+
@@ -182,6 +185,8 @@ swift run App users create # This will create a user
 +--------+-------------------------------------------------------------+
 | DELETE | /v1/categories/:categoryId                                  |
 +--------+-------------------------------------------------------------+
+| PATCH  | /v1/categories/:categoryId                                  |
++--------+-------------------------------------------------------------+
 | POST   | /v1/categories                                              |
 +--------+-------------------------------------------------------------+
 | GET    | /v1/products                                                |
@@ -196,6 +201,8 @@ swift run App users create # This will create a user
 +--------+-------------------------------------------------------------+
 | GET    | /v1/products/pos                                            |
 +--------+-------------------------------------------------------------+
+| PATCH  | /v1/products/:productId/category                            |
++--------+-------------------------------------------------------------+
 | GET    | /v1/products/:productId/reviews                             |
 +--------+-------------------------------------------------------------+
 | POST   | /v1/products/:productId/reviews                             |
@@ -203,6 +210,8 @@ swift run App users create # This will create a user
 | DELETE | /v1/products/:productId/reviews/:reviewId                   |
 +--------+-------------------------------------------------------------+
 | PATCH  | /v1/products/:productId/reviews/:reviewId                   |
++--------+-------------------------------------------------------------+
+| GET    | /v1/products/variants                                       |
 +--------+-------------------------------------------------------------+
 | GET    | /v1/products/:productId/variants                            |
 +--------+-------------------------------------------------------------+
@@ -224,8 +233,6 @@ swift run App users create # This will create a user
 +--------+-------------------------------------------------------------+
 | PATCH  | /v1/products/:productId/questions/:questionId               |
 +--------+-------------------------------------------------------------+
-| POST   | /v1/orders/checkout                                         |
-+--------+-------------------------------------------------------------+
 | GET    | /v1/orders/mine                                             |
 +--------+-------------------------------------------------------------+
 | GET    | /v1/orders/all                                              |
@@ -236,9 +243,11 @@ swift run App users create # This will create a user
 +--------+-------------------------------------------------------------+
 | GET    | /v1/orders/placed                                           |
 +--------+-------------------------------------------------------------+
-| GET    | /v1/orders/stats                                            |
+| GET    | /v1/orders/variants/:variantId                              |
 +--------+-------------------------------------------------------------+
-| POST   | /v1/orders/checkout/:method                                 |
+| GET    | /v1/orders/:id/items                                        |
++--------+-------------------------------------------------------------+
+| GET    | /v1/orders/all/metadata                                     |
 +--------+-------------------------------------------------------------+
 | GET    | /v1/transactions/payment/callback/:provider                 |
 +--------+-------------------------------------------------------------+
@@ -260,6 +269,8 @@ swift run App users create # This will create a user
 +--------+-------------------------------------------------------------+
 | GET    | /v1/finance/costs/:costId                                   |
 +--------+-------------------------------------------------------------+
+| GET    | /v1/finance/costs/date/:year/:month                         |
++--------+-------------------------------------------------------------+
 | GET    | /v1/finance/sales                                           |
 +--------+-------------------------------------------------------------+
 | GET    | /v1/finance/sales/all                                       |
@@ -276,11 +287,21 @@ swift run App users create # This will create a user
 +--------+-------------------------------------------------------------+
 | GET    | /v1/settings                                                |
 +--------+-------------------------------------------------------------+
-| PATCH  | /v1/settings                                                |
-+--------+-------------------------------------------------------------+
 | GET    | /v1/settings/flags                                          |
 +--------+-------------------------------------------------------------+
 | PATCH  | /v1/settings/flags/:flag                                    |
++--------+-------------------------------------------------------------+
+| POST   | /v1/orders/checkout                                         |
++--------+-------------------------------------------------------------+
+| POST   | /v1/orders/checkout/:method                                 |
++--------+-------------------------------------------------------------+
+| DELETE | /v1/orders/anulate                                          |
++--------+-------------------------------------------------------------+
+| PATCH  | /v1/orders/return                                           |
++--------+-------------------------------------------------------------+
+| GET    | /v1/dashboard/stats                                         |
++--------+-------------------------------------------------------------+
+| GET    | /v1/discounts/:code                                         |
 +--------+-------------------------------------------------------------+
 
 ```
