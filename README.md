@@ -142,6 +142,9 @@ swift run App users create # This will create a user
    - Refactor styles
 - [X] Add docker-compose for development
 - Add docker-compose for production
+- Inventory system for factory
+- Frontend for orders
+- Optional POS
 
 # Routes
 
