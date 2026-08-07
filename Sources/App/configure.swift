@@ -37,6 +37,7 @@ public func configure(_ app: Application) async throws {
     app.commands.use(UserCommand(), as: "users")
     app.commands.use(ProductCommand(), as: "products")
     app.commands.use(RoleCommand(), as: "roles")
+    app.commands.use(OrderCommand(), as: "orders")
 
     app.routes.defaultMaxBodySize = "100mb"
     app.jwt.signers.use(.hs256(key: settings.secrets.jwt.signerKey))

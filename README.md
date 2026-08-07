@@ -98,11 +98,20 @@ Since the whole project depends on docker-compose, you can run the project witho
 
 # Commands
 
-Vapor defines a set of commands to manage the project. You can run the following command to see the list of commands:
+This project is headless: there is no bundled web frontend or admin dashboard. Vapor defines a set of commands to manage the project and interact with it manually from the terminal. You can run the following command to see the list of commands:
 
 ```bash
 swift run App help # This will show the list of commands
 swift run App users create # This will create a user
+swift run App orders create # This will walk you through creating a manual (POS-style) order
+```
+
+The `orders` command replaces the old POS frontend for manual, in-person interactions:
+
+```bash
+swift run App orders create   # interactively build a cart and check it out
+swift run App orders list     # list the most recent orders
+swift run App orders anulate --id <transaction-id>  # void an order and restore stock
 ```
 
 # TODOs
@@ -111,12 +120,10 @@ swift run App users create # This will create a user
    - [X] Added Wompi provider (COL)
 - [X] Add orders controller
 - [X] Add transactions controller
-- [X] Add POS frontend
 - [X] Add POS controller
 - [X] Add dashboard controller
-- [X] Create frontend for managment
 - Add commands for categories
-- Add commands for orders
+- [X] Add commands for orders
 - Add commands for transactions
 - Add commands for image managment
 - [X] Add finance controller
@@ -133,18 +140,9 @@ swift run App users create # This will create a user
    - [X] Refactor controllers
    - [X] Refactor middlewares
    - [X] Refactor services
-- Refactor frontend
-   - Refactor components
-   - Refactor pages
-   - Refactor hooks
-   - Refactor services
-   - Refactor utils
-   - Refactor styles
 - [X] Add docker-compose for development
 - Add docker-compose for production
 - Inventory system for factory
-- Frontend for orders
-- Optional POS
 
 # Routes
 
