@@ -8,6 +8,7 @@ db.sqlite
 .swiftpm
 .env
 Public/images/catalog/
+.DS_Store
 .idea
 *.local
 *.log
