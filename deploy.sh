@@ -19,7 +19,7 @@
 #
 # USAGE:
 # ./deploy.sh -p # deploys the production stack
-# ./deploy.sh -d # deploys the development stack (adds intermediate nginx proxy)
+# ./deploy.sh -d # deploys the development stack (db + redis only)
 #
 
 while getopts ":pd" opt; do
